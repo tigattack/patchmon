@@ -1,0 +1,1598 @@
+import React, { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Link, useSearchParams } from 'react-router-dom'
+import { 
+  Server, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock,
+  RefreshCw,
+  ExternalLink,
+  Plus,
+  Key,
+  Trash2,
+  Copy,
+  X,
+  Eye,
+  EyeOff,
+  Users,
+  CheckSquare,
+  Square,
+  Search,
+  Filter,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ChevronDown,
+  Settings,
+  Columns,
+  GripVertical,
+  Eye as EyeIcon,
+  EyeOff as EyeOffIcon
+} from 'lucide-react'
+import { dashboardAPI, adminHostsAPI, settingsAPI, hostGroupsAPI, formatRelativeTime } from '../utils/api'
+
+// Add Host Modal Component
+const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    hostname: '',
+    hostGroupId: ''
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  // Fetch host groups for selection
+  const { data: hostGroups } = useQuery({
+    queryKey: ['hostGroups'],
+    queryFn: () => hostGroupsAPI.list().then(res => res.data),
+    enabled: isOpen
+  })
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setError('')
+
+    console.log('Submitting form data:', formData)
+
+    try {
+      const response = await adminHostsAPI.create(formData)
+      console.log('Host created successfully:', response.data)
+      onSuccess(response.data)
+      setFormData({ hostname: '', hostGroupId: '' })
+      onClose()
+    } catch (err) {
+      console.error('Full error object:', err)
+      console.error('Error response:', err.response)
+      
+      let errorMessage = 'Failed to create host'
+      
+      if (err.response?.data?.errors) {
+        // Validation errors
+        errorMessage = err.response.data.errors.map(e => e.msg).join(', ')
+      } else if (err.response?.data?.error) {
+        // Single error message
+        errorMessage = err.response.data.error
+      } else if (err.message) {
+        // Network or other error
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium text-secondary-900">Add New Host</h3>
+          <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-secondary-700">Hostname *</label>
+            <input
+              type="text"
+              required
+              value={formData.hostname}
+              onChange={(e) => setFormData({ ...formData, hostname: e.target.value })}
+              className="mt-1 block w-full border-secondary-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+              placeholder="server.example.com"
+            />
+            <p className="mt-1 text-sm text-secondary-500">
+              System information (OS, IP, architecture) will be automatically detected when the agent connects.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-secondary-700">Host Group</label>
+            <select
+              value={formData.hostGroupId}
+              onChange={(e) => setFormData({ ...formData, hostGroupId: e.target.value })}
+              className="mt-1 block w-full border-secondary-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            >
+              <option value="">No group (ungrouped)</option>
+              {hostGroups?.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-sm text-secondary-500">
+              Optional: Assign this host to a group for better organization.
+            </p>
+          </div>
+
+          {error && (
+            <div className="bg-danger-50 border border-danger-200 rounded-md p-3">
+              <p className="text-sm text-danger-700">{error}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-secondary-700 bg-white border border-secondary-300 rounded-md hover:bg-secondary-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50"
+            >
+              {isSubmitting ? 'Creating...' : 'Create Host'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// Credentials Modal Component
+const CredentialsModal = ({ host, isOpen, onClose }) => {
+  const [showApiKey, setShowApiKey] = useState(false)
+  const [activeTab, setActiveTab] = useState(host?.isNewHost ? 'quick' : 'credentials')
+
+  // Update active tab when host changes
+  React.useEffect(() => {
+    if (host?.isNewHost) {
+      setActiveTab('quick')
+    } else {
+      setActiveTab('credentials')
+    }
+  }, [host?.isNewHost])
+
+  const copyToClipboard = (text, label) => {
+    navigator.clipboard.writeText(text)
+    alert(`${label} copied to clipboard!`)
+  }
+
+  // Fetch server URL from settings
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsAPI.get().then(res => res.data),
+    enabled: isOpen // Only fetch when modal is open
+  })
+
+  const serverUrl = settings?.serverUrl || window.location.origin.replace(':3000', ':3001')
+
+  const getSetupCommands = () => {
+    return {
+      oneLine: `curl -sSL ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host?.apiId}" "${host?.apiKey}"`,
+
+      download: `# Download and setup PatchMon agent
+curl -o /tmp/patchmon-agent.sh ${serverUrl}/api/v1/hosts/agent/download
+sudo mkdir -p /etc/patchmon
+sudo mv /tmp/patchmon-agent.sh /usr/local/bin/patchmon-agent.sh
+sudo chmod +x /usr/local/bin/patchmon-agent.sh`,
+
+      configure: `# Configure API credentials
+sudo /usr/local/bin/patchmon-agent.sh configure "${host?.apiId}" "${host?.apiKey}"`,
+
+      test: `# Test the configuration
+sudo /usr/local/bin/patchmon-agent.sh test`,
+
+      initialUpdate: `# Send initial package data
+sudo /usr/local/bin/patchmon-agent.sh update`,
+
+      crontab: `# Add to crontab for hourly updates (run as root)
+echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -`,
+
+      fullSetup: `#!/bin/bash
+# Complete PatchMon Agent Setup Script
+# Run this on the target host: ${host?.hostname}
+
+echo "🔄 Setting up PatchMon agent..."
+
+# Download and install agent
+echo "📥 Downloading agent script..."
+curl -o /tmp/patchmon-agent.sh ${serverUrl}/api/v1/hosts/agent/download
+sudo mkdir -p /etc/patchmon
+sudo mv /tmp/patchmon-agent.sh /usr/local/bin/patchmon-agent.sh
+sudo chmod +x /usr/local/bin/patchmon-agent.sh
+
+# Configure credentials
+echo "🔑 Configuring API credentials..."
+sudo /usr/local/bin/patchmon-agent.sh configure "${host?.apiId}" "${host?.apiKey}"
+
+# Test configuration
+echo "🧪 Testing configuration..."
+sudo /usr/local/bin/patchmon-agent.sh test
+
+# Send initial update
+echo "📊 Sending initial package data..."
+sudo /usr/local/bin/patchmon-agent.sh update
+
+# Setup crontab
+echo "⏰ Setting up hourly crontab..."
+echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -
+
+echo "✅ PatchMon agent setup complete!"
+echo "   - Agent installed: /usr/local/bin/patchmon-agent.sh"
+echo "   - Config directory: /etc/patchmon/"
+echo "   - Updates: Every hour via crontab"
+echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
+    }
+  }
+
+  if (!isOpen || !host) return null
+
+  const commands = getSetupCommands()
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium text-secondary-900">Host Setup - {host.hostname}</h3>
+          <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex space-x-1 mb-6 bg-secondary-100 p-1 rounded-lg">
+          <button
+            onClick={() => setActiveTab('quick')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'quick'
+                ? 'bg-white text-secondary-900 shadow-sm'
+                : 'text-secondary-600 hover:text-secondary-900'
+            }`}
+          >
+            Quick Install
+          </button>
+          <button
+            onClick={() => setActiveTab('credentials')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'credentials'
+                ? 'bg-white text-secondary-900 shadow-sm'
+                : 'text-secondary-600 hover:text-secondary-900'
+            }`}
+          >
+            API Credentials
+          </button>
+          <button
+            onClick={() => setActiveTab('setup')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'setup'
+                ? 'bg-white text-secondary-900 shadow-sm'
+                : 'text-secondary-600 hover:text-secondary-900'
+            }`}
+          >
+            Setup Instructions
+          </button>
+          <button
+            onClick={() => setActiveTab('script')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'script'
+                ? 'bg-white text-secondary-900 shadow-sm'
+                : 'text-secondary-600 hover:text-secondary-900'
+            }`}
+          >
+            Auto-Setup Script
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'quick' && (
+          <div className="space-y-6">
+            <div className="bg-green-50 border border-green-200 rounded-md p-4">
+              <h4 className="text-sm font-medium text-green-800 mb-2">🚀 One-Line Installation</h4>
+              <p className="text-sm text-green-700">
+                Copy and paste this single command on <strong>{host.hostname}</strong> to install and configure the PatchMon agent automatically.
+              </p>
+            </div>
+
+            <div className="border border-secondary-200 rounded-lg p-4">
+              <h5 className="font-medium text-secondary-900 mb-3">Installation Command</h5>
+              <div className="bg-secondary-900 text-secondary-100 p-3 rounded font-mono text-sm">
+                <div className="flex justify-between items-start">
+                  <code className="flex-1 whitespace-pre-wrap break-all">{commands.oneLine}</code>
+                  <button
+                    onClick={() => copyToClipboard(commands.oneLine, 'Installation command')}
+                    className="ml-2 text-secondary-400 hover:text-secondary-200 flex-shrink-0"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-secondary-500 mt-2">
+                This command will download, install, configure, and set up automatic updates for the PatchMon agent.
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <h4 className="text-sm font-medium text-blue-800 mb-2">📋 What This Command Does</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Downloads the PatchMon installation script</li>
+                <li>• Installs the agent to <code>/usr/local/bin/patchmon-agent.sh</code></li>
+                <li>• Configures API credentials for <strong>{host.hostname}</strong></li>
+                <li>• Tests the connection to PatchMon server</li>
+                <li>• Sends initial package data</li>
+                <li>• Sets up hourly automatic updates via crontab</li>
+              </ul>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+              <h4 className="text-sm font-medium text-amber-800 mb-2">⚠️ Requirements</h4>
+              <ul className="text-sm text-amber-700 space-y-1">
+                <li>• Must be run as root (use <code>sudo</code>)</li>
+                <li>• Requires internet connection to download agent</li>
+                <li>• Requires <code>curl</code> and <code>bash</code> to be installed</li>
+                <li>• Host must be able to reach the PatchMon server</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'credentials' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 mb-2">API ID</label>
+              <div className="flex">
+                <input
+                  type="text"
+                  readOnly
+                  value={host.apiId}
+                  className="flex-1 block w-full border-secondary-300 rounded-l-md shadow-sm bg-secondary-50"
+                />
+                <button
+                  onClick={() => copyToClipboard(host.apiId, 'API ID')}
+                  className="px-3 py-2 border border-l-0 border-secondary-300 rounded-r-md bg-secondary-50 hover:bg-secondary-100"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 mb-2">API Key</label>
+              <div className="flex">
+                <input
+                  type={showApiKey ? 'text' : 'password'}
+                  readOnly
+                  value={host.apiKey}
+                  className="flex-1 block w-full border-secondary-300 rounded-l-md shadow-sm bg-secondary-50"
+                />
+                <button
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="px-3 py-2 border border-l-0 border-r-0 border-secondary-300 bg-secondary-50 hover:bg-secondary-100"
+                >
+                  {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+                <button
+                  onClick={() => copyToClipboard(host.apiKey, 'API Key')}
+                  className="px-3 py-2 border border-l-0 border-secondary-300 rounded-r-md bg-secondary-50 hover:bg-secondary-100"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+              <h4 className="text-sm font-medium text-amber-800 mb-2">⚠️ Security Note</h4>
+              <p className="text-sm text-amber-700">
+                Keep these credentials secure. They provide access to update package information for <strong>{host.hostname}</strong> only.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'setup' && (
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <h4 className="text-sm font-medium text-blue-800 mb-2">📋 Step-by-Step Setup</h4>
+              <p className="text-sm text-blue-700">
+                Follow these commands on <strong>{host.hostname}</strong> to install and configure the PatchMon agent.
+              </p>
+            </div>
+
+            {/* Step 1: Download & Install */}
+            <div className="border border-secondary-200 rounded-lg p-4">
+              <h5 className="font-medium text-secondary-900 mb-3">Step 1: Download & Install Agent</h5>
+              <div className="bg-secondary-900 text-secondary-100 p-3 rounded font-mono text-sm">
+                <div className="flex justify-between items-start">
+                  <code className="flex-1 whitespace-pre-wrap">{commands.download}</code>
+                  <button
+                    onClick={() => copyToClipboard(commands.download, 'Download commands')}
+                    className="ml-2 text-secondary-400 hover:text-secondary-200 flex-shrink-0"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2: Configure */}
+            <div className="border border-secondary-200 rounded-lg p-4">
+              <h5 className="font-medium text-secondary-900 mb-3">Step 2: Configure API Credentials</h5>
+              <div className="bg-secondary-900 text-secondary-100 p-3 rounded font-mono text-sm">
+                <div className="flex justify-between items-start">
+                  <code className="flex-1">{commands.configure}</code>
+                  <button
+                    onClick={() => copyToClipboard(commands.configure, 'Configure command')}
+                    className="ml-2 text-secondary-400 hover:text-secondary-200"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3: Test */}
+            <div className="border border-secondary-200 rounded-lg p-4">
+              <h5 className="font-medium text-secondary-900 mb-3">Step 3: Test Configuration</h5>
+              <div className="bg-secondary-900 text-secondary-100 p-3 rounded font-mono text-sm">
+                <div className="flex justify-between items-start">
+                  <code className="flex-1">{commands.test}</code>
+                  <button
+                    onClick={() => copyToClipboard(commands.test, 'Test command')}
+                    className="ml-2 text-secondary-400 hover:text-secondary-200"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 4: Initial Update */}
+            <div className="border border-secondary-200 rounded-lg p-4">
+              <h5 className="font-medium text-secondary-900 mb-3">Step 4: Send Initial Package Data</h5>
+              <p className="text-sm text-secondary-600 mb-3">
+                This will automatically detect and send system information (OS, IP, architecture) along with package data.
+              </p>
+              <div className="bg-secondary-900 text-secondary-100 p-3 rounded font-mono text-sm">
+                <div className="flex justify-between items-start">
+                  <code className="flex-1">{commands.initialUpdate}</code>
+                  <button
+                    onClick={() => copyToClipboard(commands.initialUpdate, 'Initial update command')}
+                    className="ml-2 text-secondary-400 hover:text-secondary-200"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 5: Crontab */}
+            <div className="border border-secondary-200 rounded-lg p-4">
+              <h5 className="font-medium text-secondary-900 mb-3">Step 5: Setup Hourly Updates</h5>
+              <div className="bg-secondary-900 text-secondary-100 p-3 rounded font-mono text-sm">
+                <div className="flex justify-between items-start">
+                  <code className="flex-1">{commands.crontab}</code>
+                  <button
+                    onClick={() => copyToClipboard(commands.crontab, 'Crontab command')}
+                    className="ml-2 text-secondary-400 hover:text-secondary-200"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-secondary-500 mt-2">
+                This sets up automatic package updates every hour at the top of the hour.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'script' && (
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-md p-4">
+              <h4 className="text-sm font-medium text-green-800 mb-2">🚀 Automated Setup</h4>
+              <p className="text-sm text-green-700">
+                Copy this complete setup script to <strong>{host.hostname}</strong> and run it to automatically install and configure everything.
+              </p>
+            </div>
+
+            <div className="border border-secondary-200 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-3">
+                <h5 className="font-medium text-secondary-900">Complete Setup Script</h5>
+                <button
+                  onClick={() => copyToClipboard(commands.fullSetup, 'Complete setup script')}
+                  className="px-3 py-1 bg-primary-600 text-white rounded text-sm hover:bg-primary-700 flex items-center gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy Script
+                </button>
+              </div>
+              <div className="bg-secondary-900 text-secondary-100 p-4 rounded font-mono text-xs overflow-x-auto">
+                <pre className="whitespace-pre-wrap">{commands.fullSetup}</pre>
+              </div>
+              <div className="mt-3 text-sm text-secondary-600">
+                <p><strong>Usage:</strong></p>
+                <p>1. Copy the script above</p>
+                <p>2. Save it to a file on {host.hostname} (e.g., <code>setup-patchmon.sh</code>)</p>
+                <p>3. Run: <code>chmod +x setup-patchmon.sh && sudo ./setup-patchmon.sh</code></p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end space-x-3">
+          <a
+            href={`${serverUrl}/api/v1/hosts/agent/download`}
+            download="patchmon-agent.sh"
+            className="px-4 py-2 text-sm font-medium text-primary-700 bg-primary-50 border border-primary-200 rounded-md hover:bg-primary-100"
+          >
+            Download Agent Script
+          </a>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-secondary-700 bg-white border border-secondary-300 rounded-md hover:bg-secondary-50"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const Hosts = () => {
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [selectedHosts, setSelectedHosts] = useState([])
+  const [showBulkAssignModal, setShowBulkAssignModal] = useState(false)
+  const [searchParams] = useSearchParams()
+  
+  // Table state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortField, setSortField] = useState('hostname')
+  const [sortDirection, setSortDirection] = useState('asc')
+  const [groupFilter, setGroupFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [osFilter, setOsFilter] = useState('all')
+  const [showFilters, setShowFilters] = useState(false)
+  const [groupBy, setGroupBy] = useState('none')
+  const [showColumnSettings, setShowColumnSettings] = useState(false)
+
+  // Handle URL filter parameters
+  useEffect(() => {
+    const filter = searchParams.get('filter')
+    if (filter === 'needsUpdates') {
+      setShowFilters(true)
+      // We'll filter hosts with updates > 0 in the filtering logic
+    }
+  }, [searchParams])
+
+  // Column configuration
+  const [columnConfig, setColumnConfig] = useState(() => {
+    const defaultConfig = [
+      { id: 'select', label: 'Select', visible: true, order: 0 },
+      { id: 'host', label: 'Host', visible: true, order: 1 },
+      { id: 'ip', label: 'IP Address', visible: false, order: 2 },
+      { id: 'group', label: 'Group', visible: true, order: 3 },
+      { id: 'os', label: 'OS', visible: true, order: 4 },
+      { id: 'osVersion', label: 'OS Version', visible: false, order: 5 },
+      { id: 'agentVersion', label: 'Agent Version', visible: true, order: 6 },
+      { id: 'autoUpdate', label: 'Auto-update', visible: true, order: 7 },
+      { id: 'status', label: 'Status', visible: true, order: 8 },
+      { id: 'updates', label: 'Updates', visible: true, order: 9 },
+      { id: 'lastUpdate', label: 'Last Update', visible: true, order: 10 },
+      { id: 'actions', label: 'Actions', visible: true, order: 11 }
+    ]
+
+    const saved = localStorage.getItem('hosts-column-config')
+    if (saved) {
+      const savedConfig = JSON.parse(saved)
+      
+      // Check if agentVersion column exists in saved config
+      const hasAgentVersion = savedConfig.some(col => col.id === 'agentVersion')
+      const hasAutoUpdate = savedConfig.some(col => col.id === 'autoUpdate')
+      
+      let needsUpdate = false
+      let updatedConfig = [...savedConfig]
+      
+      if (!hasAgentVersion) {
+        // Add agentVersion column to saved config
+        const agentVersionColumn = { id: 'agentVersion', label: 'Agent Version', visible: true, order: 6 }
+        
+        // Insert agentVersion column at the correct position
+        updatedConfig = updatedConfig.map(col => {
+          if (col.order >= 6) {
+            return { ...col, order: col.order + 1 }
+          }
+          return col
+        })
+        
+        updatedConfig.push(agentVersionColumn)
+        needsUpdate = true
+      }
+      
+      if (!hasAutoUpdate) {
+        // Add autoUpdate column to saved config
+        const autoUpdateColumn = { id: 'autoUpdate', label: 'Auto-update', visible: true, order: 7 }
+        
+        // Insert autoUpdate column at the correct position
+        updatedConfig = updatedConfig.map(col => {
+          if (col.order >= 7) {
+            return { ...col, order: col.order + 1 }
+          }
+          return col
+        })
+        
+        updatedConfig.push(autoUpdateColumn)
+        needsUpdate = true
+      }
+      
+      if (needsUpdate) {
+        updatedConfig.sort((a, b) => a.order - b.order)
+        localStorage.setItem('hosts-column-config', JSON.stringify(updatedConfig))
+        return updatedConfig
+      }
+      
+      return savedConfig
+    }
+    
+    return defaultConfig
+  })
+  
+  const queryClient = useQueryClient()
+
+  const { data: hosts, isLoading, error, refetch } = useQuery({
+    queryKey: ['hosts'],
+    queryFn: () => dashboardAPI.getHosts().then(res => res.data),
+      refetchInterval: 60000,
+      staleTime: 30000,
+  })
+
+  const { data: hostGroups } = useQuery({
+    queryKey: ['hostGroups'],
+    queryFn: () => hostGroupsAPI.list().then(res => res.data),
+  })
+
+  const bulkUpdateGroupMutation = useMutation({
+    mutationFn: ({ hostIds, hostGroupId }) => adminHostsAPI.bulkUpdateGroup(hostIds, hostGroupId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['hosts'])
+      setSelectedHosts([])
+      setShowBulkAssignModal(false)
+    },
+  })
+
+  // Toggle auto-update mutation
+  const toggleAutoUpdateMutation = useMutation({
+    mutationFn: ({ hostId, autoUpdate }) => adminHostsAPI.toggleAutoUpdate(hostId, autoUpdate).then(res => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['hosts'])
+    }
+  })
+
+  // Helper functions for bulk selection
+  const handleSelectHost = (hostId) => {
+    setSelectedHosts(prev => 
+      prev.includes(hostId) 
+        ? prev.filter(id => id !== hostId)
+        : [...prev, hostId]
+    )
+  }
+
+  const handleSelectAll = () => {
+    if (selectedHosts.length === hosts.length) {
+      setSelectedHosts([])
+    } else {
+      setSelectedHosts(hosts.map(host => host.id))
+    }
+  }
+
+  const handleBulkAssign = (hostGroupId) => {
+    bulkUpdateGroupMutation.mutate({ hostIds: selectedHosts, hostGroupId })
+  }
+
+  // Table filtering and sorting logic
+  const filteredAndSortedHosts = React.useMemo(() => {
+    if (!hosts) return []
+
+    let filtered = hosts.filter(host => {
+      // Search filter
+      const matchesSearch = searchTerm === '' || 
+        host.hostname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        host.ip?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        host.osType?.toLowerCase().includes(searchTerm.toLowerCase())
+
+      // Group filter
+      const matchesGroup = groupFilter === 'all' || 
+        (groupFilter === 'ungrouped' && !host.hostGroup) ||
+        (groupFilter !== 'ungrouped' && host.hostGroup?.id === groupFilter)
+
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || host.status === statusFilter
+
+      // OS filter
+      const matchesOs = osFilter === 'all' || host.osType?.toLowerCase() === osFilter.toLowerCase()
+
+      // URL filter for hosts needing updates
+      const filter = searchParams.get('filter')
+      const matchesUrlFilter = filter !== 'needsUpdates' || (host.updatesCount && host.updatesCount > 0)
+
+      return matchesSearch && matchesGroup && matchesStatus && matchesOs && matchesUrlFilter
+    })
+
+    // Sorting
+    filtered.sort((a, b) => {
+      let aValue, bValue
+      
+      switch (sortField) {
+        case 'hostname':
+          aValue = a.hostname.toLowerCase()
+          bValue = b.hostname.toLowerCase()
+          break
+        case 'ip':
+          aValue = a.ip?.toLowerCase() || 'zzz_no_ip'
+          bValue = b.ip?.toLowerCase() || 'zzz_no_ip'
+          break
+        case 'group':
+          aValue = a.hostGroup?.name || 'zzz_ungrouped'
+          bValue = b.hostGroup?.name || 'zzz_ungrouped'
+          break
+        case 'os':
+          aValue = a.osType?.toLowerCase() || 'zzz_unknown'
+          bValue = b.osType?.toLowerCase() || 'zzz_unknown'
+          break
+        case 'osVersion':
+          aValue = a.osVersion?.toLowerCase() || 'zzz_unknown'
+          bValue = b.osVersion?.toLowerCase() || 'zzz_unknown'
+          break
+        case 'agentVersion':
+          aValue = a.agentVersion?.toLowerCase() || 'zzz_no_version'
+          bValue = b.agentVersion?.toLowerCase() || 'zzz_no_version'
+          break
+        case 'status':
+          aValue = a.status
+          bValue = b.status
+          break
+        case 'updates':
+          aValue = a.updatesCount || 0
+          bValue = b.updatesCount || 0
+          break
+        case 'lastUpdate':
+          aValue = new Date(a.lastUpdate)
+          bValue = new Date(b.lastUpdate)
+          break
+        default:
+          aValue = a[sortField]
+          bValue = b[sortField]
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+
+    return filtered
+  }, [hosts, searchTerm, groupFilter, statusFilter, osFilter, sortField, sortDirection, searchParams])
+
+  // Group hosts by selected field
+  const groupedHosts = React.useMemo(() => {
+    if (groupBy === 'none') {
+      return { 'All Hosts': filteredAndSortedHosts }
+    }
+
+    const groups = {}
+    filteredAndSortedHosts.forEach(host => {
+      let groupKey
+      switch (groupBy) {
+        case 'group':
+          groupKey = host.hostGroup?.name || 'Ungrouped'
+          break
+        case 'status':
+          groupKey = host.status.charAt(0).toUpperCase() + host.status.slice(1)
+          break
+        case 'os':
+          groupKey = host.osType || 'Unknown'
+          break
+        default:
+          groupKey = 'All Hosts'
+      }
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = []
+      }
+      groups[groupKey].push(host)
+    })
+
+    return groups
+  }, [filteredAndSortedHosts, groupBy])
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const getSortIcon = (field) => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+  }
+
+  // Column management functions
+  const updateColumnConfig = (newConfig) => {
+    setColumnConfig(newConfig)
+    localStorage.setItem('hosts-column-config', JSON.stringify(newConfig))
+  }
+
+  const toggleColumnVisibility = (columnId) => {
+    const newConfig = columnConfig.map(col => 
+      col.id === columnId ? { ...col, visible: !col.visible } : col
+    )
+    updateColumnConfig(newConfig)
+  }
+
+  const reorderColumns = (fromIndex, toIndex) => {
+    const newConfig = [...columnConfig]
+    const [movedColumn] = newConfig.splice(fromIndex, 1)
+    newConfig.splice(toIndex, 0, movedColumn)
+    
+    // Update order values
+    const updatedConfig = newConfig.map((col, index) => ({ ...col, order: index }))
+    updateColumnConfig(updatedConfig)
+  }
+
+  const resetColumns = () => {
+    const defaultConfig = [
+      { id: 'select', label: 'Select', visible: true, order: 0 },
+      { id: 'host', label: 'Host', visible: true, order: 1 },
+      { id: 'ip', label: 'IP Address', visible: false, order: 2 },
+      { id: 'group', label: 'Group', visible: true, order: 3 },
+      { id: 'os', label: 'OS', visible: true, order: 4 },
+      { id: 'osVersion', label: 'OS Version', visible: false, order: 5 },
+      { id: 'status', label: 'Status', visible: true, order: 6 },
+      { id: 'updates', label: 'Updates', visible: true, order: 7 },
+      { id: 'lastUpdate', label: 'Last Update', visible: true, order: 8 },
+      { id: 'actions', label: 'Actions', visible: true, order: 9 }
+    ]
+    updateColumnConfig(defaultConfig)
+  }
+
+  // Get visible columns in order
+  const visibleColumns = columnConfig
+    .filter(col => col.visible)
+    .sort((a, b) => a.order - b.order)
+
+  // Helper function to render table cell content
+  const renderCellContent = (column, host) => {
+    switch (column.id) {
+      case 'select':
+        return (
+          <button
+            onClick={() => handleSelectHost(host.id)}
+            className="flex items-center gap-2 hover:text-secondary-700"
+          >
+            {selectedHosts.includes(host.id) ? (
+              <CheckSquare className="h-4 w-4 text-primary-600" />
+            ) : (
+              <Square className="h-4 w-4 text-secondary-400" />
+            )}
+          </button>
+        )
+      case 'host':
+        return (
+          <Link
+            to={`/hosts/${host.id}`}
+            className="text-sm font-medium text-primary-600 hover:text-primary-900 hover:underline"
+          >
+            {host.hostname}
+          </Link>
+        )
+      case 'ip':
+        return (
+          <div className="text-sm text-secondary-900 dark:text-white">
+            {host.ip || 'N/A'}
+          </div>
+        )
+      case 'group':
+        return host.hostGroup ? (
+          <span 
+            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
+            style={{ backgroundColor: host.hostGroup.color }}
+          >
+            {host.hostGroup.name}
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800">
+            Ungrouped
+          </span>
+        )
+      case 'os':
+        return (
+          <div className="text-sm text-secondary-900 dark:text-white">
+            {host.osType}
+          </div>
+        )
+      case 'osVersion':
+        return (
+          <div className="text-sm text-secondary-900 dark:text-white">
+            {host.osVersion || 'N/A'}
+          </div>
+        )
+      case 'agentVersion':
+        return (
+          <div className="text-sm text-secondary-900 dark:text-white">
+            {host.agentVersion || 'N/A'}
+          </div>
+        )
+      case 'autoUpdate':
+        return (
+          <span className={`text-sm font-medium ${
+            host.autoUpdate 
+              ? 'text-green-600 dark:text-green-400' 
+              : 'text-red-600 dark:text-red-400'
+          }`}>
+            {host.autoUpdate ? 'Yes' : 'No'}
+          </span>
+        )
+      case 'status':
+        return (
+          <div className="text-sm text-secondary-900 dark:text-white">
+            {host.status.charAt(0).toUpperCase() + host.status.slice(1)}
+          </div>
+        )
+      case 'updates':
+        return (
+          <div className="text-sm text-secondary-900 dark:text-white">
+            {host.updatesCount || 0}
+          </div>
+        )
+      case 'lastUpdate':
+        return (
+          <div className="text-sm text-secondary-500 dark:text-secondary-300">
+            {formatRelativeTime(host.lastUpdate)}
+          </div>
+        )
+      case 'actions':
+        return (
+          <Link
+            to={`/hosts/${host.id}`}
+            className="text-primary-600 hover:text-primary-900 flex items-center gap-1"
+          >
+            View
+            <ExternalLink className="h-3 w-3" />
+          </Link>
+        )
+      default:
+        return null
+    }
+  }
+
+  const handleHostCreated = (newHost) => {
+    queryClient.invalidateQueries(['hosts'])
+    // Host created successfully - user can view details for setup instructions
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="h-8 w-8 animate-spin text-primary-600" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-danger-50 border border-danger-200 rounded-md p-4">
+        <div className="flex">
+          <AlertTriangle className="h-5 w-5 text-danger-400" />
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-danger-800">Error loading hosts</h3>
+            <p className="text-sm text-danger-700 mt-1">
+              {error.message || 'Failed to load hosts'}
+            </p>
+            <button
+              onClick={() => refetch()}
+              className="mt-2 btn-danger text-xs"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const getStatusColor = (host) => {
+    if (host.isStale) return 'text-danger-600'
+    if (host.updatesCount > 0) return 'text-warning-600'
+    return 'text-success-600'
+  }
+
+  const getStatusIcon = (host) => {
+    if (host.isStale) return <AlertTriangle className="h-5 w-5" />
+    if (host.updatesCount > 0) return <Clock className="h-5 w-5" />
+    return <CheckCircle className="h-5 w-5" />
+  }
+
+  const getStatusText = (host) => {
+    if (host.isStale) return 'Stale'
+    if (host.updatesCount > 0) return 'Needs Updates'
+    return 'Up to Date'
+  }
+
+  return (
+    <div className="space-y-6">
+
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
+        <div className="card p-4">
+          <div className="flex items-center">
+            <Server className="h-5 w-5 text-primary-600 mr-2" />
+            <div>
+              <p className="text-sm text-secondary-500 dark:text-white">Total Hosts</p>
+              <p className="text-xl font-semibold text-secondary-900 dark:text-white">{hosts?.length || 0}</p>
+            </div>
+          </div>
+        </div>
+        <div className="card p-4">
+          <div className="flex items-center">
+            <CheckCircle className="h-5 w-5 text-success-600 mr-2" />
+            <div>
+              <p className="text-sm text-secondary-500 dark:text-white">Up to Date</p>
+              <p className="text-xl font-semibold text-secondary-900 dark:text-white">
+                {hosts?.filter(h => !h.isStale && h.updatesCount === 0).length || 0}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="card p-4">
+          <div className="flex items-center">
+            <Clock className="h-5 w-5 text-warning-600 mr-2" />
+            <div>
+              <p className="text-sm text-secondary-500 dark:text-white">Needs Updates</p>
+              <p className="text-xl font-semibold text-secondary-900 dark:text-white">
+                {hosts?.filter(h => !h.isStale && h.updatesCount > 0).length || 0}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="card p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-danger-600 mr-2" />
+            <div>
+              <p className="text-sm text-secondary-500 dark:text-white">Stale</p>
+              <p className="text-xl font-semibold text-secondary-900 dark:text-white">
+                {hosts?.filter(h => h.isStale).length || 0}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Hosts List */}
+      <div className="card">
+        <div className="px-4 py-4 sm:p-4">
+          <div className="flex items-center justify-end mb-4">
+            {selectedHosts.length > 0 && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-secondary-600">
+                  {selectedHosts.length} host{selectedHosts.length !== 1 ? 's' : ''} selected
+                </span>
+                <button
+                  onClick={() => setShowBulkAssignModal(true)}
+                  className="btn-outline flex items-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  Assign to Group
+                </button>
+                <button
+                  onClick={() => setSelectedHosts([])}
+                  className="text-sm text-secondary-500 hover:text-secondary-700"
+                >
+                  Clear Selection
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {/* Table Controls */}
+          <div className="mb-4 space-y-4">
+            {/* Search and Filter Bar */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400 dark:text-secondary-500" />
+                  <input
+                    type="text"
+                    placeholder="Search hosts, IP addresses, or OS..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 w-full border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-800 text-secondary-900 dark:text-white placeholder-secondary-500 dark:placeholder-secondary-400"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`btn-outline flex items-center gap-2 ${showFilters ? 'bg-primary-50 border-primary-300' : ''}`}
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                </button>
+                <button
+                  onClick={() => setShowColumnSettings(true)}
+                  className="btn-outline flex items-center gap-2"
+                >
+                  <Columns className="h-4 w-4" />
+                  Columns
+                </button>
+                <div className="relative">
+                  <select
+                    value={groupBy}
+                    onChange={(e) => setGroupBy(e.target.value)}
+                    className="appearance-none bg-white dark:bg-secondary-800 border-2 border-secondary-300 dark:border-secondary-600 rounded-lg px-3 py-2 pr-8 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-secondary-900 dark:text-white hover:border-secondary-400 dark:hover:border-secondary-500 transition-colors"
+                  >
+                    <option value="none">No Grouping</option>
+                    <option value="group">Group by Host Group</option>
+                    <option value="status">Group by Status</option>
+                    <option value="os">Group by OS</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400 dark:text-secondary-500 pointer-events-none" />
+                </div>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Host
+                </button>
+              </div>
+            </div>
+
+            {/* Advanced Filters */}
+            {showFilters && (
+              <div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg border dark:border-secondary-600">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">Host Group</label>
+                    <select
+                      value={groupFilter}
+                      onChange={(e) => setGroupFilter(e.target.value)}
+                      className="w-full border border-secondary-300 dark:border-secondary-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-800 text-secondary-900 dark:text-white"
+                    >
+                      <option value="all">All Groups</option>
+                      <option value="ungrouped">Ungrouped</option>
+                      {hostGroups?.map(group => (
+                        <option key={group.id} value={group.id}>{group.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">Status</label>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full border border-secondary-300 dark:border-secondary-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-800 text-secondary-900 dark:text-white"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="active">Active</option>
+                      <option value="pending">Pending</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="error">Error</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">Operating System</label>
+                    <select
+                      value={osFilter}
+                      onChange={(e) => setOsFilter(e.target.value)}
+                      className="w-full border border-secondary-300 dark:border-secondary-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-800 text-secondary-900 dark:text-white"
+                    >
+                      <option value="all">All OS</option>
+                      <option value="linux">Linux</option>
+                      <option value="windows">Windows</option>
+                      <option value="macos">macOS</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => {
+                        setSearchTerm('')
+                        setGroupFilter('all')
+                        setStatusFilter('all')
+                        setOsFilter('all')
+                        setGroupBy('none')
+                      }}
+                      className="btn-outline w-full"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {(!hosts || hosts.length === 0) ? (
+            <div className="text-center py-8">
+              <Server className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
+              <p className="text-secondary-500">No hosts registered yet</p>
+              <p className="text-sm text-secondary-400 mt-2">
+                Click "Add Host" to manually register a new host and get API credentials
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(groupedHosts).map(([groupName, groupHosts]) => (
+                <div key={groupName} className="space-y-3">
+                  {/* Group Header */}
+                  {groupBy !== 'none' && (
+                    <div className="flex items-center justify-between bg-secondary-100 dark:bg-secondary-700 px-4 py-2 rounded-lg">
+                      <h3 className="text-sm font-medium text-secondary-900 dark:text-white">
+                        {groupName} ({groupHosts.length})
+                      </h3>
+                    </div>
+                  )}
+                  
+                  {/* Table for this group */}
+            <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-secondary-200 dark:divide-secondary-600">
+                <thead className="bg-secondary-50 dark:bg-secondary-700">
+                  <tr>
+                    {visibleColumns.map((column) => (
+                      <th key={column.id} className="px-4 py-2 text-center text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider">
+                        {column.id === 'select' ? (
+                          <button
+                            onClick={handleSelectAll}
+                            className="flex items-center gap-2 hover:text-secondary-700"
+                          >
+                            {selectedHosts.length === groupHosts.length ? (
+                              <CheckSquare className="h-4 w-4" />
+                            ) : (
+                              <Square className="h-4 w-4" />
+                            )}
+                          </button>
+                        ) : column.id === 'host' ? (
+                          <button
+                            onClick={() => handleSort('hostname')}
+                            className="flex items-center gap-2 hover:text-secondary-700"
+                          >
+                            {column.label}
+                            {getSortIcon('hostname')}
+                          </button>
+                        ) : column.id === 'ip' ? (
+                          <button
+                            onClick={() => handleSort('ip')}
+                            className="flex items-center gap-2 hover:text-secondary-700"
+                          >
+                            {column.label}
+                            {getSortIcon('ip')}
+                          </button>
+                        ) : column.id === 'group' ? (
+                          <button
+                            onClick={() => handleSort('group')}
+                            className="flex items-center gap-2 hover:text-secondary-700"
+                          >
+                            {column.label}
+                            {getSortIcon('group')}
+                          </button>
+                        ) : column.id === 'os' ? (
+                          <button
+                            onClick={() => handleSort('os')}
+                            className="flex items-center gap-2 hover:text-secondary-700"
+                          >
+                            {column.label}
+                            {getSortIcon('os')}
+                          </button>
+                        ) : column.id === 'osVersion' ? (
+                          <button
+                            onClick={() => handleSort('osVersion')}
+                            className="flex items-center gap-2 hover:text-secondary-700"
+                          >
+                            {column.label}
+                            {getSortIcon('osVersion')}
+                          </button>
+                        ) : column.id === 'agentVersion' ? (
+                          <button
+                            onClick={() => handleSort('agentVersion')}
+                            className="flex items-center gap-2 hover:text-secondary-700"
+                          >
+                            {column.label}
+                            {getSortIcon('agentVersion')}
+                          </button>
+                        ) : column.id === 'autoUpdate' ? (
+                          <div className="flex items-center gap-2 font-normal text-xs text-secondary-500 dark:text-secondary-300 normal-case tracking-wider">
+                            {column.label}
+                          </div>
+                        ) : column.id === 'status' ? (
+                          <button
+                            onClick={() => handleSort('status')}
+                            className="flex items-center gap-2 hover:text-secondary-700"
+                          >
+                            {column.label}
+                            {getSortIcon('status')}
+                          </button>
+                        ) : column.id === 'updates' ? (
+                          <button
+                            onClick={() => handleSort('updates')}
+                            className="flex items-center gap-2 hover:text-secondary-700"
+                          >
+                            {column.label}
+                            {getSortIcon('updates')}
+                          </button>
+                        ) : column.id === 'lastUpdate' ? (
+                          <button
+                            onClick={() => handleSort('lastUpdate')}
+                            className="flex items-center gap-2 hover:text-secondary-700"
+                          >
+                            {column.label}
+                            {getSortIcon('lastUpdate')}
+                          </button>
+                        ) : (
+                          column.label
+                        )}
+                    </th>
+                    ))}
+                  </tr>
+                </thead>
+                      <tbody className="bg-white dark:bg-secondary-800 divide-y divide-secondary-200 dark:divide-secondary-600">
+                        {groupHosts.map((host) => (
+                          <tr key={host.id} className={`hover:bg-secondary-50 dark:hover:bg-secondary-700 ${selectedHosts.includes(host.id) ? 'bg-primary-50 dark:bg-primary-600' : ''}`}>
+                            {visibleColumns.map((column) => (
+                              <td key={column.id} className="px-4 py-2 whitespace-nowrap text-center">
+                                {renderCellContent(column, host)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                            </div>
+                </div>
+              ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+      {/* Modals */}
+      <AddHostModal 
+        isOpen={showAddModal} 
+        onClose={() => setShowAddModal(false)} 
+        onSuccess={handleHostCreated}
+      />
+      
+
+      {/* Bulk Assign Modal */}
+      {showBulkAssignModal && (
+        <BulkAssignModal
+          selectedHosts={selectedHosts}
+          hosts={hosts}
+          onClose={() => setShowBulkAssignModal(false)}
+          onAssign={handleBulkAssign}
+          isLoading={bulkUpdateGroupMutation.isPending}
+        />
+      )}
+
+      {/* Column Settings Modal */}
+      {showColumnSettings && (
+        <ColumnSettingsModal
+          columnConfig={columnConfig}
+          onClose={() => setShowColumnSettings(false)}
+          onToggleVisibility={toggleColumnVisibility}
+          onReorder={reorderColumns}
+          onReset={resetColumns}
+        />
+      )}
+                        </div>
+  )
+}
+
+// Bulk Assign Modal Component
+const BulkAssignModal = ({ selectedHosts, hosts, onClose, onAssign, isLoading }) => {
+  const [selectedGroupId, setSelectedGroupId] = useState('')
+
+  // Fetch host groups for selection
+  const { data: hostGroups } = useQuery({
+    queryKey: ['hostGroups'],
+    queryFn: () => hostGroupsAPI.list().then(res => res.data),
+  })
+
+  const selectedHostNames = hosts
+    .filter(host => selectedHosts.includes(host.id))
+    .map(host => host.hostname)
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onAssign(selectedGroupId || null)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-secondary-900">
+            Assign to Host Group
+          </h3>
+          <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600">
+            <X className="h-5 w-5" />
+          </button>
+                        </div>
+
+        <div className="mb-4">
+          <p className="text-sm text-secondary-600 mb-2">
+            Assigning {selectedHosts.length} host{selectedHosts.length !== 1 ? 's' : ''}:
+          </p>
+          <div className="max-h-32 overflow-y-auto bg-secondary-50 rounded-md p-3">
+            {selectedHostNames.map((hostname, index) => (
+              <div key={index} className="text-sm text-secondary-700">
+                • {hostname}
+                        </div>
+            ))}
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 mb-1">
+              Host Group
+            </label>
+            <select
+              value={selectedGroupId}
+              onChange={(e) => setSelectedGroupId(e.target.value)}
+              className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">No group (ungrouped)</option>
+              {hostGroups?.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-sm text-secondary-500">
+              Select a group to assign these hosts to, or leave ungrouped.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-outline"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Assigning...' : 'Assign to Group'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// Column Settings Modal Component
+const ColumnSettingsModal = ({ columnConfig, onClose, onToggleVisibility, onReorder, onReset }) => {
+  const [draggedIndex, setDraggedIndex] = useState(null)
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDrop = (e, dropIndex) => {
+    e.preventDefault()
+    if (draggedIndex !== null && draggedIndex !== dropIndex) {
+      onReorder(draggedIndex, dropIndex)
+    }
+    setDraggedIndex(null)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-600">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-secondary-900 dark:text-white">Column Settings</h3>
+            <button
+              onClick={onClose}
+              className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+        
+        <div className="px-6 py-4">
+          <p className="text-sm text-secondary-600 dark:text-secondary-300 mb-4">
+            Drag to reorder columns or toggle visibility
+          </p>
+          
+          <div className="space-y-2">
+            {columnConfig.map((column, index) => (
+              <div
+                key={column.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, index)}
+                className={`flex items-center justify-between p-3 border rounded-lg cursor-move ${
+                  draggedIndex === index ? 'opacity-50' : 'hover:bg-secondary-50 dark:hover:bg-secondary-700'
+                } border-secondary-200 dark:border-secondary-600`}
+              >
+                <div className="flex items-center gap-3">
+                  <GripVertical className="h-4 w-4 text-secondary-400 dark:text-secondary-500" />
+                  <span className="text-sm font-medium text-secondary-900 dark:text-white">
+                    {column.label}
+                          </span>
+                </div>
+                <button
+                  onClick={() => onToggleVisibility(column.id)}
+                  className={`p-1 rounded ${
+                    column.visible 
+                      ? 'text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300' 
+                      : 'text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300'
+                  }`}
+                >
+                  {column.visible ? (
+                    <EyeIcon className="h-4 w-4" />
+                  ) : (
+                    <EyeOffIcon className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            ))}
+            </div>
+          
+          <div className="flex justify-between mt-6">
+            <button
+              onClick={onReset}
+              className="btn-outline"
+            >
+              Reset to Default
+            </button>
+            <button
+              onClick={onClose}
+              className="btn-primary"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default Hosts 
