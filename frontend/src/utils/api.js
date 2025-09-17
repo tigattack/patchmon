@@ -73,7 +73,8 @@ export const adminUsersAPI = {
   list: () => api.get('/auth/admin/users'),
   create: (userData) => api.post('/auth/admin/users', userData),
   update: (userId, userData) => api.put(`/auth/admin/users/${userId}`, userData),
-  delete: (userId) => api.delete(`/auth/admin/users/${userId}`)
+  delete: (userId) => api.delete(`/auth/admin/users/${userId}`),
+  resetPassword: (userId, newPassword) => api.post(`/auth/admin/users/${userId}/reset-password`, { newPassword })
 }
 
 // Permissions API (for role management)

@@ -122,7 +122,8 @@ router.put('/', authenticateToken, requireManageSettings, [
   body('serverPort').isInt({ min: 1, max: 65535 }).withMessage('Port must be between 1 and 65535'),
   body('frontendUrl').isLength({ min: 1 }).withMessage('Frontend URL is required'),
   body('updateInterval').isInt({ min: 5, max: 1440 }).withMessage('Update interval must be between 5 and 1440 minutes'),
-  body('autoUpdate').isBoolean().withMessage('Auto update must be a boolean')
+  body('autoUpdate').isBoolean().withMessage('Auto update must be a boolean'),
+  body('githubRepoUrl').optional().isLength({ min: 1 }).withMessage('GitHub repo URL must be a non-empty string')
 ], async (req, res) => {
   try {
     console.log('Settings update request body:', req.body);
@@ -132,8 +133,8 @@ router.put('/', authenticateToken, requireManageSettings, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { serverProtocol, serverHost, serverPort, frontendUrl, updateInterval, autoUpdate } = req.body;
-    console.log('Extracted values:', { serverProtocol, serverHost, serverPort, frontendUrl, updateInterval, autoUpdate });
+    const { serverProtocol, serverHost, serverPort, frontendUrl, updateInterval, autoUpdate, githubRepoUrl } = req.body;
+    console.log('Extracted values:', { serverProtocol, serverHost, serverPort, frontendUrl, updateInterval, autoUpdate, githubRepoUrl });
     
     // Construct server URL from components
     const serverUrl = `${serverProtocol}://${serverHost}:${serverPort}`;
@@ -149,7 +150,8 @@ router.put('/', authenticateToken, requireManageSettings, [
         serverPort,
         frontendUrl,
         updateInterval: updateInterval || 60,
-        autoUpdate: autoUpdate || false
+        autoUpdate: autoUpdate || false,
+        githubRepoUrl: githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git'
       });
       const oldUpdateInterval = settings.updateInterval;
       
@@ -162,7 +164,8 @@ router.put('/', authenticateToken, requireManageSettings, [
           serverPort,
           frontendUrl,
           updateInterval: updateInterval || 60,
-          autoUpdate: autoUpdate || false
+          autoUpdate: autoUpdate || false,
+          githubRepoUrl: githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git'
         }
       });
       console.log('Settings updated successfully:', settings);
@@ -182,7 +185,8 @@ router.put('/', authenticateToken, requireManageSettings, [
           serverPort,
           frontendUrl,
           updateInterval: updateInterval || 60,
-          autoUpdate: autoUpdate || false
+          autoUpdate: autoUpdate || false,
+          githubRepoUrl: githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git'
         }
       });
     }

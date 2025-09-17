@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, Edit, User, Mail, Shield, Calendar, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Trash2, Edit, User, Mail, Shield, Calendar, CheckCircle, XCircle, Key } from 'lucide-react'
 import { adminUsersAPI, permissionsAPI } from '../utils/api'
 import { useAuth } from '../contexts/AuthContext'
 
 const Users = () => {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
+  const [resetPasswordUser, setResetPasswordUser] = useState(null)
   const queryClient = useQueryClient()
   const { user: currentUser } = useAuth()
 
@@ -39,6 +40,15 @@ const Users = () => {
     }
   })
 
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: ({ userId, newPassword }) => adminUsersAPI.resetPassword(userId, newPassword),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['users'])
+      setResetPasswordUser(null)
+    }
+  })
+
   const handleDeleteUser = async (userId, username) => {
     if (window.confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
       try {
@@ -56,6 +66,10 @@ const Users = () => {
 
   const handleEditUser = (user) => {
     setEditingUser(user)
+  }
+
+  const handleResetPassword = (user) => {
+    setResetPasswordUser(user)
   }
 
   if (isLoading) {
@@ -157,6 +171,18 @@ const Users = () => {
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
+                      onClick={() => handleResetPassword(user)}
+                      className="text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-300 disabled:text-gray-300 disabled:cursor-not-allowed"
+                      title={
+                        !user.isActive 
+                          ? "Cannot reset password for inactive user"
+                          : "Reset password"
+                      }
+                      disabled={!user.isActive}
+                    >
+                      <Key className="h-4 w-4" />
+                    </button>
+                    <button
                       onClick={() => handleDeleteUser(user.id, user.username)}
                       className="text-danger-400 hover:text-danger-600 dark:text-danger-500 dark:hover:text-danger-400 disabled:text-gray-300 disabled:cursor-not-allowed"
                       title={
@@ -207,6 +233,17 @@ const Users = () => {
           onClose={() => setEditingUser(null)}
           onUserUpdated={() => updateUserMutation.mutate()}
           roles={roles}
+        />
+      )}
+
+      {/* Reset Password Modal */}
+      {resetPasswordUser && (
+        <ResetPasswordModal
+          user={resetPasswordUser}
+          isOpen={!!resetPasswordUser}
+          onClose={() => setResetPasswordUser(null)}
+          onPasswordReset={resetPasswordMutation.mutate}
+          isLoading={resetPasswordMutation.isPending}
         />
       )}
     </div>
@@ -479,6 +516,128 @@ const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
               className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50"
             >
               {isLoading ? 'Updating...' : 'Update User'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// Reset Password Modal Component
+const ResetPasswordModal = ({ user, isOpen, onClose, onPasswordReset, isLoading }) => {
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+
+    // Validate passwords
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
+    try {
+      await onPasswordReset({ userId: user.id, newPassword })
+      // Reset form on success
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to reset password')
+    }
+  }
+
+  const handleClose = () => {
+    setNewPassword('')
+    setConfirmPassword('')
+    setError('')
+    onClose()
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-secondary-800 rounded-lg p-6 w-full max-w-md">
+        <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
+          Reset Password for {user.username}
+        </h3>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+              New Password
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
+              placeholder="Enter new password (min 6 characters)"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
+              placeholder="Confirm new password"
+            />
+          </div>
+
+          <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-md p-3">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <Key className="h-5 w-5 text-yellow-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  Password Reset Warning
+                </h3>
+                <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                  <p>This will immediately change the user's password. The user will need to use the new password to login.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-danger-50 dark:bg-danger-900 border border-danger-200 dark:border-danger-700 rounded-md p-3">
+              <p className="text-sm text-danger-700 dark:text-danger-300">{error}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="px-4 py-2 text-sm font-medium text-secondary-700 dark:text-secondary-200 bg-white dark:bg-secondary-700 border border-secondary-300 dark:border-secondary-600 rounded-md hover:bg-secondary-50 dark:hover:bg-secondary-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50 flex items-center"
+            >
+              {isLoading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>}
+              {isLoading ? 'Resetting...' : 'Reset Password'}
             </button>
           </div>
         </form>

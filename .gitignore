@@ -139,3 +139,6 @@ test-results.xml
 # Deployment scripts (production deployment tools)
 deploy-patchmon.sh
 manage-instances.sh
+setup-installer-site.sh
+install-server.*
+notify-clients-upgrade.sh

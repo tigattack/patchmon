@@ -18,7 +18,8 @@ import {
   Clock,
   RefreshCw,
   GitBranch,
-  Wrench
+  Wrench,
+  Plus
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -59,7 +60,7 @@ const Layout = ({ children }) => {
       ]
     },
     {
-      section: 'Users',
+      section: 'PatchMon Users',
       items: [
         ...(canViewUsers() ? [{ name: 'Users', href: '/users', icon: Users }] : []),
         ...(canManageSettings() ? [{ name: 'Permissions', href: '/permissions', icon: Shield }] : []),
@@ -68,7 +69,7 @@ const Layout = ({ children }) => {
     {
       section: 'Settings',
       items: [
-        ...(canManageSettings() ? [{ name: 'Settings', href: '/settings', icon: Settings }] : []),
+        ...(canManageSettings() ? [{ name: 'Server Config', href: '/settings', icon: Settings }] : []),
       ]
     }
   ]
@@ -98,6 +99,26 @@ const Layout = ({ children }) => {
   const handleLogout = async () => {
     await logout()
     setUserMenuOpen(false)
+  }
+
+  const handleAddHost = () => {
+    // Navigate to hosts page with add modal parameter
+    window.location.href = '/hosts?action=add'
+  }
+
+  // Short format for navigation area
+  const formatRelativeTimeShort = (date) => {
+    const now = new Date()
+    const diff = now - new Date(date)
+    const seconds = Math.floor(diff / 1000)
+    const minutes = Math.floor(seconds / 60)
+    const hours = Math.floor(minutes / 60)
+    const days = Math.floor(hours / 24)
+
+    if (days > 0) return `${days}d ago`
+    if (hours > 0) return `${hours}h ago`
+    if (minutes > 0) return `${minutes}m ago`
+    return `${seconds}s ago`
   }
 
   // Save sidebar collapsed state to localStorage
@@ -168,26 +189,57 @@ const Layout = ({ children }) => {
                     </h3>
                     <div className="space-y-1">
                       {item.items.map((subItem) => (
-                        <Link
-                          key={subItem.name}
-                          to={subItem.href}
-                          className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                            isActive(subItem.href)
-                              ? 'bg-primary-100 text-primary-900'
-                              : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
-                          } ${subItem.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          onClick={subItem.comingSoon ? (e) => e.preventDefault() : () => setSidebarOpen(false)}
-                        >
-                          <subItem.icon className="mr-3 h-5 w-5" />
-                          <span className="flex items-center gap-2">
-                            {subItem.name}
-                            {subItem.comingSoon && (
-                              <span className="text-xs bg-secondary-100 text-secondary-600 px-1.5 py-0.5 rounded">
-                                Soon
+                        <div key={subItem.name}>
+                          {subItem.name === 'Hosts' && canManageHosts() ? (
+                            // Special handling for Hosts item with integrated + button (mobile)
+                            <Link
+                              to={subItem.href}
+                              className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                                isActive(subItem.href)
+                                  ? 'bg-primary-100 text-primary-900'
+                                  : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
+                              }`}
+                              onClick={() => setSidebarOpen(false)}
+                            >
+                              <subItem.icon className="mr-3 h-5 w-5" />
+                              <span className="flex items-center gap-2 flex-1">
+                                {subItem.name}
                               </span>
-                            )}
-                          </span>
-                        </Link>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  setSidebarOpen(false)
+                                  handleAddHost()
+                                }}
+                                className="ml-auto flex items-center justify-center w-5 h-5 rounded-full border-2 border-current opacity-60 hover:opacity-100 transition-all duration-200 self-center"
+                                title="Add Host"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </button>
+                            </Link>
+                          ) : (
+                            // Standard navigation item (mobile)
+                            <Link
+                              to={subItem.href}
+                              className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                                isActive(subItem.href)
+                                  ? 'bg-primary-100 text-primary-900'
+                                  : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
+                              } ${subItem.comingSoon ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              onClick={subItem.comingSoon ? (e) => e.preventDefault() : () => setSidebarOpen(false)}
+                            >
+                              <subItem.icon className="mr-3 h-5 w-5" />
+                              <span className="flex items-center gap-2">
+                                {subItem.name}
+                                {subItem.comingSoon && (
+                                  <span className="text-xs bg-secondary-100 text-secondary-600 px-1.5 py-0.5 rounded">
+                                    Soon
+                                  </span>
+                                )}
+                              </span>
+                            </Link>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -268,30 +320,65 @@ const Layout = ({ children }) => {
                       <ul className={`space-y-1 ${sidebarCollapsed ? '' : '-mx-2'}`}>
                         {item.items.map((subItem) => (
                           <li key={subItem.name}>
-                            <Link
-                              to={subItem.href}
-                              className={`group flex gap-x-3 rounded-md text-sm leading-6 font-medium transition-all duration-200 ${
-                                isActive(subItem.href)
-                                  ? 'bg-primary-50 dark:bg-primary-600 text-primary-700 dark:text-white'
-                                  : 'text-secondary-700 dark:text-secondary-200 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700'
-                              } ${sidebarCollapsed ? 'justify-center p-2' : 'p-2'} ${
-                                subItem.comingSoon ? 'opacity-50 cursor-not-allowed' : ''
-                              }`}
-                              title={sidebarCollapsed ? subItem.name : ''}
-                              onClick={subItem.comingSoon ? (e) => e.preventDefault() : undefined}
-                            >
-                              <subItem.icon className={`h-5 w-5 shrink-0 ${sidebarCollapsed ? 'mx-auto' : ''}`} />
-                              {!sidebarCollapsed && (
-                                <span className="truncate flex items-center gap-2">
-                                  {subItem.name}
-                                  {subItem.comingSoon && (
-                                    <span className="text-xs bg-secondary-100 text-secondary-600 px-1.5 py-0.5 rounded">
-                                      Soon
+                            {subItem.name === 'Hosts' && canManageHosts() ? (
+                              // Special handling for Hosts item with integrated + button
+                              <div className="flex items-center gap-1">
+                                <Link
+                                  to={subItem.href}
+                                  className={`group flex gap-x-3 rounded-md text-sm leading-6 font-medium transition-all duration-200 flex-1 ${
+                                    isActive(subItem.href)
+                                      ? 'bg-primary-50 dark:bg-primary-600 text-primary-700 dark:text-white'
+                                      : 'text-secondary-700 dark:text-secondary-200 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700'
+                                  } ${sidebarCollapsed ? 'justify-center p-2' : 'p-2'}`}
+                                  title={sidebarCollapsed ? subItem.name : ''}
+                                >
+                                  <subItem.icon className={`h-5 w-5 shrink-0 ${sidebarCollapsed ? 'mx-auto' : ''}`} />
+                                  {!sidebarCollapsed && (
+                                    <span className="truncate flex items-center gap-2 flex-1">
+                                      {subItem.name}
                                     </span>
                                   )}
-                                </span>
-                              )}
-                            </Link>
+                                  {!sidebarCollapsed && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault()
+                                        handleAddHost()
+                                      }}
+                                      className="ml-auto flex items-center justify-center w-5 h-5 rounded-full border-2 border-current opacity-60 hover:opacity-100 transition-all duration-200 self-center"
+                                      title="Add Host"
+                                    >
+                                      <Plus className="h-3 w-3" />
+                                    </button>
+                                  )}
+                                </Link>
+                              </div>
+                            ) : (
+                              // Standard navigation item
+                              <Link
+                                to={subItem.href}
+                                className={`group flex gap-x-3 rounded-md text-sm leading-6 font-medium transition-all duration-200 ${
+                                  isActive(subItem.href)
+                                    ? 'bg-primary-50 dark:bg-primary-600 text-primary-700 dark:text-white'
+                                    : 'text-secondary-700 dark:text-secondary-200 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700'
+                                } ${sidebarCollapsed ? 'justify-center p-2' : 'p-2'} ${
+                                  subItem.comingSoon ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
+                                title={sidebarCollapsed ? subItem.name : ''}
+                                onClick={subItem.comingSoon ? (e) => e.preventDefault() : undefined}
+                              >
+                                <subItem.icon className={`h-5 w-5 shrink-0 ${sidebarCollapsed ? 'mx-auto' : ''}`} />
+                                {!sidebarCollapsed && (
+                                  <span className="truncate flex items-center gap-2">
+                                    {subItem.name}
+                                    {subItem.comingSoon && (
+                                      <span className="text-xs bg-secondary-100 text-secondary-600 px-1.5 py-0.5 rounded">
+                                        Soon
+                                      </span>
+                                    )}
+                                  </span>
+                                )}
+                              </Link>
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -304,39 +391,41 @@ const Layout = ({ children }) => {
           </nav>
           
           {/* Profile Section - Bottom of Sidebar */}
-          <div className="border-t border-secondary-200">
+          <div className="border-t border-secondary-200 dark:border-secondary-600">
             {!sidebarCollapsed ? (
-              <div className="space-y-1">
-                {/* My Profile Link */}
-                <Link
-                  to="/profile"
-                  className={`group flex gap-x-3 rounded-md text-sm leading-6 font-medium transition-all duration-200 p-2 ${
-                    isActive('/profile')
-                      ? 'bg-primary-50 dark:bg-primary-600 text-primary-700 dark:text-white'
-                      : 'text-secondary-700 dark:text-secondary-200 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-secondary-50 dark:hover:bg-secondary-500'
-                  }`}
-                >
-                  <UserCircle className="h-5 w-5 shrink-0" />
-                  <span className="truncate">My Profile</span>
-                </Link>
-                
-                {/* User Info with Sign Out */}
+              <div>
+              {/* User Info with Sign Out - Username is clickable */}
                 <div className="flex items-center justify-between p-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-x-2">
-                      <p className="text-sm font-medium text-secondary-900 dark:text-white truncate">
-                        {user?.username}
-                      </p>
-                      {user?.role === 'admin' && (
-                        <span className="inline-flex items-center rounded-full bg-primary-100 px-1.5 py-0.5 text-xs font-medium text-primary-800">
-                          Admin
+                  <Link 
+                    to="/profile"
+                    className={`flex-1 min-w-0 rounded-md p-2 transition-all duration-200 ${
+                      isActive('/profile')
+                        ? 'bg-primary-50 dark:bg-primary-600'
+                        : 'hover:bg-secondary-50 dark:hover:bg-secondary-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-x-3">
+                      <UserCircle className={`h-5 w-5 shrink-0 ${
+                        isActive('/profile')
+                          ? 'text-primary-700 dark:text-white'
+                          : 'text-secondary-500 dark:text-secondary-400'
+                      }`} />
+                      <div className="flex items-center gap-x-2">
+                        <span className={`text-sm leading-6 font-semibold truncate ${
+                          isActive('/profile')
+                            ? 'text-primary-700 dark:text-white'
+                            : 'text-secondary-700 dark:text-secondary-200'
+                        }`}>
+                          {user?.username}
                         </span>
-                      )}
+                        {user?.role === 'admin' && (
+                          <span className="inline-flex items-center rounded-full bg-primary-100 px-1.5 py-0.5 text-xs font-medium text-primary-800">
+                            Admin
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-secondary-500 dark:text-secondary-300 truncate">
-                      {user?.email}
-                    </p>
-                  </div>
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="ml-2 p-1.5 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 rounded transition-colors"
@@ -345,23 +434,55 @@ const Layout = ({ children }) => {
                     <LogOut className="h-4 w-4" />
                   </button>
                 </div>
+                {/* Updated info */}
+                {stats && (
+                  <div className="px-3 py-1 border-t border-secondary-200 dark:border-secondary-700">
+                    <div className="flex items-center gap-x-2 text-xs text-secondary-500 dark:text-secondary-400">
+                      <Clock className="h-3 w-3" />
+                      <span>Updated: {formatRelativeTimeShort(stats.lastUpdated)}</span>
+                      <button
+                        onClick={() => refetch()}
+                        className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded"
+                        title="Refresh data"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-1">
                 <Link
                   to="/profile"
-                  className="flex items-center justify-center p-2 text-secondary-700 hover:bg-secondary-50 rounded-md transition-colors"
-                  title="My Profile"
+                  className={`flex items-center justify-center p-2 rounded-md transition-colors ${
+                    isActive('/profile')
+                      ? 'bg-primary-50 dark:bg-primary-600 text-primary-700 dark:text-white'
+                      : 'text-secondary-700 dark:text-secondary-200 hover:bg-secondary-50 dark:hover:bg-secondary-700'
+                  }`}
+                  title={`My Profile (${user?.username})`}
                 >
-                  <UserCircle className="h-5 w-5 text-white" />
+                  <UserCircle className="h-5 w-5" />
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center justify-center w-full p-2 text-secondary-700 hover:bg-secondary-50 rounded-md transition-colors"
+                  className="flex items-center justify-center w-full p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded-md transition-colors"
                   title="Sign out"
                 >
-                  <LogOut className="h-5 w-5 text-white" />
+                  <LogOut className="h-4 w-4" />
                 </button>
+                {/* Updated info for collapsed sidebar */}
+                {stats && (
+                  <div className="flex justify-center py-1 border-t border-secondary-200 dark:border-secondary-700">
+                    <button
+                      onClick={() => refetch()}
+                      className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded"
+                      title={`Refresh data - Updated: ${formatRelativeTimeShort(stats.lastUpdated)}`}
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -369,7 +490,7 @@ const Layout = ({ children }) => {
       </div>
 
       {/* Main content */}
-      <div className={`transition-all duration-300 ${
+      <div className={`flex flex-col min-h-screen transition-all duration-300 ${
         sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'
       }`}>
         {/* Top bar */}
@@ -392,22 +513,6 @@ const Layout = ({ children }) => {
               </h2>
             </div>
             <div className="flex items-center gap-x-4 lg:gap-x-6">
-
-              {/* Last updated info */}
-              {stats && (
-                <div className="flex items-center gap-x-2 text-sm text-secondary-500 dark:text-secondary-400">
-                  <Clock className="h-4 w-4" />
-                  <span>Last updated: {formatRelativeTime(stats.lastUpdated)}</span>
-                  <button
-                    onClick={() => refetch()}
-                    className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-800 rounded"
-                    title="Refresh data"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-              
               {/* Customize Dashboard Button - Only show on Dashboard page */}
               {location.pathname === '/' && (
                 <button
@@ -426,7 +531,7 @@ const Layout = ({ children }) => {
           </div>
         </div>
 
-        <main className="py-6 bg-secondary-50 dark:bg-secondary-800 min-h-screen">
+        <main className="flex-1 py-6 bg-secondary-50 dark:bg-secondary-800">
           <div className="px-4 sm:px-6 lg:px-8">
             {children}
           </div>

@@ -262,6 +262,67 @@ router.delete('/admin/users/:userId', authenticateToken, requireManageUsers, asy
   }
 });
 
+// Admin endpoint to reset user password
+router.post('/admin/users/:userId/reset-password', authenticateToken, requireManageUsers, [
+  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+], async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const errors = validationResult(req);
+    
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { newPassword } = req.body;
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        isActive: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent resetting password of inactive users
+    if (!user.isActive) {
+      return res.status(400).json({ error: 'Cannot reset password for inactive user' });
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    // Update user password
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash }
+    });
+
+    // Log the password reset action (you might want to add an audit log table)
+    console.log(`Password reset for user ${user.username} (${user.email}) by admin ${req.user.username}`);
+
+    res.json({
+      message: 'Password reset successfully',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
 // Login
 router.post('/login', [
   body('username').notEmpty().withMessage('Username is required'),

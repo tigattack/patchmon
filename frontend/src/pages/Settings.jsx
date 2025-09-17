@@ -10,7 +10,8 @@ const Settings = () => {
     serverPort: 3001,
     frontendUrl: 'http://localhost:3000',
     updateInterval: 60,
-    autoUpdate: false
+    autoUpdate: false,
+    githubRepoUrl: 'git@github.com:9technologygroup/patchmon.net.git'
   });
   const [errors, setErrors] = useState({});
   const [isDirty, setIsDirty] = useState(false);
@@ -22,7 +23,8 @@ const Settings = () => {
   const tabs = [
     { id: 'server', name: 'Server Configuration', icon: Server },
     { id: 'frontend', name: 'Frontend Configuration', icon: Globe },
-    { id: 'agent', name: 'Agent Management', icon: SettingsIcon }
+    { id: 'agent', name: 'Agent Management', icon: SettingsIcon },
+    { id: 'version', name: 'Server Version', icon: Code }
   ];
   
   // Agent version management state
@@ -54,7 +56,8 @@ const Settings = () => {
         serverPort: settings.serverPort || 3001,
         frontendUrl: settings.frontendUrl || 'http://localhost:3000',
         updateInterval: settings.updateInterval || 60,
-        autoUpdate: settings.autoUpdate || false
+        autoUpdate: settings.autoUpdate || false,
+        githubRepoUrl: settings.githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git'
       };
       console.log('Setting form data to:', newFormData);
       setFormData(newFormData);
@@ -651,6 +654,100 @@ const Settings = () => {
             )}
               </div>
             )}
+            </div>
+          )}
+
+          {/* Server Version Tab */}
+          {activeTab === 'version' && (
+            <div className="space-y-6">
+              <div className="flex items-center mb-6">
+                <Code className="h-6 w-6 text-primary-600 mr-3" />
+                <h2 className="text-xl font-semibold text-secondary-900 dark:text-white">Server Version Management</h2>
+              </div>
+              
+              <div className="bg-secondary-50 dark:bg-secondary-700 rounded-lg p-6">
+                <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Version Check Configuration</h3>
+                <p className="text-sm text-secondary-600 dark:text-secondary-300 mb-6">
+                  Configure automatic version checking against your GitHub repository to notify users of available updates.
+                </p>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+                      GitHub Repository URL
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git'}
+                      onChange={(e) => handleInputChange('githubRepoUrl', e.target.value)}
+                      className="w-full border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white font-mono text-sm"
+                      placeholder="git@github.com:username/repository.git"
+                    />
+                    <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
+                      SSH or HTTPS URL to your GitHub repository
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white dark:bg-secondary-800 rounded-lg p-4 border border-secondary-200 dark:border-secondary-600">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <span className="text-sm font-medium text-secondary-700 dark:text-secondary-300">Current Version</span>
+                      </div>
+                      <span className="text-lg font-mono text-secondary-900 dark:text-white">1.2.3</span>
+                    </div>
+                    
+                    <div className="bg-white dark:bg-secondary-800 rounded-lg p-4 border border-secondary-200 dark:border-secondary-600">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Download className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-medium text-secondary-700 dark:text-secondary-300">Latest Version</span>
+                      </div>
+                      <span className="text-lg font-mono text-secondary-900 dark:text-white">Checking...</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        // TODO: Implement version check
+                        console.log('Checking for updates...');
+                      }}
+                      className="btn-primary flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Check for Updates
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        // TODO: Implement update notification
+                        console.log('Enable update notifications');
+                      }}
+                      className="btn-outline flex items-center gap-2"
+                    >
+                      <AlertCircle className="h-4 w-4" />
+                      Enable Notifications
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
+                <div className="flex">
+                  <AlertCircle className="h-5 w-5 text-amber-400 dark:text-amber-300" />
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">Setup Instructions</h3>
+                    <div className="mt-2 text-sm text-amber-700 dark:text-amber-300">
+                      <p className="mb-2">To enable version checking, you need to:</p>
+                      <ol className="list-decimal list-inside space-y-1 ml-4">
+                        <li>Create a version tag (e.g., v1.2.3) in your GitHub repository</li>
+                        <li>Ensure the repository is publicly accessible or configure access tokens</li>
+                        <li>Click "Check for Updates" to verify the connection</li>
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

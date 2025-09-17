@@ -70,9 +70,8 @@ async function setupAdminUser() {
       data: {
         username: username.trim(),
         email: email.trim(),
-        passwordHash,
-        role: 'admin',
-        isActive: true
+        passwordHash: passwordHash,
+        role: 'admin'
       },
       select: {
         id: true,
@@ -92,9 +91,10 @@ async function setupAdminUser() {
 
     console.log('\n🎉 Setup complete!');
     console.log('\nNext steps:');
-    console.log('1. Start the backend server: cd backend && npm start');
-    console.log('2. Start the frontend: cd frontend && npm run dev');
-    console.log('3. Visit http://localhost:3000 and login with your credentials');
+    console.log('1. The backend server is already running as a systemd service');
+    console.log('2. The frontend is already built and served by Nginx');
+    console.log('3. Visit https://' + process.env.FQDN + ' and login with your credentials');
+    console.log('4. Use the management script: ./manage.sh {status|restart|logs|update|backup|credentials|reset-admin}');
 
   } catch (error) {
     console.error('❌ Error setting up admin user:', error);

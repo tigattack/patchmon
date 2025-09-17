@@ -21,7 +21,9 @@ import {
   Code,
   EyeOff,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Edit,
+  Check
 } from 'lucide-react'
 import { dashboardAPI, adminHostsAPI, settingsAPI, formatRelativeTime, formatDate } from '../utils/api'
 
@@ -31,6 +33,8 @@ const HostDetail = () => {
   const queryClient = useQueryClient()
   const [showCredentialsModal, setShowCredentialsModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isEditingHostname, setIsEditingHostname] = useState(false)
+  const [editedHostname, setEditedHostname] = useState('')
   
   const { data: host, isLoading, error, refetch } = useQuery({
     queryKey: ['host', hostId],
@@ -38,6 +42,13 @@ const HostDetail = () => {
     refetchInterval: 60000,
     staleTime: 30000,
   })
+
+  // Auto-show credentials modal for new/pending hosts
+  React.useEffect(() => {
+    if (host && host.status === 'pending') {
+      setShowCredentialsModal(true)
+    }
+  }, [host])
 
   const deleteHostMutation = useMutation({
     mutationFn: (hostId) => adminHostsAPI.delete(hostId),

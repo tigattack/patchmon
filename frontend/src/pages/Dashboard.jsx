@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js'
 import { Pie, Bar } from 'react-chartjs-2'
-import { dashboardAPI, dashboardPreferencesAPI, formatRelativeTime } from '../utils/api'
+import { dashboardAPI, dashboardPreferencesAPI, settingsAPI, formatRelativeTime } from '../utils/api'
 import DashboardSettingsModal from '../components/DashboardSettingsModal'
 import { useTheme } from '../contexts/ThemeContext'
 
@@ -42,11 +42,59 @@ const Dashboard = () => {
     navigate('/packages?filter=security')
   }
 
+  const handleErroredHostsClick = () => {
+    navigate('/hosts?filter=inactive')
+  }
+
+  const handleOSDistributionClick = () => {
+    navigate('/hosts')
+  }
+
+  const handleUpdateStatusClick = () => {
+    navigate('/hosts')
+  }
+
+  const handlePackagePriorityClick = () => {
+    navigate('/packages?filter=security')
+  }
+
+  // Helper function to format the update interval threshold
+  const formatUpdateIntervalThreshold = () => {
+    if (!settings?.updateInterval) return '24 hours'
+    
+    const intervalMinutes = settings.updateInterval
+    const thresholdMinutes = intervalMinutes * 2 // 2x the update interval
+    
+    if (thresholdMinutes < 60) {
+      return `${thresholdMinutes} minutes`
+    } else if (thresholdMinutes < 1440) {
+      const hours = Math.floor(thresholdMinutes / 60)
+      const minutes = thresholdMinutes % 60
+      if (minutes === 0) {
+        return `${hours} hour${hours > 1 ? 's' : ''}`
+      }
+      return `${hours}h ${minutes}m`
+    } else {
+      const days = Math.floor(thresholdMinutes / 1440)
+      const hours = Math.floor((thresholdMinutes % 1440) / 60)
+      if (hours === 0) {
+        return `${days} day${days > 1 ? 's' : ''}`
+      }
+      return `${days}d ${hours}h`
+    }
+  }
+
   const { data: stats, isLoading, error, refetch } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: () => dashboardAPI.getStats().then(res => res.data),
       refetchInterval: 60000, // Refresh every minute
       staleTime: 30000, // Consider data stale after 30 seconds
+  })
+
+  // Fetch settings to get the agent update interval
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => settingsAPI.get().then(res => res.data),
   })
 
   // Fetch user's dashboard preferences
@@ -210,11 +258,14 @@ const Dashboard = () => {
       
       case 'erroredHosts':
         return (
-          <div className={`border rounded-lg p-4 ${
-            stats.cards.erroredHosts > 0 
-              ? 'bg-danger-50 border-danger-200' 
-              : 'bg-success-50 border-success-200'
-          }`}>
+          <div 
+            className={`border rounded-lg p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 ${
+              stats.cards.erroredHosts > 0 
+                ? 'bg-danger-50 border-danger-200' 
+                : 'bg-success-50 border-success-200'
+            }`}
+            onClick={handleErroredHostsClick}
+          >
             <div className="flex">
               <AlertTriangle className={`h-5 w-5 ${
                 stats.cards.erroredHosts > 0 ? 'text-danger-400' : 'text-success-400'
@@ -223,7 +274,7 @@ const Dashboard = () => {
                 {stats.cards.erroredHosts > 0 ? (
                   <>
                     <h3 className="text-sm font-medium text-danger-800">
-                      {stats.cards.erroredHosts} host{stats.cards.erroredHosts > 1 ? 's' : ''} haven't reported in 24+ hours
+                      {stats.cards.erroredHosts} host{stats.cards.erroredHosts > 1 ? 's' : ''} haven't reported in {formatUpdateIntervalThreshold()}+
                     </h3>
                     <p className="text-sm text-danger-700 mt-1">
                       These hosts may be offline or experiencing connectivity issues.
@@ -235,7 +286,7 @@ const Dashboard = () => {
                       All hosts are reporting normally
                     </h3>
                     <p className="text-sm text-success-700 mt-1">
-                      No hosts have failed to report in the last 24 hours.
+                      No hosts have failed to report in the last {formatUpdateIntervalThreshold()}.
                     </p>
                   </>
                 )}
@@ -246,7 +297,10 @@ const Dashboard = () => {
       
       case 'osDistribution':
         return (
-          <div className="card p-6">
+          <div 
+            className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+            onClick={handleOSDistributionClick}
+          >
             <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">OS Distribution</h3>
             <div className="h-64">
               <Pie data={osChartData} options={chartOptions} />
@@ -256,7 +310,10 @@ const Dashboard = () => {
       
       case 'updateStatus':
         return (
-          <div className="card p-6">
+          <div 
+            className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+            onClick={handleUpdateStatusClick}
+          >
             <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Update Status</h3>
             <div className="h-64">
               <Pie data={updateStatusChartData} options={chartOptions} />
@@ -266,7 +323,10 @@ const Dashboard = () => {
       
       case 'packagePriority':
         return (
-          <div className="card p-6">
+          <div 
+            className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+            onClick={handlePackagePriorityClick}
+          >
             <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Package Priority</h3>
             <div className="h-64">
               <Pie data={packagePriorityChartData} options={chartOptions} />

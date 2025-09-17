@@ -179,6 +179,7 @@ model Settings {
   frontendUrl     String   @map("frontend_url") @default("http://localhost:3000")
   updateInterval  Int      @map("update_interval") @default(60) // Update interval in minutes
   autoUpdate      Boolean  @map("auto_update") @default(false) // Enable automatic agent updates
+  githubRepoUrl   String   @map("github_repo_url") @default("git@github.com:9technologygroup/patchmon.net.git") // GitHub repository URL for version checking
   createdAt       DateTime @map("created_at") @default(now())
   updatedAt       DateTime @map("updated_at") @updatedAt
 

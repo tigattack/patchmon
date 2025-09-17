@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { 
   Server, 
   AlertTriangle, 
@@ -88,67 +88,105 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="bg-white dark:bg-secondary-800 rounded-lg p-6 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-secondary-900">Add New Host</h3>
-          <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600">
+          <h3 className="text-lg font-medium text-secondary-900 dark:text-white">Add New Host</h3>
+          <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300">
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-secondary-700">Hostname *</label>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">Hostname *</label>
             <input
               type="text"
               required
               value={formData.hostname}
               onChange={(e) => setFormData({ ...formData, hostname: e.target.value })}
-              className="mt-1 block w-full border-secondary-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+              className="block w-full px-3 py-2.5 text-base border-2 border-secondary-300 dark:border-secondary-600 rounded-lg shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white transition-all duration-200"
               placeholder="server.example.com"
             />
-            <p className="mt-1 text-sm text-secondary-500">
+            <p className="mt-2 text-sm text-secondary-500 dark:text-secondary-400">
               System information (OS, IP, architecture) will be automatically detected when the agent connects.
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-secondary-700">Host Group</label>
-            <select
-              value={formData.hostGroupId}
-              onChange={(e) => setFormData({ ...formData, hostGroupId: e.target.value })}
-              className="mt-1 block w-full border-secondary-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-            >
-              <option value="">No group (ungrouped)</option>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-3">Host Group</label>
+            <div className="grid grid-cols-3 gap-2">
+              {/* No Group Option */}
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, hostGroupId: '' })}
+                className={`flex flex-col items-center justify-center px-2 py-3 text-center border-2 rounded-lg transition-all duration-200 relative min-h-[80px] ${
+                  formData.hostGroupId === ''
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                    : 'border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 text-secondary-700 dark:text-secondary-200 hover:border-secondary-400 dark:hover:border-secondary-500'
+                }`}
+              >
+                <div className="text-xs font-medium">No Group</div>
+                <div className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">Ungrouped</div>
+                {formData.hostGroupId === '' && (
+                  <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary-500 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                  </div>
+                )}
+              </button>
+              
+              {/* Host Group Options */}
               {hostGroups?.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
-                </option>
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, hostGroupId: group.id })}
+                  className={`flex flex-col items-center justify-center px-2 py-3 text-center border-2 rounded-lg transition-all duration-200 relative min-h-[80px] ${
+                    formData.hostGroupId === group.id
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                      : 'border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 text-secondary-700 dark:text-secondary-200 hover:border-secondary-400 dark:hover:border-secondary-500'
+                  }`}
+                >
+                  <div className="flex items-center gap-1 mb-1 w-full justify-center">
+                    {group.color && (
+                      <div 
+                        className="w-3 h-3 rounded-full border border-secondary-300 dark:border-secondary-500 flex-shrink-0"
+                        style={{ backgroundColor: group.color }}
+                      ></div>
+                    )}
+                    <div className="text-xs font-medium truncate max-w-full">{group.name}</div>
+                  </div>
+                  <div className="text-xs text-secondary-500 dark:text-secondary-400">Group</div>
+                  {formData.hostGroupId === group.id && (
+                    <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary-500 flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                    </div>
+                  )}
+                </button>
               ))}
-            </select>
-            <p className="mt-1 text-sm text-secondary-500">
+            </div>
+            <p className="mt-2 text-sm text-secondary-500 dark:text-secondary-400">
               Optional: Assign this host to a group for better organization.
             </p>
           </div>
 
           {error && (
-            <div className="bg-danger-50 border border-danger-200 rounded-md p-3">
-              <p className="text-sm text-danger-700">{error}</p>
+            <div className="bg-danger-50 dark:bg-danger-900 border border-danger-200 dark:border-danger-700 rounded-md p-3">
+              <p className="text-sm text-danger-700 dark:text-danger-300">{error}</p>
             </div>
           )}
 
-          <div className="flex justify-end space-x-3">
+          <div className="flex justify-end space-x-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-secondary-700 bg-white border border-secondary-300 rounded-md hover:bg-secondary-50"
+              className="px-6 py-3 text-sm font-medium text-secondary-700 dark:text-secondary-200 bg-white dark:bg-secondary-700 border-2 border-secondary-300 dark:border-secondary-600 rounded-lg hover:bg-secondary-50 dark:hover:bg-secondary-600 transition-all duration-200"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md hover:bg-primary-700 disabled:opacity-50"
+              className="px-6 py-3 text-sm font-medium text-white bg-primary-600 border-2 border-transparent rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-all duration-200"
             >
               {isSubmitting ? 'Creating...' : 'Create Host'}
             </button>
@@ -564,6 +602,7 @@ const Hosts = () => {
   const [selectedHosts, setSelectedHosts] = useState([])
   const [showBulkAssignModal, setShowBulkAssignModal] = useState(false)
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   
   // Table state
   const [searchTerm, setSearchTerm] = useState('')
@@ -575,15 +614,35 @@ const Hosts = () => {
   const [showFilters, setShowFilters] = useState(false)
   const [groupBy, setGroupBy] = useState('none')
   const [showColumnSettings, setShowColumnSettings] = useState(false)
+  const [hideStale, setHideStale] = useState(false)
 
   // Handle URL filter parameters
   useEffect(() => {
     const filter = searchParams.get('filter')
     if (filter === 'needsUpdates') {
       setShowFilters(true)
+      setStatusFilter('all')
       // We'll filter hosts with updates > 0 in the filtering logic
+    } else if (filter === 'inactive') {
+      setShowFilters(true)
+      setStatusFilter('inactive')
+      // We'll filter hosts with inactive status in the filtering logic
+    } else if (filter === 'upToDate') {
+      setShowFilters(true)
+      setStatusFilter('active')
+      // We'll filter hosts that are up to date in the filtering logic
     }
-  }, [searchParams])
+    
+    // Handle add host action from navigation
+    const action = searchParams.get('action')
+    if (action === 'add') {
+      setShowAddModal(true)
+      // Remove the action parameter from URL without triggering a page reload
+      const newSearchParams = new URLSearchParams(searchParams)
+      newSearchParams.delete('action')
+      navigate(`/hosts${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ''}`, { replace: true })
+    }
+  }, [searchParams, navigate])
 
   // Column configuration
   const [columnConfig, setColumnConfig] = useState(() => {
@@ -726,16 +785,22 @@ const Hosts = () => {
         (groupFilter !== 'ungrouped' && host.hostGroup?.id === groupFilter)
 
       // Status filter
-      const matchesStatus = statusFilter === 'all' || host.status === statusFilter
+      const matchesStatus = statusFilter === 'all' || (host.effectiveStatus || host.status) === statusFilter
 
       // OS filter
       const matchesOs = osFilter === 'all' || host.osType?.toLowerCase() === osFilter.toLowerCase()
 
-      // URL filter for hosts needing updates
+      // URL filter for hosts needing updates, inactive hosts, or up-to-date hosts
       const filter = searchParams.get('filter')
-      const matchesUrlFilter = filter !== 'needsUpdates' || (host.updatesCount && host.updatesCount > 0)
+      const matchesUrlFilter = 
+        (filter !== 'needsUpdates' || (host.updatesCount && host.updatesCount > 0)) &&
+        (filter !== 'inactive' || (host.effectiveStatus || host.status) === 'inactive') &&
+        (filter !== 'upToDate' || (!host.isStale && host.updatesCount === 0))
 
-      return matchesSearch && matchesGroup && matchesStatus && matchesOs && matchesUrlFilter
+      // Hide stale filter
+      const matchesHideStale = !hideStale || !host.isStale
+
+      return matchesSearch && matchesGroup && matchesStatus && matchesOs && matchesUrlFilter && matchesHideStale
     })
 
     // Sorting
@@ -768,8 +833,8 @@ const Hosts = () => {
           bValue = b.agentVersion?.toLowerCase() || 'zzz_no_version'
           break
         case 'status':
-          aValue = a.status
-          bValue = b.status
+          aValue = a.effectiveStatus || a.status
+          bValue = b.effectiveStatus || b.status
           break
         case 'updates':
           aValue = a.updatesCount || 0
@@ -806,7 +871,7 @@ const Hosts = () => {
           groupKey = host.hostGroup?.name || 'Ungrouped'
           break
         case 'status':
-          groupKey = host.status.charAt(0).toUpperCase() + host.status.slice(1)
+          groupKey = (host.effectiveStatus || host.status).charAt(0).toUpperCase() + (host.effectiveStatus || host.status).slice(1)
           break
         case 'os':
           groupKey = host.osType || 'Unknown'
@@ -957,7 +1022,7 @@ const Hosts = () => {
       case 'status':
         return (
           <div className="text-sm text-secondary-900 dark:text-white">
-            {host.status.charAt(0).toUpperCase() + host.status.slice(1)}
+            {(host.effectiveStatus || host.status).charAt(0).toUpperCase() + (host.effectiveStatus || host.status).slice(1)}
           </div>
         )
       case 'updates':
@@ -989,7 +1054,50 @@ const Hosts = () => {
 
   const handleHostCreated = (newHost) => {
     queryClient.invalidateQueries(['hosts'])
-    // Host created successfully - user can view details for setup instructions
+    // Navigate to host detail page to show credentials and setup instructions
+    navigate(`/hosts/${newHost.hostId}`)
+  }
+
+  // Stats card click handlers
+  const handleTotalHostsClick = () => {
+    // Clear all filters to show all hosts
+    setSearchTerm('')
+    setGroupFilter('all')
+    setStatusFilter('all')
+    setOsFilter('all')
+    setGroupBy('none')
+    setHideStale(false)
+    setShowFilters(false)
+  }
+
+  const handleUpToDateClick = () => {
+    // Filter to show only up-to-date hosts
+    setStatusFilter('active')
+    setShowFilters(true)
+    // Use the upToDate URL filter
+    const newSearchParams = new URLSearchParams(window.location.search)
+    newSearchParams.set('filter', 'upToDate')
+    navigate(`/hosts?${newSearchParams.toString()}`, { replace: true })
+  }
+
+  const handleNeedsUpdatesClick = () => {
+    // Filter to show hosts needing updates (regardless of status)
+    setStatusFilter('all')
+    setShowFilters(true)
+    // We'll use the existing needsUpdates URL filter logic
+    const newSearchParams = new URLSearchParams(window.location.search)
+    newSearchParams.set('filter', 'needsUpdates')
+    navigate(`/hosts?${newSearchParams.toString()}`, { replace: true })
+  }
+
+  const handleStaleClick = () => {
+    // Filter to show stale/inactive hosts
+    setStatusFilter('inactive')
+    setShowFilters(true)
+    // We'll use the existing inactive URL filter logic
+    const newSearchParams = new URLSearchParams(window.location.search)
+    newSearchParams.set('filter', 'inactive')
+    navigate(`/hosts?${newSearchParams.toString()}`, { replace: true })
   }
 
   if (isLoading) {
@@ -1045,7 +1153,10 @@ const Hosts = () => {
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
-        <div className="card p-4">
+        <div 
+          className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+          onClick={handleTotalHostsClick}
+        >
           <div className="flex items-center">
             <Server className="h-5 w-5 text-primary-600 mr-2" />
             <div>
@@ -1054,7 +1165,10 @@ const Hosts = () => {
             </div>
           </div>
         </div>
-        <div className="card p-4">
+        <div 
+          className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+          onClick={handleUpToDateClick}
+        >
           <div className="flex items-center">
             <CheckCircle className="h-5 w-5 text-success-600 mr-2" />
             <div>
@@ -1065,18 +1179,24 @@ const Hosts = () => {
             </div>
           </div>
         </div>
-        <div className="card p-4">
+        <div 
+          className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+          onClick={handleNeedsUpdatesClick}
+        >
           <div className="flex items-center">
             <Clock className="h-5 w-5 text-warning-600 mr-2" />
             <div>
               <p className="text-sm text-secondary-500 dark:text-white">Needs Updates</p>
               <p className="text-xl font-semibold text-secondary-900 dark:text-white">
-                {hosts?.filter(h => !h.isStale && h.updatesCount > 0).length || 0}
+                {hosts?.filter(h => h.updatesCount > 0).length || 0}
               </p>
             </div>
           </div>
         </div>
-        <div className="card p-4">
+        <div 
+          className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+          onClick={handleStaleClick}
+        >
           <div className="flex items-center">
             <AlertTriangle className="h-5 w-5 text-danger-600 mr-2" />
             <div>
@@ -1150,15 +1270,22 @@ const Hosts = () => {
                   <select
                     value={groupBy}
                     onChange={(e) => setGroupBy(e.target.value)}
-                    className="appearance-none bg-white dark:bg-secondary-800 border-2 border-secondary-300 dark:border-secondary-600 rounded-lg px-3 py-2 pr-8 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-secondary-900 dark:text-white hover:border-secondary-400 dark:hover:border-secondary-500 transition-colors"
+                    className="appearance-none bg-white dark:bg-secondary-800 border-2 border-secondary-300 dark:border-secondary-600 rounded-lg px-2 py-2 pr-6 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-secondary-900 dark:text-white hover:border-secondary-400 dark:hover:border-secondary-500 transition-colors min-w-[120px]"
                   >
                     <option value="none">No Grouping</option>
-                    <option value="group">Group by Host Group</option>
-                    <option value="status">Group by Status</option>
-                    <option value="os">Group by OS</option>
+                    <option value="group">By Group</option>
+                    <option value="status">By Status</option>
+                    <option value="os">By OS</option>
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400 dark:text-secondary-500 pointer-events-none" />
+                  <ChevronDown className="absolute right-1 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400 dark:text-secondary-500 pointer-events-none" />
                 </div>
+                <button
+                  onClick={() => setHideStale(!hideStale)}
+                  className={`btn-outline flex items-center gap-2 ${hideStale ? 'bg-primary-50 border-primary-300' : ''}`}
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  Hide Stale
+                </button>
                 <button
                   onClick={() => setShowAddModal(true)}
                   className="btn-primary flex items-center gap-2"
@@ -1222,6 +1349,7 @@ const Hosts = () => {
                         setStatusFilter('all')
                         setOsFilter('all')
                         setGroupBy('none')
+                        setHideStale(false)
                       }}
                       className="btn-outline w-full"
                     >
@@ -1356,15 +1484,28 @@ const Hosts = () => {
                   </tr>
                 </thead>
                       <tbody className="bg-white dark:bg-secondary-800 divide-y divide-secondary-200 dark:divide-secondary-600">
-                        {groupHosts.map((host) => (
-                          <tr key={host.id} className={`hover:bg-secondary-50 dark:hover:bg-secondary-700 ${selectedHosts.includes(host.id) ? 'bg-primary-50 dark:bg-primary-600' : ''}`}>
-                            {visibleColumns.map((column) => (
-                              <td key={column.id} className="px-4 py-2 whitespace-nowrap text-center">
-                                {renderCellContent(column, host)}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
+                        {groupHosts.map((host) => {
+                          const isInactive = (host.effectiveStatus || host.status) === 'inactive'
+                          const isSelected = selectedHosts.includes(host.id)
+                          
+                          let rowClasses = 'hover:bg-secondary-50 dark:hover:bg-secondary-700'
+                          
+                          if (isSelected) {
+                            rowClasses += ' bg-primary-50 dark:bg-primary-600'
+                          } else if (isInactive) {
+                            rowClasses += ' bg-red-50 dark:bg-red-900/20'
+                          }
+                          
+                          return (
+                            <tr key={host.id} className={rowClasses}>
+                              {visibleColumns.map((column) => (
+                                <td key={column.id} className="px-4 py-2 whitespace-nowrap text-center">
+                                  {renderCellContent(column, host)}
+                                </td>
+                              ))}
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                             </div>

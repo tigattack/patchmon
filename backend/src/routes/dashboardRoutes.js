@@ -15,7 +15,15 @@ const prisma = new PrismaClient();
 router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) => {
   try {
     const now = new Date();
-    const twentyFourHoursAgo = moment(now).subtract(24, 'hours').toDate();
+    
+    // Get the agent update interval setting
+    const settings = await prisma.settings.findFirst();
+    const updateIntervalMinutes = settings?.updateInterval || 60; // Default to 60 minutes if no setting
+    
+    // Calculate the threshold based on the actual update interval
+    // Use 2x the update interval as the threshold for "errored" hosts
+    const thresholdMinutes = updateIntervalMinutes * 2;
+    const thresholdTime = moment(now).subtract(thresholdMinutes, 'minutes').toDate();
 
     // Get all statistics in parallel for better performance
     const [
@@ -49,12 +57,12 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
         where: { needsUpdate: true }
       }),
 
-      // Errored hosts (not updated in 24 hours)
+      // Errored hosts (not updated within threshold based on update interval)
       prisma.host.count({
         where: {
           status: 'active',
           lastUpdate: {
-            lt: twentyFourHoursAgo
+            lt: thresholdTime
           }
         }
       }),
@@ -180,10 +188,25 @@ router.get('/hosts', authenticateToken, requireViewHosts, async (req, res) => {
           }
         });
 
+        // Get the agent update interval setting for stale calculation
+        const settings = await prisma.settings.findFirst();
+        const updateIntervalMinutes = settings?.updateInterval || 60;
+        const thresholdMinutes = updateIntervalMinutes * 2;
+
+        // Calculate effective status based on reporting interval
+        const isStale = moment(host.lastUpdate).isBefore(moment().subtract(thresholdMinutes, 'minutes'));
+        let effectiveStatus = host.status;
+        
+        // Override status if host hasn't reported within threshold
+        if (isStale && host.status === 'active') {
+          effectiveStatus = 'inactive';
+        }
+
         return {
           ...host,
           updatesCount,
-          isStale: moment(host.lastUpdate).isBefore(moment().subtract(24, 'hours'))
+          isStale,
+          effectiveStatus
         };
       })
     );
