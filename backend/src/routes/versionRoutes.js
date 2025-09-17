@@ -63,11 +63,27 @@ router.get('/check-updates', authenticateToken, requireManageSettings, async (re
     const sshRepoUrl = `git@github.com:${owner}/${repo}.git`;
     
     try {
-      // Fetch the latest tag using SSH
+      // Set up environment for SSH
+      const sshKeyPath = process.env.HOME + '/.ssh/id_ed25519';
+      const env = {
+        ...process.env,
+        GIT_SSH_COMMAND: `ssh -i ${sshKeyPath} -o StrictHostKeyChecking=no`
+      };
+
+      console.log('SSH Key Path:', sshKeyPath);
+      console.log('SSH Command:', env.GIT_SSH_COMMAND);
+      console.log('Repository URL:', sshRepoUrl);
+
+      // Fetch the latest tag using SSH with explicit key
       const { stdout: latestTag } = await execAsync(
-        `git ls-remote --tags --sort=-version:refname ${sshRepoUrl} | head -n 1 | sed 's/.*refs\\/tags\\///' | sed 's/\\^\\{\\}//'`,
-        { timeout: 10000 }
+        `git ls-remote --tags --sort=-version:refname ${sshRepoUrl} | head -n 1 | sed 's/.*refs\\/tags\\///' | sed 's/\\^{}//'`,
+        { 
+          timeout: 10000,
+          env: env
+        }
       );
+
+      console.log('Latest tag output:', latestTag);
 
       const latestVersion = latestTag.trim().replace('v', ''); // Remove 'v' prefix
       const currentVersion = '1.2.3';
@@ -80,7 +96,10 @@ router.get('/check-updates', authenticateToken, requireManageSettings, async (re
       try {
         const { stdout: tagDetails } = await execAsync(
           `git ls-remote --tags ${sshRepoUrl} | grep "${latestTag.trim()}" | head -n 1`,
-          { timeout: 5000 }
+          { 
+            timeout: 5000,
+            env: env
+          }
         );
         
         // Extract commit hash and other details if needed
