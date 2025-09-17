@@ -1144,6 +1144,7 @@ case \$1 in
         ;;
     "update")
         cd $APP_DIR
+        git config --global --add safe.directory $APP_DIR 2>/dev/null || true
         git pull
         npm install
         cd backend && npm install
@@ -1364,6 +1365,10 @@ update_instance() {
     
     # Update code
     print_info "Pulling latest code..."
+    
+    # Fix git ownership issue if it exists
+    git config --global --add safe.directory "$app_dir" 2>/dev/null || true
+    
     git pull
     
     # Update dependencies
