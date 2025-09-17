@@ -135,3 +135,7 @@ test-results.xml
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+
+# Deployment scripts (production deployment tools)
+deploy-patchmon.sh
+manage-instances.sh

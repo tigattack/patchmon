@@ -4,9 +4,9 @@
 # This script sends package update information to the PatchMon server using API credentials
 
 # Configuration
-PATCHMON_SERVER="http://localhost:3001"
+PATCHMON_SERVER="${PATCHMON_SERVER:-http://localhost:3001}"
 API_VERSION="v1"
-AGENT_VERSION="1.2.2"
+AGENT_VERSION="1.2.3"
 CONFIG_FILE="/etc/patchmon/agent.conf"
 CREDENTIALS_FILE="/etc/patchmon/credentials"
 LOG_FILE="/var/log/patchmon-agent.log"
