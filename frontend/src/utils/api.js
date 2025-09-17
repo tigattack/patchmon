@@ -178,6 +178,12 @@ export const formatDate = (date) => {
   return new Date(date).toLocaleString()
 }
 
+// Version API
+export const versionAPI = {
+  getCurrent: () => api.get('/version/current'),
+  checkUpdates: () => api.get('/version/check-updates'),
+}
+
 export const formatRelativeTime = (date) => {
   const now = new Date()
   const diff = now - new Date(date)

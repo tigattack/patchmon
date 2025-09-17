@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save, Server, Globe, Shield, AlertCircle, CheckCircle, Code, Plus, Trash2, Star, Download, X, Settings as SettingsIcon } from 'lucide-react';
-import { settingsAPI, agentVersionAPI } from '../utils/api';
+import { settingsAPI, agentVersionAPI, versionAPI } from '../utils/api';
 
 const Settings = () => {
   const [formData, setFormData] = useState({
@@ -35,6 +35,15 @@ const Settings = () => {
     releaseNotes: '',
     scriptContent: '',
     isDefault: false
+  });
+
+  // Version checking state
+  const [versionInfo, setVersionInfo] = useState({
+    currentVersion: '1.2.3',
+    latestVersion: null,
+    isUpdateAvailable: false,
+    checking: false,
+    error: null
   });
 
   const queryClient = useQueryClient();
@@ -151,6 +160,31 @@ const Settings = () => {
       queryClient.invalidateQueries(['agentVersions']);
     }
   });
+
+  // Version checking functions
+  const checkForUpdates = async () => {
+    setVersionInfo(prev => ({ ...prev, checking: true, error: null }));
+    
+    try {
+      const response = await versionAPI.checkUpdates();
+      const data = response.data;
+      
+      setVersionInfo({
+        currentVersion: data.currentVersion,
+        latestVersion: data.latestVersion,
+        isUpdateAvailable: data.isUpdateAvailable,
+        checking: false,
+        error: null
+      });
+    } catch (error) {
+      console.error('Version check error:', error);
+      setVersionInfo(prev => ({
+        ...prev,
+        checking: false,
+        error: error.response?.data?.error || 'Failed to check for updates'
+      }));
+    }
+  };
 
   const handleInputChange = (field, value) => {
     console.log(`handleInputChange: ${field} = ${value}`);
@@ -694,7 +728,7 @@ const Settings = () => {
                         <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                         <span className="text-sm font-medium text-secondary-700 dark:text-secondary-300">Current Version</span>
                       </div>
-                      <span className="text-lg font-mono text-secondary-900 dark:text-white">1.2.3</span>
+                      <span className="text-lg font-mono text-secondary-900 dark:text-white">{versionInfo.currentVersion}</span>
                     </div>
                     
                     <div className="bg-white dark:bg-secondary-800 rounded-lg p-4 border border-secondary-200 dark:border-secondary-600">
@@ -702,20 +736,29 @@ const Settings = () => {
                         <Download className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         <span className="text-sm font-medium text-secondary-700 dark:text-secondary-300">Latest Version</span>
                       </div>
-                      <span className="text-lg font-mono text-secondary-900 dark:text-white">Checking...</span>
+                      <span className="text-lg font-mono text-secondary-900 dark:text-white">
+                        {versionInfo.checking ? (
+                          <span className="text-blue-600 dark:text-blue-400">Checking...</span>
+                        ) : versionInfo.latestVersion ? (
+                          <span className={versionInfo.isUpdateAvailable ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}>
+                            {versionInfo.latestVersion}
+                            {versionInfo.isUpdateAvailable && ' (Update Available!)'}
+                          </span>
+                        ) : (
+                          <span className="text-secondary-500 dark:text-secondary-400">Not checked</span>
+                        )}
+                      </span>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={() => {
-                        // TODO: Implement version check
-                        console.log('Checking for updates...');
-                      }}
+                      onClick={checkForUpdates}
+                      disabled={versionInfo.checking}
                       className="btn-primary flex items-center gap-2"
                     >
                       <Download className="h-4 w-4" />
-                      Check for Updates
+                      {versionInfo.checking ? 'Checking...' : 'Check for Updates'}
                     </button>
                     
                     <button
@@ -729,25 +772,28 @@ const Settings = () => {
                       Enable Notifications
                     </button>
                   </div>
+                  
+                  {versionInfo.error && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
+                      <div className="flex">
+                        <AlertCircle className="h-5 w-5 text-red-400 dark:text-red-300" />
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Version Check Failed</h3>
+                          <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+                            {versionInfo.error}
+                          </p>
+                          {versionInfo.error.includes('private') && (
+                            <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+                              For private repositories, you may need to configure GitHub authentication or make the repository public.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
-                <div className="flex">
-                  <AlertCircle className="h-5 w-5 text-amber-400 dark:text-amber-300" />
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">Setup Instructions</h3>
-                    <div className="mt-2 text-sm text-amber-700 dark:text-amber-300">
-                      <p className="mb-2">To enable version checking, you need to:</p>
-                      <ol className="list-decimal list-inside space-y-1 ml-4">
-                        <li>Create a version tag (e.g., v1.2.3) in your GitHub repository</li>
-                        <li>Ensure the repository is publicly accessible or configure access tokens</li>
-                        <li>Click "Check for Updates" to verify the connection</li>
-                      </ol>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
         </div>

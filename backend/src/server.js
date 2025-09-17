@@ -16,6 +16,7 @@ const permissionsRoutes = require('./routes/permissionsRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const dashboardPreferencesRoutes = require('./routes/dashboardPreferencesRoutes');
 const repositoryRoutes = require('./routes/repositoryRoutes');
+const versionRoutes = require('./routes/versionRoutes');
 
 // Initialize Prisma client
 const prisma = new PrismaClient();
@@ -134,6 +135,7 @@ app.use(`/api/${apiVersion}/permissions`, permissionsRoutes);
 app.use(`/api/${apiVersion}/settings`, settingsRoutes);
 app.use(`/api/${apiVersion}/dashboard-preferences`, dashboardPreferencesRoutes);
 app.use(`/api/${apiVersion}/repositories`, repositoryRoutes);
+app.use(`/api/${apiVersion}/version`, versionRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
