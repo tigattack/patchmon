@@ -1150,7 +1150,19 @@ case \$1 in
         cd backend && npm install
         if [ -f ".env" ]; then
             export \$(grep -v '^#' .env | xargs)
-            npx prisma migrate deploy
+            
+            # Try different ways to run Prisma migrations
+            if command -v npx >/dev/null 2>&1; then
+                npx prisma migrate deploy
+            elif [ -f "./node_modules/.bin/prisma" ]; then
+                ./node_modules/.bin/prisma migrate deploy
+            elif [ -f "../node_modules/.bin/prisma" ]; then
+                ../node_modules/.bin/prisma migrate deploy
+            else
+                echo "Error: Prisma CLI not found. Trying to install..."
+                npm install prisma @prisma/client
+                npx prisma migrate deploy
+            fi
         else
             echo "Error: .env file not found"
             exit 1
@@ -1384,7 +1396,22 @@ update_instance() {
     # Set environment variables for Prisma
     if [ -f ".env" ]; then
         export $(grep -v '^#' .env | xargs)
-        npx prisma migrate deploy
+        
+        # Try different ways to run Prisma migrations
+        if command -v npx >/dev/null 2>&1; then
+            npx prisma migrate deploy
+        elif [ -f "./node_modules/.bin/prisma" ]; then
+            chmod +x ./node_modules/.bin/prisma
+            ./node_modules/.bin/prisma migrate deploy
+        elif [ -f "../node_modules/.bin/prisma" ]; then
+            chmod +x ../node_modules/.bin/prisma
+            ../node_modules/.bin/prisma migrate deploy
+        else
+            print_error "Prisma CLI not found. Trying to install..."
+            npm install prisma @prisma/client
+            npx prisma migrate deploy
+        fi
+        
         print_status "Database migrations completed"
     else
         print_error ".env file not found, cannot run migrations"
