@@ -1147,7 +1147,13 @@ case \$1 in
         git pull
         npm install
         cd backend && npm install
-        npx prisma migrate deploy
+        if [ -f ".env" ]; then
+            export \$(grep -v '^#' .env | xargs)
+            npx prisma migrate deploy
+        else
+            echo "Error: .env file not found"
+            exit 1
+        fi
         cd ../frontend && npm install && npm run build
         systemctl restart $SERVICE_NAME
         ;;
@@ -1333,11 +1339,28 @@ update_instance() {
     
     # Backup database first
     print_info "Creating database backup..."
-    local db_safe_name=$(echo $fqdn | tr '[:upper:]' '[:lower:]' | tr '.-' '__')
-    local db_name="patchmon_${db_safe_name}"
-    local db_user="patchmon_${db_safe_name}_user"
     
-    pg_dump -h localhost -U "$db_user" "$db_name" > backup_$(date +%Y%m%d_%H%M%S).sql
+    # Read database credentials from .env file
+    if [ -f "$app_dir/backend/.env" ]; then
+        local db_name=$(grep "^DATABASE_URL=" "$app_dir/backend/.env" | cut -d'=' -f2 | sed 's/.*\/\([^?]*\).*/\1/')
+        local db_user=$(grep "^DATABASE_URL=" "$app_dir/backend/.env" | cut -d'@' -f1 | sed 's/.*:\/\/\([^:]*\).*/\1/')
+        local db_pass=$(grep "^DATABASE_URL=" "$app_dir/backend/.env" | cut -d'@' -f1 | sed 's/.*:\/\/[^:]*:\([^@]*\).*/\1/')
+        local db_host=$(grep "^DATABASE_URL=" "$app_dir/backend/.env" | cut -d'@' -f2 | cut -d'/' -f1 | cut -d':' -f1)
+        local db_port=$(grep "^DATABASE_URL=" "$app_dir/backend/.env" | cut -d'@' -f2 | cut -d'/' -f1 | cut -d':' -f2)
+        
+        # Set defaults if not found
+        db_host=${db_host:-localhost}
+        db_port=${db_port:-5432}
+        
+        if [ -n "$db_name" ] && [ -n "$db_user" ] && [ -n "$db_pass" ]; then
+            PGPASSWORD="$db_pass" pg_dump -h "$db_host" -p "$db_port" -U "$db_user" "$db_name" > backup_$(date +%Y%m%d_%H%M%S).sql
+            print_status "Database backup created"
+        else
+            print_warning "Could not read database credentials from .env file, skipping backup"
+        fi
+    else
+        print_warning ".env file not found, skipping database backup"
+    fi
     
     # Update code
     print_info "Pulling latest code..."
@@ -1352,7 +1375,16 @@ update_instance() {
     # Run migrations
     print_info "Running database migrations..."
     cd ../backend
-    npx prisma migrate deploy
+    
+    # Set environment variables for Prisma
+    if [ -f ".env" ]; then
+        export $(grep -v '^#' .env | xargs)
+        npx prisma migrate deploy
+        print_status "Database migrations completed"
+    else
+        print_error ".env file not found, cannot run migrations"
+        exit 1
+    fi
     
     # Rebuild frontend
     print_info "Rebuilding frontend..."
