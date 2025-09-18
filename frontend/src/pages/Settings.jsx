@@ -41,7 +41,7 @@ const Settings = () => {
 
   // Version checking state
   const [versionInfo, setVersionInfo] = useState({
-    currentVersion: '1.2.3',
+    currentVersion: '1.2.4',
     latestVersion: null,
     isUpdateAvailable: false,
     checking: false,

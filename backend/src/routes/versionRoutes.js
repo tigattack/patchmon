@@ -14,7 +14,7 @@ const router = express.Router();
 router.get('/current', authenticateToken, async (req, res) => {
   try {
     // For now, return hardcoded version - this should match your agent version
-    const currentVersion = '1.2.3';
+    const currentVersion = '1.2.4';
     
     res.json({
       version: currentVersion,
@@ -230,7 +230,7 @@ router.get('/check-updates', authenticateToken, requireManageSettings, async (re
       );
 
       const latestVersion = latestTag.trim().replace('v', ''); // Remove 'v' prefix
-      const currentVersion = '1.2.3';
+      const currentVersion = '1.2.4';
 
       // Simple version comparison (assumes semantic versioning)
       const isUpdateAvailable = compareVersions(latestVersion, currentVersion) > 0;
