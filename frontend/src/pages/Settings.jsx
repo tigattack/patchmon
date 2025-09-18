@@ -100,12 +100,15 @@ const Settings = () => {
       queryClient.invalidateQueries(['settings']);
       // Update form data with the returned data
       setFormData({
-        serverProtocol: data.serverProtocol || 'http',
-        serverHost: data.serverHost || 'localhost',
-        serverPort: data.serverPort || 3001,
-        frontendUrl: data.frontendUrl || 'http://localhost:3000',
-        updateInterval: data.updateInterval || 60,
-        autoUpdate: data.autoUpdate || false
+        serverProtocol: data.settings?.serverProtocol || data.serverProtocol || 'http',
+        serverHost: data.settings?.serverHost || data.serverHost || 'localhost',
+        serverPort: data.settings?.serverPort || data.serverPort || 3001,
+        frontendUrl: data.settings?.frontendUrl || data.frontendUrl || 'http://localhost:3000',
+        updateInterval: data.settings?.updateInterval || data.updateInterval || 60,
+        autoUpdate: data.settings?.autoUpdate || data.autoUpdate || false,
+        githubRepoUrl: data.settings?.githubRepoUrl || data.githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git',
+        sshKeyPath: data.settings?.sshKeyPath || data.sshKeyPath || '',
+        useCustomSshKey: !!(data.settings?.sshKeyPath || data.sshKeyPath)
       });
       setIsDirty(false);
       setErrors({});
@@ -289,7 +292,16 @@ const Settings = () => {
     console.log('Saving settings:', formData);
     if (validateForm()) {
       console.log('Validation passed, calling mutation');
-      updateSettingsMutation.mutate(formData);
+      
+      // Prepare data for submission
+      const dataToSubmit = { ...formData };
+      if (!dataToSubmit.useCustomSshKey) {
+        dataToSubmit.sshKeyPath = '';
+      }
+      // Remove the frontend-only field
+      delete dataToSubmit.useCustomSshKey;
+      
+      updateSettingsMutation.mutate(dataToSubmit);
     } else {
       console.log('Validation failed:', errors);
     }
@@ -885,25 +897,40 @@ const Settings = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={checkForUpdates}
-                      disabled={versionInfo.checking}
-                      className="btn-primary flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      {versionInfo.checking ? 'Checking...' : 'Check for Updates'}
-                    </button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={checkForUpdates}
+                        disabled={versionInfo.checking}
+                        className="btn-primary flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        {versionInfo.checking ? 'Checking...' : 'Check for Updates'}
+                      </button>
+                    </div>
                     
+                    {/* Save Button for Version Settings */}
                     <button
-                      onClick={() => {
-                        // TODO: Implement update notification
-                        console.log('Enable update notifications');
-                      }}
-                      className="btn-outline flex items-center gap-2"
+                      type="button"
+                      onClick={handleSave}
+                      disabled={!isDirty || updateSettingsMutation.isPending}
+                      className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
+                        !isDirty || updateSettingsMutation.isPending
+                          ? 'bg-secondary-400 cursor-not-allowed'
+                          : 'bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
+                      }`}
                     >
-                      <AlertCircle className="h-4 w-4" />
-                      Enable Notifications
+                      {updateSettingsMutation.isPending ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Settings
+                        </>
+                      )}
                     </button>
                   </div>
                   
@@ -921,6 +948,18 @@ const Settings = () => {
                               For private repositories, you may need to configure GitHub authentication or make the repository public.
                             </p>
                           )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Success Message for Version Settings */}
+                  {updateSettingsMutation.isSuccess && (
+                    <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-md p-4">
+                      <div className="flex">
+                        <CheckCircle className="h-5 w-5 text-green-400 dark:text-green-300" />
+                        <div className="ml-3">
+                          <p className="text-sm text-green-700 dark:text-green-300">Settings saved successfully!</p>
                         </div>
                       </div>
                     </div>
