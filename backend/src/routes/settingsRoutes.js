@@ -124,7 +124,15 @@ router.put('/', authenticateToken, requireManageSettings, [
   body('updateInterval').isInt({ min: 5, max: 1440 }).withMessage('Update interval must be between 5 and 1440 minutes'),
   body('autoUpdate').isBoolean().withMessage('Auto update must be a boolean'),
   body('githubRepoUrl').optional().isLength({ min: 1 }).withMessage('GitHub repo URL must be a non-empty string'),
-  body('sshKeyPath').optional().isLength({ min: 1 }).withMessage('SSH key path must be a non-empty string')
+  body('sshKeyPath').optional().custom((value) => {
+    if (value && value.trim().length === 0) {
+      return true; // Allow empty string
+    }
+    if (value && value.trim().length < 1) {
+      throw new Error('SSH key path must be a non-empty string');
+    }
+    return true;
+  })
 ], async (req, res) => {
   try {
     console.log('Settings update request body:', req.body);

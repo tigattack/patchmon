@@ -12,7 +12,8 @@ const Settings = () => {
     updateInterval: 60,
     autoUpdate: false,
     githubRepoUrl: 'git@github.com:9technologygroup/patchmon.net.git',
-    sshKeyPath: ''
+    sshKeyPath: '',
+    useCustomSshKey: false
   });
   const [errors, setErrors] = useState({});
   const [isDirty, setIsDirty] = useState(false);
@@ -46,6 +47,13 @@ const Settings = () => {
     checking: false,
     error: null
   });
+  
+  const [sshTestResult, setSshTestResult] = useState({
+    testing: false,
+    success: null,
+    message: null,
+    error: null
+  });
 
   const queryClient = useQueryClient();
 
@@ -68,7 +76,8 @@ const Settings = () => {
         updateInterval: settings.updateInterval || 60,
         autoUpdate: settings.autoUpdate || false,
         githubRepoUrl: settings.githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git',
-        sshKeyPath: settings.sshKeyPath || ''
+        sshKeyPath: settings.sshKeyPath || '',
+        useCustomSshKey: !!settings.sshKeyPath
       };
       console.log('Setting form data to:', newFormData);
       setFormData(newFormData);
@@ -188,6 +197,42 @@ const Settings = () => {
     }
   };
 
+  const testSshKey = async () => {
+    if (!formData.sshKeyPath || !formData.githubRepoUrl) {
+      setSshTestResult({
+        testing: false,
+        success: false,
+        message: null,
+        error: 'Please enter both SSH key path and GitHub repository URL'
+      });
+      return;
+    }
+
+    setSshTestResult({ testing: true, success: null, message: null, error: null });
+    
+    try {
+      const response = await versionAPI.testSshKey({
+        sshKeyPath: formData.sshKeyPath,
+        githubRepoUrl: formData.githubRepoUrl
+      });
+      
+      setSshTestResult({
+        testing: false,
+        success: true,
+        message: response.data.message,
+        error: null
+      });
+    } catch (error) {
+      console.error('SSH key test error:', error);
+      setSshTestResult({
+        testing: false,
+        success: false,
+        message: null,
+        error: error.response?.data?.error || 'Failed to test SSH key'
+      });
+    }
+  };
+
   const handleInputChange = (field, value) => {
     console.log(`handleInputChange: ${field} = ${value}`);
     setFormData(prev => {
@@ -203,7 +248,16 @@ const Settings = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    updateSettingsMutation.mutate(formData);
+    
+    // Only include sshKeyPath if the toggle is enabled
+    const dataToSubmit = { ...formData };
+    if (!dataToSubmit.useCustomSshKey) {
+      dataToSubmit.sshKeyPath = '';
+    }
+    // Remove the frontend-only field
+    delete dataToSubmit.useCustomSshKey;
+    
+    updateSettingsMutation.mutate(dataToSubmit);
   };
 
   const validateForm = () => {
@@ -725,19 +779,81 @@ const Settings = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
-                      SSH Key Path (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.sshKeyPath || ''}
-                      onChange={(e) => handleInputChange('sshKeyPath', e.target.value)}
-                      className="w-full border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white font-mono text-sm"
-                      placeholder="/root/.ssh/id_ed25519"
-                    />
-                    <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
-                      Path to your SSH deploy key. Leave empty to auto-detect from common locations.
-                    </p>
+                    <div className="flex items-center gap-3 mb-3">
+                      <input
+                        type="checkbox"
+                        id="useCustomSshKey"
+                        checked={formData.useCustomSshKey}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          handleInputChange('useCustomSshKey', checked);
+                          if (!checked) {
+                            handleInputChange('sshKeyPath', '');
+                          }
+                        }}
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="useCustomSshKey" className="text-sm font-medium text-secondary-700 dark:text-secondary-200">
+                        Set custom SSH key path
+                      </label>
+                    </div>
+                    
+                    {formData.useCustomSshKey && (
+                      <div>
+                        <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+                          SSH Key Path
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.sshKeyPath || ''}
+                          onChange={(e) => handleInputChange('sshKeyPath', e.target.value)}
+                          className="w-full border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white font-mono text-sm"
+                          placeholder="/root/.ssh/id_ed25519"
+                        />
+                        <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
+                          Path to your SSH deploy key. If not set, will auto-detect from common locations.
+                        </p>
+                        
+                        <div className="mt-3">
+                          <button
+                            type="button"
+                            onClick={testSshKey}
+                            disabled={sshTestResult.testing || !formData.sshKeyPath || !formData.githubRepoUrl}
+                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {sshTestResult.testing ? 'Testing...' : 'Test SSH Key'}
+                          </button>
+                          
+                          {sshTestResult.success && (
+                            <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+                              <div className="flex items-center">
+                                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 mr-2" />
+                                <p className="text-sm text-green-800 dark:text-green-200">
+                                  {sshTestResult.message}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {sshTestResult.error && (
+                            <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+                              <div className="flex items-center">
+                                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400 mr-2" />
+                                <p className="text-sm text-red-800 dark:text-red-200">
+                                  {sshTestResult.error}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {!formData.useCustomSshKey && (
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400">
+                        Using auto-detection for SSH key location
+                      </p>
+                    )}
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

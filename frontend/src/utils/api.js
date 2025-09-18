@@ -182,6 +182,7 @@ export const formatDate = (date) => {
 export const versionAPI = {
   getCurrent: () => api.get('/version/current'),
   checkUpdates: () => api.get('/version/check-updates'),
+  testSshKey: (data) => api.post('/version/test-ssh-key', data),
 }
 
 export const formatRelativeTime = (date) => {
