@@ -144,6 +144,12 @@ router.get('/check-updates', authenticateToken, requireManageSettings, async (re
   try {
     // Get GitHub repo URL from settings
     const settings = await prisma.settings.findFirst();
+    console.log('Settings retrieved for version check:', {
+      id: settings?.id,
+      githubRepoUrl: settings?.githubRepoUrl,
+      repositoryType: settings?.repositoryType
+    });
+    
     if (!settings || !settings.githubRepoUrl) {
       return res.status(400).json({ error: 'GitHub repository URL not configured' });
     }
@@ -153,6 +159,7 @@ router.get('/check-updates', authenticateToken, requireManageSettings, async (re
     // git@github.com:owner/repo.git
     // https://github.com/owner/repo.git
     const repoUrl = settings.githubRepoUrl;
+    console.log('Using repository URL:', repoUrl);
     let owner, repo;
     
     if (repoUrl.includes('git@github.com:')) {
@@ -167,67 +174,107 @@ router.get('/check-updates', authenticateToken, requireManageSettings, async (re
       }
     }
 
+    console.log('Extracted owner and repo:', { owner, repo });
+    
     if (!owner || !repo) {
       return res.status(400).json({ error: 'Invalid GitHub repository URL format' });
     }
 
-    // Use SSH with deploy keys (secure approach)
-    const sshRepoUrl = `git@github.com:${owner}/${repo}.git`;
+    // Determine repository type and set up appropriate access method
+    const repositoryType = settings.repositoryType || 'public';
+    const isPrivate = repositoryType === 'private';
     
-    try {
-      let sshKeyPath = null;
+    let latestTag;
+    
+    if (isPrivate) {
+      // Use SSH with deploy keys for private repositories
+      const sshRepoUrl = `git@github.com:${owner}/${repo}.git`;
       
-      // First, try to use the configured SSH key path from settings
-      if (settings.sshKeyPath) {
-        try {
-          require('fs').accessSync(settings.sshKeyPath);
-          sshKeyPath = settings.sshKeyPath;
-          console.log(`Using configured SSH key at: ${sshKeyPath}`);
-        } catch (e) {
-          console.warn(`Configured SSH key path not accessible: ${settings.sshKeyPath}`);
-        }
-      }
-      
-      // If no configured path or it's not accessible, try common locations
-      if (!sshKeyPath) {
-        const possibleKeyPaths = [
-          '/root/.ssh/id_ed25519',           // Root user (if service runs as root)
-          '/root/.ssh/id_rsa',               // Root user RSA key
-          '/home/patchmon/.ssh/id_ed25519',  // PatchMon user
-          '/home/patchmon/.ssh/id_rsa',      // PatchMon user RSA key
-          '/var/www/.ssh/id_ed25519',        // Web user
-          '/var/www/.ssh/id_rsa'             // Web user RSA key
-        ];
+      try {
+        let sshKeyPath = null;
         
-        for (const path of possibleKeyPaths) {
+        // First, try to use the configured SSH key path from settings
+        if (settings.sshKeyPath) {
           try {
-            require('fs').accessSync(path);
-            sshKeyPath = path;
-            console.log(`Found SSH key at: ${path}`);
-            break;
+            require('fs').accessSync(settings.sshKeyPath);
+            sshKeyPath = settings.sshKeyPath;
+            console.log(`Using configured SSH key at: ${sshKeyPath}`);
           } catch (e) {
-            // Key not found at this path, try next
+            console.warn(`Configured SSH key path not accessible: ${settings.sshKeyPath}`);
           }
         }
-      }
-      
-      if (!sshKeyPath) {
-        throw new Error('No SSH deploy key found. Please configure the SSH key path in settings or ensure a deploy key is installed in one of the expected locations.');
-      }
-      
-      const env = {
-        ...process.env,
-        GIT_SSH_COMMAND: `ssh -i ${sshKeyPath} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes`
-      };
-
-      // Fetch the latest tag using SSH with deploy key
-      const { stdout: latestTag } = await execAsync(
-        `git ls-remote --tags --sort=-version:refname ${sshRepoUrl} | head -n 1 | sed 's/.*refs\\/tags\\///' | sed 's/\\^{}//'`,
-        { 
-          timeout: 10000,
-          env: env
+        
+        // If no configured path or it's not accessible, try common locations
+        if (!sshKeyPath) {
+          const possibleKeyPaths = [
+            '/root/.ssh/id_ed25519',           // Root user (if service runs as root)
+            '/root/.ssh/id_rsa',               // Root user RSA key
+            '/home/patchmon/.ssh/id_ed25519',  // PatchMon user
+            '/home/patchmon/.ssh/id_rsa',      // PatchMon user RSA key
+            '/var/www/.ssh/id_ed25519',        // Web user
+            '/var/www/.ssh/id_rsa'             // Web user RSA key
+          ];
+          
+          for (const path of possibleKeyPaths) {
+            try {
+              require('fs').accessSync(path);
+              sshKeyPath = path;
+              console.log(`Found SSH key at: ${path}`);
+              break;
+            } catch (e) {
+              // Key not found at this path, try next
+            }
+          }
         }
-      );
+        
+        if (!sshKeyPath) {
+          throw new Error('No SSH deploy key found. Please configure the SSH key path in settings or ensure a deploy key is installed in one of the expected locations.');
+        }
+        
+        const env = {
+          ...process.env,
+          GIT_SSH_COMMAND: `ssh -i ${sshKeyPath} -o StrictHostKeyChecking=no -o IdentitiesOnly=yes`
+        };
+
+        // Fetch the latest tag using SSH with deploy key
+        const { stdout: sshLatestTag } = await execAsync(
+          `git ls-remote --tags --sort=-version:refname ${sshRepoUrl} | head -n 1 | sed 's/.*refs\\/tags\\///' | sed 's/\\^{}//'`,
+          { 
+            timeout: 10000,
+            env: env
+          }
+        );
+        
+        latestTag = sshLatestTag;
+      } catch (sshError) {
+        console.error('SSH Git error:', sshError.message);
+        throw sshError;
+      }
+    } else {
+      // Use GitHub API for public repositories (no authentication required)
+      try {
+        const httpsRepoUrl = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
+        
+        const response = await fetch(httpsRepoUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'PatchMon-Server/1.2.4'
+          },
+          timeout: 10000
+        });
+        
+        if (!response.ok) {
+          throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+        }
+        
+        const releaseData = await response.json();
+        latestTag = releaseData.tag_name;
+      } catch (apiError) {
+        console.error('GitHub API error:', apiError.message);
+        throw apiError;
+      }
+    }
 
       const latestVersion = latestTag.trim().replace('v', ''); // Remove 'v' prefix
       const currentVersion = '1.2.4';
@@ -239,53 +286,58 @@ router.get('/check-updates', authenticateToken, requireManageSettings, async (re
         currentVersion,
         latestVersion,
         isUpdateAvailable,
+        repositoryType,
         latestRelease: {
           tagName: latestTag.trim(),
           version: latestVersion,
           repository: `${owner}/${repo}`,
-          sshUrl: sshRepoUrl,
-          sshKeyUsed: sshKeyPath
+          accessMethod: isPrivate ? 'ssh' : 'api',
+          ...(isPrivate && { sshUrl: `git@github.com:${owner}/${repo}.git`, sshKeyUsed: settings.sshKeyPath })
         }
       });
 
-    } catch (sshError) {
-      console.error('SSH Git error:', sshError.message);
+    } catch (error) {
+      console.error('Version check error:', error.message);
 
-      if (sshError.message.includes('Permission denied') || sshError.message.includes('Host key verification failed')) {
+      if (error.message.includes('Permission denied') || error.message.includes('Host key verification failed')) {
         return res.status(403).json({
-          error: 'SSH access denied to repository',
-          suggestion: 'Ensure your deploy key is properly configured and has access to the repository. Check that the key has read access to the repository.'
+          error: 'Access denied to repository',
+          suggestion: isPrivate 
+            ? 'Ensure your deploy key is properly configured and has access to the repository. Check that the key has read access to the repository.'
+            : 'Check that the repository URL is correct and the repository is public.'
         });
       }
 
-      if (sshError.message.includes('not found') || sshError.message.includes('does not exist')) {
+      if (error.message.includes('not found') || error.message.includes('does not exist')) {
         return res.status(404).json({
           error: 'Repository not found',
-          suggestion: 'Check that the repository URL is correct and accessible with the deploy key.'
+          suggestion: 'Check that the repository URL is correct and accessible.'
         });
       }
 
-      if (sshError.message.includes('No SSH deploy key found')) {
+      if (error.message.includes('No SSH deploy key found')) {
         return res.status(400).json({
           error: 'No SSH deploy key found',
           suggestion: 'Please install a deploy key in one of the expected locations: /root/.ssh/, /home/patchmon/.ssh/, or /var/www/.ssh/'
         });
       }
 
+      if (error.message.includes('GitHub API error')) {
+        return res.status(500).json({
+          error: 'Failed to fetch repository information via GitHub API',
+          details: error.message,
+          suggestion: 'Check that the repository URL is correct and the repository is public.'
+        });
+      }
+
       return res.status(500).json({
         error: 'Failed to fetch repository information',
-        details: sshError.message,
-        suggestion: 'Check deploy key configuration and repository access permissions.'
+        details: error.message,
+        suggestion: isPrivate 
+          ? 'Check deploy key configuration and repository access permissions.'
+          : 'Check repository URL and ensure it is accessible.'
       });
     }
-
-  } catch (error) {
-    console.error('Error checking for updates:', error);
-    res.status(500).json({ 
-      error: 'Failed to check for updates',
-      details: error.message 
-    });
-  }
 });
 
 // Simple version comparison function

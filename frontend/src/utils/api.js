@@ -31,9 +31,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized
-      localStorage.removeItem('token')
-      window.location.href = '/login'
+      // Don't redirect if we're on the login page or if it's a TFA verification error
+      const currentPath = window.location.pathname
+      const isTfaError = error.config?.url?.includes('/verify-tfa')
+      
+      if (currentPath !== '/login' && !isTfaError) {
+        // Handle unauthorized
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        localStorage.removeItem('permissions')
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
@@ -183,6 +191,22 @@ export const versionAPI = {
   getCurrent: () => api.get('/version/current'),
   checkUpdates: () => api.get('/version/check-updates'),
   testSshKey: (data) => api.post('/version/test-ssh-key', data),
+}
+
+// Auth API
+export const authAPI = {
+  login: (username, password) => api.post('/auth/login', { username, password }),
+  verifyTfa: (username, token) => api.post('/auth/verify-tfa', { username, token }),
+}
+
+// TFA API
+export const tfaAPI = {
+  setup: () => api.get('/tfa/setup'),
+  verifySetup: (data) => api.post('/tfa/verify-setup', data),
+  disable: (data) => api.post('/tfa/disable', data),
+  status: () => api.get('/tfa/status'),
+  regenerateBackupCodes: () => api.post('/tfa/regenerate-backup-codes'),
+  verify: (data) => api.post('/tfa/verify', data),
 }
 
 export const formatRelativeTime = (date) => {

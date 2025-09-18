@@ -1,16 +1,22 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Lock, User, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Lock, User, AlertCircle, Smartphone, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { authAPI } from '../utils/api'
 
 const Login = () => {
   const [formData, setFormData] = useState({
     username: '',
     password: ''
   })
+  const [tfaData, setTfaData] = useState({
+    token: ''
+  })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [requiresTfa, setRequiresTfa] = useState(false)
+  const [tfaUsername, setTfaUsername] = useState('')
 
   const navigate = useNavigate()
   const { login } = useAuth()
@@ -21,16 +27,52 @@ const Login = () => {
     setError('')
 
     try {
-      const result = await login(formData.username, formData.password)
+      const response = await authAPI.login(formData.username, formData.password)
       
-      if (result.success) {
+      if (response.data.requiresTfa) {
+        setRequiresTfa(true)
+        setTfaUsername(formData.username)
+        setError('')
+      } else {
+        // Regular login successful
+        const result = await login(formData.username, formData.password)
+        if (result.success) {
+          navigate('/')
+        } else {
+          setError(result.error || 'Login failed')
+        }
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleTfaSubmit = async (e) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const response = await authAPI.verifyTfa(tfaUsername, tfaData.token)
+      
+      if (response.data && response.data.token) {
+        // Store token and user data
+        localStorage.setItem('token', response.data.token)
+        localStorage.setItem('user', JSON.stringify(response.data.user))
+        
         // Redirect to dashboard
         navigate('/')
       } else {
-        setError(result.error || 'Login failed')
+        setError('TFA verification failed - invalid response')
       }
     } catch (err) {
-      setError('Network error occurred')
+      console.error('TFA verification error:', err)
+      const errorMessage = err.response?.data?.error || err.message || 'TFA verification failed'
+      setError(errorMessage)
+      // Clear the token input for security
+      setTfaData({ token: '' })
     } finally {
       setIsLoading(false)
     }
@@ -41,6 +83,23 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value
     })
+  }
+
+  const handleTfaInputChange = (e) => {
+    setTfaData({
+      ...tfaData,
+      [e.target.name]: e.target.value.replace(/\D/g, '').slice(0, 6)
+    })
+    // Clear error when user starts typing
+    if (error) {
+      setError('')
+    }
+  }
+
+  const handleBackToLogin = () => {
+    setRequiresTfa(false)
+    setTfaData({ token: '' })
+    setError('')
   }
 
   return (
@@ -58,7 +117,8 @@ const Login = () => {
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {!requiresTfa ? (
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-secondary-700">
@@ -150,6 +210,83 @@ const Login = () => {
             </p>
           </div>
         </form>
+        ) : (
+          <form className="mt-8 space-y-6" onSubmit={handleTfaSubmit}>
+            <div className="text-center">
+              <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-100">
+                <Smartphone className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="mt-4 text-lg font-medium text-secondary-900">
+                Two-Factor Authentication
+              </h3>
+              <p className="mt-2 text-sm text-secondary-600">
+                Enter the 6-digit code from your authenticator app
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="token" className="block text-sm font-medium text-secondary-700">
+                Verification Code
+              </label>
+              <div className="mt-1">
+                <input
+                  id="token"
+                  name="token"
+                  type="text"
+                  required
+                  value={tfaData.token}
+                  onChange={handleTfaInputChange}
+                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-secondary-300 placeholder-secondary-500 text-secondary-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm text-center text-lg font-mono tracking-widest"
+                  placeholder="000000"
+                  maxLength="6"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-danger-50 border border-danger-200 rounded-md p-3">
+                <div className="flex">
+                  <AlertCircle className="h-5 w-5 text-danger-400" />
+                  <div className="ml-3">
+                    <p className="text-sm text-danger-700">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <button
+                type="submit"
+                disabled={isLoading || tfaData.token.length !== 6}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Verifying...
+                  </div>
+                ) : (
+                  'Verify Code'
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleBackToLogin}
+                className="group relative w-full flex justify-center py-2 px-4 border border-secondary-300 text-sm font-medium rounded-md text-secondary-700 bg-white hover:bg-secondary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Login
+              </button>
+            </div>
+
+            <div className="text-center">
+              <p className="text-sm text-secondary-600">
+                Don't have access to your authenticator? Use a backup code.
+              </p>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   )

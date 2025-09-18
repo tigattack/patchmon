@@ -73,10 +73,12 @@ router.get('/defaults', authenticateToken, async (req, res) => {
       { cardId: 'totalOutdatedPackages', title: 'Outdated Packages', icon: 'Package', enabled: true, order: 2 },
       { cardId: 'securityUpdates', title: 'Security Updates', icon: 'Shield', enabled: true, order: 3 },
       { cardId: 'erroredHosts', title: 'Errored Hosts', icon: 'AlertTriangle', enabled: true, order: 4 },
-      { cardId: 'osDistribution', title: 'OS Distribution', icon: 'BarChart3', enabled: true, order: 5 },
-      { cardId: 'updateStatus', title: 'Update Status', icon: 'BarChart3', enabled: true, order: 6 },
-      { cardId: 'packagePriority', title: 'Package Priority', icon: 'BarChart3', enabled: true, order: 7 },
-      { cardId: 'quickStats', title: 'Quick Stats', icon: 'TrendingUp', enabled: true, order: 8 }
+      { cardId: 'offlineHosts', title: 'Offline/Stale Hosts', icon: 'WifiOff', enabled: false, order: 5 },
+      { cardId: 'osDistribution', title: 'OS Distribution', icon: 'BarChart3', enabled: true, order: 6 },
+      { cardId: 'osDistributionBar', title: 'OS Distribution (Bar)', icon: 'BarChart3', enabled: false, order: 7 },
+      { cardId: 'updateStatus', title: 'Update Status', icon: 'BarChart3', enabled: true, order: 8 },
+      { cardId: 'packagePriority', title: 'Package Priority', icon: 'BarChart3', enabled: true, order: 9 },
+      { cardId: 'quickStats', title: 'Quick Stats', icon: 'TrendingUp', enabled: true, order: 10 }
     ];
 
     res.json(defaultCards);

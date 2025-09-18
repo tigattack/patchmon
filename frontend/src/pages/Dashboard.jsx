@@ -8,7 +8,8 @@ import {
   Shield, 
   TrendingUp,
   RefreshCw,
-  Clock
+  Clock,
+  WifiOff
 } from 'lucide-react'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js'
 import { Pie, Bar } from 'react-chartjs-2'
@@ -44,6 +45,10 @@ const Dashboard = () => {
 
   const handleErroredHostsClick = () => {
     navigate('/hosts?filter=inactive')
+  }
+
+  const handleOfflineHostsClick = () => {
+    navigate('/hosts?filter=offline')
   }
 
   const handleOSDistributionClick = () => {
@@ -151,7 +156,7 @@ const Dashboard = () => {
   const getCardType = (cardId) => {
     if (['totalHosts', 'hostsNeedingUpdates', 'totalOutdatedPackages', 'securityUpdates'].includes(cardId)) {
       return 'stats';
-    } else if (['osDistribution', 'updateStatus', 'packagePriority'].includes(cardId)) {
+    } else if (['osDistribution', 'osDistributionBar', 'updateStatus', 'packagePriority'].includes(cardId)) {
       return 'charts';
     } else if (['erroredHosts', 'quickStats'].includes(cardId)) {
       return 'fullwidth';
@@ -295,6 +300,45 @@ const Dashboard = () => {
           </div>
         );
       
+      case 'offlineHosts':
+        return (
+          <div 
+            className={`border rounded-lg p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 ${
+              stats.cards.offlineHosts > 0 
+                ? 'bg-warning-50 border-warning-200' 
+                : 'bg-success-50 border-success-200'
+            }`}
+            onClick={handleOfflineHostsClick}
+          >
+            <div className="flex">
+              <WifiOff className={`h-5 w-5 ${
+                stats.cards.offlineHosts > 0 ? 'text-warning-400' : 'text-success-400'
+              }`} />
+              <div className="ml-3">
+                {stats.cards.offlineHosts > 0 ? (
+                  <>
+                    <h3 className="text-sm font-medium text-warning-800">
+                      {stats.cards.offlineHosts} host{stats.cards.offlineHosts > 1 ? 's' : ''} offline/stale
+                    </h3>
+                    <p className="text-sm text-warning-700 mt-1">
+                      These hosts haven't reported in {formatUpdateIntervalThreshold() * 3}+ minutes.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-sm font-medium text-success-800">
+                      All hosts are online
+                    </h3>
+                    <p className="text-sm text-success-700 mt-1">
+                      No hosts are offline or stale.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      
       case 'osDistribution':
         return (
           <div 
@@ -304,6 +348,19 @@ const Dashboard = () => {
             <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">OS Distribution</h3>
             <div className="h-64">
               <Pie data={osChartData} options={chartOptions} />
+            </div>
+          </div>
+        );
+      
+      case 'osDistributionBar':
+        return (
+          <div 
+            className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+            onClick={handleOSDistributionClick}
+          >
+            <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">OS Distribution</h3>
+            <div className="h-64">
+              <Bar data={osBarChartData} options={barChartOptions} />
             </div>
           </div>
         );
@@ -414,6 +471,40 @@ const Dashboard = () => {
     },
   }
 
+  const barChartOptions = {
+    responsive: true,
+    indexAxis: 'y', // Make the chart horizontal
+    plugins: {
+      legend: {
+        display: false
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: isDark ? '#ffffff' : '#374151',
+          font: {
+            size: 12
+          }
+        },
+        grid: {
+          color: isDark ? '#374151' : '#e5e7eb'
+        }
+      },
+      y: {
+        ticks: {
+          color: isDark ? '#ffffff' : '#374151',
+          font: {
+            size: 12
+          }
+        },
+        grid: {
+          color: isDark ? '#374151' : '#e5e7eb'
+        }
+      }
+    }
+  }
+
   const osChartData = {
     labels: stats.charts.osDistribution.map(item => item.name),
     datasets: [
@@ -429,6 +520,28 @@ const Dashboard = () => {
         ],
         borderWidth: 2,
         borderColor: '#ffffff',
+      },
+    ],
+  }
+
+  const osBarChartData = {
+    labels: stats.charts.osDistribution.map(item => item.name),
+    datasets: [
+      {
+        label: 'Hosts',
+        data: stats.charts.osDistribution.map(item => item.count),
+        backgroundColor: [
+          '#3B82F6', // Blue
+          '#10B981', // Green
+          '#F59E0B', // Yellow
+          '#EF4444', // Red
+          '#8B5CF6', // Purple
+          '#06B6D4', // Cyan
+        ],
+        borderWidth: 1,
+        borderColor: isDark ? '#374151' : '#ffffff',
+        borderRadius: 4,
+        borderSkipped: false,
       },
     ],
   }

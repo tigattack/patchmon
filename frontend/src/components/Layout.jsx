@@ -19,12 +19,15 @@ import {
   RefreshCw,
   GitBranch,
   Wrench,
+  Container,
   Plus
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
-import { dashboardAPI, formatRelativeTime } from '../utils/api'
+import { useUpdateNotification } from '../contexts/UpdateNotificationContext'
+import { dashboardAPI, formatRelativeTime, versionAPI } from '../utils/api'
+import UpgradeNotificationIcon from './UpgradeNotificationIcon'
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -36,6 +39,7 @@ const Layout = ({ children }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const location = useLocation()
   const { user, logout, canViewHosts, canManageHosts, canViewPackages, canViewUsers, canManageUsers, canManageSettings } = useAuth()
+  const { updateAvailable } = useUpdateNotification()
   const userMenuRef = useRef(null)
 
   // Fetch dashboard stats for the "Last updated" info
@@ -46,16 +50,23 @@ const Layout = ({ children }) => {
     staleTime: 30000, // Consider data stale after 30 seconds
   })
 
+  // Fetch version info
+  const { data: versionInfo } = useQuery({
+    queryKey: ['versionInfo'],
+    queryFn: () => versionAPI.getCurrent().then(res => res.data),
+    staleTime: 300000, // Consider data stale after 5 minutes
+  })
+
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
     {
       section: 'Inventory',
       items: [
         ...(canViewHosts() ? [{ name: 'Hosts', href: '/hosts', icon: Server }] : []),
-        ...(canManageHosts() ? [{ name: 'Host Groups', href: '/host-groups', icon: Users }] : []),
         ...(canViewPackages() ? [{ name: 'Packages', href: '/packages', icon: Package }] : []),
         ...(canViewHosts() ? [{ name: 'Repos', href: '/repositories', icon: GitBranch }] : []),
         { name: 'Services', href: '/services', icon: Wrench, comingSoon: true },
+        { name: 'Docker', href: '/docker', icon: Container, comingSoon: true },
         { name: 'Reporting', href: '/reporting', icon: BarChart3, comingSoon: true },
       ]
     },
@@ -69,7 +80,17 @@ const Layout = ({ children }) => {
     {
       section: 'Settings',
       items: [
-        ...(canManageSettings() ? [{ name: 'Server Config', href: '/settings', icon: Settings }] : []),
+        ...(canManageSettings() ? [{ 
+          name: 'Server Config', 
+          href: '/settings', 
+          icon: Settings,
+          showUpgradeIcon: updateAvailable
+        }] : []),
+        ...(canManageHosts() ? [{ 
+          name: 'Options', 
+          href: '/options', 
+          icon: Settings
+        }] : []),
       ]
     }
   ]
@@ -82,13 +103,14 @@ const Layout = ({ children }) => {
     
     if (path === '/') return 'Dashboard'
     if (path === '/hosts') return 'Hosts'
-    if (path === '/host-groups') return 'Host Groups'
     if (path === '/packages') return 'Packages'
     if (path === '/repositories' || path.startsWith('/repositories/')) return 'Repositories'
     if (path === '/services') return 'Services'
+    if (path === '/docker') return 'Docker'
     if (path === '/users') return 'Users'
     if (path === '/permissions') return 'Permissions'
     if (path === '/settings') return 'Settings'
+    if (path === '/options') return 'Options'
     if (path === '/profile') return 'My Profile'
     if (path.startsWith('/hosts/')) return 'Host Details'
     if (path.startsWith('/packages/')) return 'Package Details'
@@ -267,7 +289,7 @@ const Layout = ({ children }) => {
                 className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-secondary-100 transition-colors"
                 title="Expand sidebar"
               >
-                <ChevronRight className="h-5 w-5 text-white" />
+                <ChevronRight className="h-5 w-5 text-secondary-700 dark:text-white" />
               </button>
             ) : (
               <>
@@ -280,7 +302,7 @@ const Layout = ({ children }) => {
                   className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-secondary-100 transition-colors"
                   title="Collapse sidebar"
                 >
-                  <ChevronLeft className="h-5 w-5 text-white" />
+                  <ChevronLeft className="h-5 w-5 text-secondary-700 dark:text-white" />
                 </button>
               </>
             )}
@@ -360,13 +382,18 @@ const Layout = ({ children }) => {
                                   isActive(subItem.href)
                                     ? 'bg-primary-50 dark:bg-primary-600 text-primary-700 dark:text-white'
                                     : 'text-secondary-700 dark:text-secondary-200 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700'
-                                } ${sidebarCollapsed ? 'justify-center p-2' : 'p-2'} ${
+                                } ${sidebarCollapsed ? 'justify-center p-2 relative' : 'p-2'} ${
                                   subItem.comingSoon ? 'opacity-50 cursor-not-allowed' : ''
                                 }`}
                                 title={sidebarCollapsed ? subItem.name : ''}
                                 onClick={subItem.comingSoon ? (e) => e.preventDefault() : undefined}
                               >
-                                <subItem.icon className={`h-5 w-5 shrink-0 ${sidebarCollapsed ? 'mx-auto' : ''}`} />
+                                <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : ''}`}>
+                                  <subItem.icon className={`h-5 w-5 shrink-0 ${sidebarCollapsed ? 'mx-auto' : ''}`} />
+                                  {sidebarCollapsed && subItem.showUpgradeIcon && (
+                                    <UpgradeNotificationIcon className="h-3 w-3 absolute -top-1 -right-1" />
+                                  )}
+                                </div>
                                 {!sidebarCollapsed && (
                                   <span className="truncate flex items-center gap-2">
                                     {subItem.name}
@@ -374,6 +401,9 @@ const Layout = ({ children }) => {
                                       <span className="text-xs bg-secondary-100 text-secondary-600 px-1.5 py-0.5 rounded">
                                         Soon
                                       </span>
+                                    )}
+                                    {subItem.showUpgradeIcon && (
+                                      <UpgradeNotificationIcon className="h-3 w-3" />
                                     )}
                                   </span>
                                 )}
@@ -436,17 +466,22 @@ const Layout = ({ children }) => {
                 </div>
                 {/* Updated info */}
                 {stats && (
-                  <div className="px-3 py-1 border-t border-secondary-200 dark:border-secondary-700">
-                    <div className="flex items-center gap-x-2 text-xs text-secondary-500 dark:text-secondary-400">
-                      <Clock className="h-3 w-3" />
-                      <span>Updated: {formatRelativeTimeShort(stats.lastUpdated)}</span>
+                  <div className="px-2 py-1 border-t border-secondary-200 dark:border-secondary-700">
+                    <div className="flex items-center gap-x-1 text-xs text-secondary-500 dark:text-secondary-400">
+                      <Clock className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">Updated: {formatRelativeTimeShort(stats.lastUpdated)}</span>
                       <button
                         onClick={() => refetch()}
-                        className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded"
+                        className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded flex-shrink-0"
                         title="Refresh data"
                       >
                         <RefreshCw className="h-3 w-3" />
                       </button>
+                      {versionInfo && (
+                        <span className="text-xs text-secondary-400 dark:text-secondary-500 flex-shrink-0">
+                          v{versionInfo.version}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
@@ -473,7 +508,7 @@ const Layout = ({ children }) => {
                 </button>
                 {/* Updated info for collapsed sidebar */}
                 {stats && (
-                  <div className="flex justify-center py-1 border-t border-secondary-200 dark:border-secondary-700">
+                  <div className="flex flex-col items-center py-1 border-t border-secondary-200 dark:border-secondary-700">
                     <button
                       onClick={() => refetch()}
                       className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded"
@@ -481,6 +516,11 @@ const Layout = ({ children }) => {
                     >
                       <RefreshCw className="h-3 w-3" />
                     </button>
+                    {versionInfo && (
+                      <span className="text-xs text-secondary-400 dark:text-secondary-500 mt-1">
+                        v{versionInfo.version}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

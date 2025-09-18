@@ -344,6 +344,14 @@ router.post('/login', [
           { email: username }
         ],
         isActive: true
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        passwordHash: true,
+        role: true,
+        tfaEnabled: true
       }
     });
 
@@ -355,6 +363,15 @@ router.post('/login', [
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check if TFA is enabled
+    if (user.tfaEnabled) {
+      return res.status(200).json({
+        message: 'TFA verification required',
+        requiresTfa: true,
+        username: user.username
+      });
     }
 
     // Update last login
@@ -379,6 +396,102 @@ router.post('/login', [
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// TFA verification for login
+router.post('/verify-tfa', [
+  body('username').notEmpty().withMessage('Username is required'),
+  body('token').isLength({ min: 6, max: 6 }).withMessage('Token must be 6 digits'),
+  body('token').isNumeric().withMessage('Token must contain only numbers')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { username, token } = req.body;
+
+    // Find user
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username },
+          { email: username }
+        ],
+        isActive: true,
+        tfaEnabled: true
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        tfaSecret: true,
+        tfaBackupCodes: true
+      }
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials or TFA not enabled' });
+    }
+
+    // Verify TFA token using the TFA routes logic
+    const speakeasy = require('speakeasy');
+    
+    // Check if it's a backup code
+    const backupCodes = user.tfaBackupCodes ? JSON.parse(user.tfaBackupCodes) : [];
+    const isBackupCode = backupCodes.includes(token);
+
+    let verified = false;
+
+    if (isBackupCode) {
+      // Remove the used backup code
+      const updatedBackupCodes = backupCodes.filter(code => code !== token);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          tfaBackupCodes: JSON.stringify(updatedBackupCodes)
+        }
+      });
+      verified = true;
+    } else {
+      // Verify TOTP token
+      verified = speakeasy.totp.verify({
+        secret: user.tfaSecret,
+        encoding: 'base32',
+        token: token,
+        window: 2
+      });
+    }
+
+    if (!verified) {
+      return res.status(401).json({ error: 'Invalid verification code' });
+    }
+
+    // Update last login
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() }
+    });
+
+    // Generate token
+    const jwtToken = generateToken(user.id);
+
+    res.json({
+      message: 'Login successful',
+      token: jwtToken,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('TFA verification error:', error);
+    res.status(500).json({ error: 'TFA verification failed' });
   }
 });
 

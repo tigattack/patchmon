@@ -32,6 +32,7 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
       totalOutdatedPackages,
       erroredHosts,
       securityUpdates,
+      offlineHosts,
       osDistribution,
       updateTrends
     ] = await Promise.all([
@@ -72,6 +73,16 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
         where: {
           needsUpdate: true,
           isSecurityUpdate: true
+        }
+      }),
+
+      // Offline/Stale hosts (not updated within 3x the update interval)
+      prisma.host.count({
+        where: {
+          status: 'active',
+          lastUpdate: {
+            lt: moment(now).subtract(updateIntervalMinutes * 3, 'minutes').toDate()
+          }
         }
       }),
 
@@ -127,7 +138,8 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
         hostsNeedingUpdates,
         totalOutdatedPackages,
         erroredHosts,
-        securityUpdates
+        securityUpdates,
+        offlineHosts
       },
       charts: {
         osDistribution: osDistributionFormatted,

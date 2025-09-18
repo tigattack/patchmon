@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save, Server, Globe, Shield, AlertCircle, CheckCircle, Code, Plus, Trash2, Star, Download, X, Settings as SettingsIcon } from 'lucide-react';
 import { settingsAPI, agentVersionAPI, versionAPI } from '../utils/api';
+import { useUpdateNotification } from '../contexts/UpdateNotificationContext';
+import UpgradeNotificationIcon from '../components/UpgradeNotificationIcon';
 
 const Settings = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +14,7 @@ const Settings = () => {
     updateInterval: 60,
     autoUpdate: false,
     githubRepoUrl: 'git@github.com:9technologygroup/patchmon.net.git',
+    repositoryType: 'public',
     sshKeyPath: '',
     useCustomSshKey: false
   });
@@ -21,12 +24,15 @@ const Settings = () => {
   // Tab management
   const [activeTab, setActiveTab] = useState('server');
   
+  // Get update notification state
+  const { updateAvailable } = useUpdateNotification();
+  
   // Tab configuration
   const tabs = [
     { id: 'server', name: 'Server Configuration', icon: Server },
     { id: 'frontend', name: 'Frontend Configuration', icon: Globe },
     { id: 'agent', name: 'Agent Management', icon: SettingsIcon },
-    { id: 'version', name: 'Server Version', icon: Code }
+    { id: 'version', name: 'Server Version', icon: Code, showUpgradeIcon: updateAvailable }
   ];
   
   // Agent version management state
@@ -76,6 +82,7 @@ const Settings = () => {
         updateInterval: settings.updateInterval || 60,
         autoUpdate: settings.autoUpdate || false,
         githubRepoUrl: settings.githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git',
+        repositoryType: settings.repositoryType || 'public',
         sshKeyPath: settings.sshKeyPath || '',
         useCustomSshKey: !!settings.sshKeyPath
       };
@@ -107,6 +114,7 @@ const Settings = () => {
         updateInterval: data.settings?.updateInterval || data.updateInterval || 60,
         autoUpdate: data.settings?.autoUpdate || data.autoUpdate || false,
         githubRepoUrl: data.settings?.githubRepoUrl || data.githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git',
+        repositoryType: data.settings?.repositoryType || data.repositoryType || 'public',
         sshKeyPath: data.settings?.sshKeyPath || data.sshKeyPath || '',
         useCustomSshKey: !!(data.settings?.sshKeyPath || data.sshKeyPath)
       });
@@ -301,6 +309,7 @@ const Settings = () => {
       // Remove the frontend-only field
       delete dataToSubmit.useCustomSshKey;
       
+      console.log('Submitting data with githubRepoUrl:', dataToSubmit.githubRepoUrl);
       updateSettingsMutation.mutate(dataToSubmit);
     } else {
       console.log('Validation failed:', errors);
@@ -368,6 +377,9 @@ const Settings = () => {
                 >
                   <Icon className="h-4 w-4" />
                   {tab.name}
+                  {tab.showUpgradeIcon && (
+                    <UpgradeNotificationIcon className="h-3 w-3" />
+                  )}
                 </button>
               );
             })}
@@ -776,11 +788,50 @@ const Settings = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+                      Repository Type
+                    </label>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          id="repo-public"
+                          name="repositoryType"
+                          value="public"
+                          checked={formData.repositoryType === 'public'}
+                          onChange={(e) => handleInputChange('repositoryType', e.target.value)}
+                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                        />
+                        <label htmlFor="repo-public" className="ml-2 text-sm text-secondary-700 dark:text-secondary-200">
+                          Public Repository (uses GitHub API - no authentication required)
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          id="repo-private"
+                          name="repositoryType"
+                          value="private"
+                          checked={formData.repositoryType === 'private'}
+                          onChange={(e) => handleInputChange('repositoryType', e.target.value)}
+                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                        />
+                        <label htmlFor="repo-private" className="ml-2 text-sm text-secondary-700 dark:text-secondary-200">
+                          Private Repository (uses SSH with deploy key)
+                        </label>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
+                      Choose whether your repository is public or private to determine the appropriate access method.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
                       GitHub Repository URL
                     </label>
                     <input
                       type="text"
-                      value={formData.githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git'}
+                      value={formData.githubRepoUrl || ''}
                       onChange={(e) => handleInputChange('githubRepoUrl', e.target.value)}
                       className="w-full border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white font-mono text-sm"
                       placeholder="git@github.com:username/repository.git"
@@ -790,25 +841,26 @@ const Settings = () => {
                     </p>
                   </div>
                   
-                  <div>
-                    <div className="flex items-center gap-3 mb-3">
-                      <input
-                        type="checkbox"
-                        id="useCustomSshKey"
-                        checked={formData.useCustomSshKey}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          handleInputChange('useCustomSshKey', checked);
-                          if (!checked) {
-                            handleInputChange('sshKeyPath', '');
-                          }
-                        }}
-                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                      />
-                      <label htmlFor="useCustomSshKey" className="text-sm font-medium text-secondary-700 dark:text-secondary-200">
-                        Set custom SSH key path
-                      </label>
-                    </div>
+                  {formData.repositoryType === 'private' && (
+                    <div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <input
+                          type="checkbox"
+                          id="useCustomSshKey"
+                          checked={formData.useCustomSshKey}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            handleInputChange('useCustomSshKey', checked);
+                            if (!checked) {
+                              handleInputChange('sshKeyPath', '');
+                            }
+                          }}
+                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="useCustomSshKey" className="text-sm font-medium text-secondary-700 dark:text-secondary-200">
+                          Set custom SSH key path
+                        </label>
+                      </div>
                     
                     {formData.useCustomSshKey && (
                       <div>
@@ -866,7 +918,8 @@ const Settings = () => {
                         Using auto-detection for SSH key location
                       </p>
                     )}
-                  </div>
+                    </div>
+                  )}
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-white dark:bg-secondary-800 rounded-lg p-4 border border-secondary-200 dark:border-secondary-600">
