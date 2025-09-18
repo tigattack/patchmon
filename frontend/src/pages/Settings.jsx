@@ -11,7 +11,8 @@ const Settings = () => {
     frontendUrl: 'http://localhost:3000',
     updateInterval: 60,
     autoUpdate: false,
-    githubRepoUrl: 'git@github.com:9technologygroup/patchmon.net.git'
+    githubRepoUrl: 'git@github.com:9technologygroup/patchmon.net.git',
+    sshKeyPath: ''
   });
   const [errors, setErrors] = useState({});
   const [isDirty, setIsDirty] = useState(false);
@@ -66,7 +67,8 @@ const Settings = () => {
         frontendUrl: settings.frontendUrl || 'http://localhost:3000',
         updateInterval: settings.updateInterval || 60,
         autoUpdate: settings.autoUpdate || false,
-        githubRepoUrl: settings.githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git'
+        githubRepoUrl: settings.githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git',
+        sshKeyPath: settings.sshKeyPath || ''
       };
       console.log('Setting form data to:', newFormData);
       setFormData(newFormData);
@@ -719,6 +721,22 @@ const Settings = () => {
                     />
                     <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
                       SSH or HTTPS URL to your GitHub repository
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+                      SSH Key Path (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.sshKeyPath || ''}
+                      onChange={(e) => handleInputChange('sshKeyPath', e.target.value)}
+                      className="w-full border border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white font-mono text-sm"
+                      placeholder="/root/.ssh/id_ed25519"
+                    />
+                    <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
+                      Path to your SSH deploy key. Leave empty to auto-detect from common locations.
                     </p>
                   </div>
                   
