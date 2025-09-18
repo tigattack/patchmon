@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { versionAPI } from '../utils/api'
 
 const UpdateNotificationContext = createContext()
 
@@ -11,20 +13,29 @@ export const useUpdateNotification = () => {
 }
 
 export const UpdateNotificationProvider = ({ children }) => {
-  const [updateAvailable, setUpdateAvailable] = useState(false)
-  const [updateInfo, setUpdateInfo] = useState(null)
+  const [dismissed, setDismissed] = useState(false)
+
+  // Query for update information
+  const { data: updateData, isLoading, error } = useQuery({
+    queryKey: ['updateCheck'],
+    queryFn: () => versionAPI.checkUpdates().then(res => res.data),
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    retry: 1
+  })
+
+  const updateAvailable = updateData?.isUpdateAvailable && !dismissed
+  const updateInfo = updateData
 
   const dismissNotification = () => {
-    setUpdateAvailable(false)
-    setUpdateInfo(null)
+    setDismissed(true)
   }
 
   const value = {
     updateAvailable,
     updateInfo,
     dismissNotification,
-    isLoading: false,
-    error: null
+    isLoading,
+    error
   }
 
   return (

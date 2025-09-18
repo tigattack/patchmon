@@ -18,6 +18,7 @@ const dashboardPreferencesRoutes = require('./routes/dashboardPreferencesRoutes'
 const repositoryRoutes = require('./routes/repositoryRoutes');
 const versionRoutes = require('./routes/versionRoutes');
 const tfaRoutes = require('./routes/tfaRoutes');
+const updateScheduler = require('./services/updateScheduler');
 
 // Initialize Prisma client
 const prisma = new PrismaClient();
@@ -160,6 +161,7 @@ process.on('SIGTERM', async () => {
   if (process.env.ENABLE_LOGGING === 'true') {
     logger.info('SIGTERM received, shutting down gracefully');
   }
+  updateScheduler.stop();
   await prisma.$disconnect();
   process.exit(0);
 });
@@ -168,6 +170,7 @@ process.on('SIGINT', async () => {
   if (process.env.ENABLE_LOGGING === 'true') {
     logger.info('SIGINT received, shutting down gracefully');
   }
+  updateScheduler.stop();
   await prisma.$disconnect();
   process.exit(0);
 });
@@ -178,6 +181,9 @@ app.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`);
     logger.info(`Environment: ${process.env.NODE_ENV}`);
   }
+  
+  // Start update scheduler
+  updateScheduler.start();
 });
 
 module.exports = app; 

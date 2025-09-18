@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Save, Server, Globe, Shield, AlertCircle, CheckCircle, Code, Plus, Trash2, Star, Download, X, Settings as SettingsIcon } from 'lucide-react';
+import { Save, Server, Globe, Shield, AlertCircle, CheckCircle, Code, Plus, Trash2, Star, Download, X, Settings as SettingsIcon, Clock } from 'lucide-react';
 import { settingsAPI, agentVersionAPI, versionAPI } from '../utils/api';
 import { useUpdateNotification } from '../contexts/UpdateNotificationContext';
 import UpgradeNotificationIcon from '../components/UpgradeNotificationIcon';
@@ -195,6 +195,7 @@ const Settings = () => {
         currentVersion: data.currentVersion,
         latestVersion: data.latestVersion,
         isUpdateAvailable: data.isUpdateAvailable,
+        lastUpdateCheck: data.lastUpdateCheck,
         checking: false,
         error: null
       });
@@ -949,6 +950,22 @@ const Settings = () => {
                       </span>
                     </div>
                   </div>
+                  
+                  {/* Last Checked Time */}
+                  {versionInfo.lastUpdateCheck && (
+                    <div className="bg-white dark:bg-secondary-800 rounded-lg p-4 border border-secondary-200 dark:border-secondary-600">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-medium text-secondary-700 dark:text-secondary-300">Last Checked</span>
+                      </div>
+                      <span className="text-sm text-secondary-600 dark:text-secondary-400">
+                        {new Date(versionInfo.lastUpdateCheck).toLocaleString()}
+                      </span>
+                      <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
+                        Updates are checked automatically every 24 hours
+                      </p>
+                    </div>
+                  )}
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">

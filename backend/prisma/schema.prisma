@@ -187,6 +187,9 @@ model Settings {
   githubRepoUrl   String   @map("github_repo_url") @default("git@github.com:9technologygroup/patchmon.net.git") // GitHub repository URL for version checking
   repositoryType  String   @map("repository_type") @default("public") // "public" or "private"
   sshKeyPath      String?  @map("ssh_key_path") // Optional SSH key path for deploy key authentication
+  lastUpdateCheck DateTime? @map("last_update_check") // When the system last checked for updates
+  updateAvailable Boolean  @map("update_available") @default(false) // Whether an update is available
+  latestVersion   String?  @map("latest_version") // Latest available version
   createdAt       DateTime @map("created_at") @default(now())
   updatedAt       DateTime @map("updated_at") @updatedAt
 
