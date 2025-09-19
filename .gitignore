@@ -143,3 +143,4 @@ manage-patchmon.sh
 setup-installer-site.sh
 install-server.*
 notify-clients-upgrade.sh
+debug-agent.sh
