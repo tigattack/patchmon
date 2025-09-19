@@ -306,8 +306,17 @@ router.post('/update', validateApiCredentials, [
           where: { hostId: host.id }
         });
 
-        // Process each repository
+        // Deduplicate repositories by URL+distribution+components to avoid constraint violations
+        const uniqueRepos = new Map();
         for (const repoData of repositories) {
+          const key = `${repoData.url}|${repoData.distribution}|${repoData.components}`;
+          if (!uniqueRepos.has(key)) {
+            uniqueRepos.set(key, repoData);
+          }
+        }
+
+        // Process each unique repository
+        for (const repoData of uniqueRepos.values()) {
           // Find or create repository
           let repo = await tx.repository.findFirst({
             where: {
@@ -332,34 +341,15 @@ router.post('/update', validateApiCredentials, [
             });
           }
 
-          // Create host repository relationship (handle duplicates gracefully)
-          try {
-            await tx.hostRepository.create({
-              data: {
-                hostId: host.id,
-                repositoryId: repo.id,
-                isEnabled: repoData.isEnabled !== false, // Default to enabled
-                lastChecked: new Date()
-              }
-            });
-          } catch (error) {
-            // If it's a duplicate constraint error, update the existing record
-            if (error.code === 'P2002') {
-              await tx.hostRepository.updateMany({
-                where: {
-                  hostId: host.id,
-                  repositoryId: repo.id
-                },
-                data: {
-                  isEnabled: repoData.isEnabled !== false,
-                  lastChecked: new Date()
-                }
-              });
-            } else {
-              // Re-throw other errors
-              throw error;
+          // Create host repository relationship
+          await tx.hostRepository.create({
+            data: {
+              hostId: host.id,
+              repositoryId: repo.id,
+              isEnabled: repoData.isEnabled !== false, // Default to enabled
+              lastChecked: new Date()
             }
-          }
+          });
         }
       }
     });
