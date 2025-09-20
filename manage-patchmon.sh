@@ -2330,6 +2330,31 @@ update_single_instance() {
     
     cd "$app_dir"
     
+    # Check current branch and switch to main if needed (for main script)
+    local current_branch=$(git branch --show-current 2>/dev/null || echo "unknown")
+    if [ "$current_branch" != "main" ]; then
+        print_info "Current branch: $current_branch, switching to main branch..."
+        
+        # Stash any local changes before switching
+        if git status --porcelain | grep -q .; then
+            print_info "Stashing local changes before branch switch..."
+            git stash push -m "Auto-stash before switching to main branch $(date)"
+        fi
+        
+        # Switch to main branch
+        if git checkout main 2>/dev/null; then
+            print_status "Successfully switched to main branch"
+        else
+            # If main branch doesn't exist locally, create it from origin/main
+            print_info "Creating local main branch from origin/main..."
+            git fetch origin main
+            git checkout -b main origin/main
+            print_status "Created and switched to main branch"
+        fi
+    else
+        print_info "Already on main branch"
+    fi
+    
     # Backup database first
     print_info "Creating database backup..."
     

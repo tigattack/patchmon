@@ -2335,6 +2335,31 @@ update_single_instance() {
     
     cd "$app_dir"
     
+    # Check current branch and switch to dev if needed
+    local current_branch=$(git branch --show-current 2>/dev/null || echo "unknown")
+    if [ "$current_branch" != "dev" ]; then
+        print_info "Current branch: $current_branch, switching to dev branch..."
+        
+        # Stash any local changes before switching
+        if git status --porcelain | grep -q .; then
+            print_info "Stashing local changes before branch switch..."
+            git stash push -m "Auto-stash before switching to dev branch $(date)"
+        fi
+        
+        # Switch to dev branch
+        if git checkout dev 2>/dev/null; then
+            print_status "Successfully switched to dev branch"
+        else
+            # If dev branch doesn't exist locally, create it from origin/dev
+            print_info "Creating local dev branch from origin/dev..."
+            git fetch origin dev
+            git checkout -b dev origin/dev
+            print_status "Created and switched to dev branch"
+        fi
+    else
+        print_info "Already on dev branch"
+    fi
+    
     # Backup database first
     print_info "Creating database backup..."
     
