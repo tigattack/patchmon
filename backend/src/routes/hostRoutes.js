@@ -133,7 +133,7 @@ const validateApiCredentials = async (req, res, next) => {
 
 // Admin endpoint to create a new host manually (replaces auto-registration)
 router.post('/create', authenticateToken, requireManageHosts, [
-  body('hostname').isLength({ min: 1 }).withMessage('Hostname is required'),
+  body('friendlyName').isLength({ min: 1 }).withMessage('Friendly name is required'),
   body('hostGroupId').optional()
 ], async (req, res) => {
   try {
@@ -142,14 +142,14 @@ router.post('/create', authenticateToken, requireManageHosts, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { hostname, hostGroupId } = req.body;
+    const { friendlyName, hostGroupId } = req.body;
     
     // Generate unique API credentials for this host
     const { apiId, apiKey } = generateApiCredentials();
     
     // Check if host already exists
     const existingHost = await prisma.host.findUnique({
-      where: { hostname }
+      where: { friendlyName }
     });
 
     if (existingHost) {
@@ -170,7 +170,7 @@ router.post('/create', authenticateToken, requireManageHosts, [
     // Create new host with API credentials - system info will be populated when agent connects
     const host = await prisma.host.create({
       data: {
-        hostname,
+        friendlyName,
         osType: 'unknown', // Will be updated when agent connects
         osVersion: 'unknown', // Will be updated when agent connects
         ip: null, // Will be updated when agent connects
@@ -194,7 +194,7 @@ router.post('/create', authenticateToken, requireManageHosts, [
     res.status(201).json({
       message: 'Host created successfully',
       hostId: host.id,
-      hostname: host.hostname,
+      friendlyName: host.friendlyName,
       apiId: host.apiId,
       apiKey: host.apiKey,
       hostGroup: host.hostGroup,
@@ -223,7 +223,22 @@ router.post('/update', validateApiCredentials, [
   body('packages.*.availableVersion').optional().isLength({ min: 1 }),
   body('packages.*.needsUpdate').isBoolean().withMessage('needsUpdate must be boolean'),
   body('packages.*.isSecurityUpdate').optional().isBoolean().withMessage('isSecurityUpdate must be boolean'),
-  body('agentVersion').optional().isLength({ min: 1 }).withMessage('Agent version must be a non-empty string')
+  body('agentVersion').optional().isLength({ min: 1 }).withMessage('Agent version must be a non-empty string'),
+  // Hardware Information
+  body('cpuModel').optional().isString().withMessage('CPU model must be a string'),
+  body('cpuCores').optional().isInt({ min: 1 }).withMessage('CPU cores must be a positive integer'),
+  body('ramInstalled').optional().isInt({ min: 1 }).withMessage('RAM installed must be a positive integer'),
+  body('swapSize').optional().isInt({ min: 0 }).withMessage('Swap size must be a non-negative integer'),
+  body('diskDetails').optional().isArray().withMessage('Disk details must be an array'),
+  // Network Information
+  body('gatewayIp').optional().isIP().withMessage('Gateway IP must be a valid IP address'),
+  body('dnsServers').optional().isArray().withMessage('DNS servers must be an array'),
+  body('networkInterfaces').optional().isArray().withMessage('Network interfaces must be an array'),
+  // System Information
+  body('kernelVersion').optional().isString().withMessage('Kernel version must be a string'),
+  body('selinuxStatus').optional().isIn(['enabled', 'disabled', 'permissive']).withMessage('SELinux status must be enabled, disabled, or permissive'),
+  body('systemUptime').optional().isString().withMessage('System uptime must be a string'),
+  body('loadAverage').optional().isArray().withMessage('Load average must be an array')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -234,13 +249,34 @@ router.post('/update', validateApiCredentials, [
     const { packages, repositories } = req.body;
     const host = req.hostRecord;
 
-    // Update host last update timestamp and OS info if provided
+    // Update host last update timestamp and system info if provided
     const updateData = { lastUpdate: new Date() };
+    
+    // Basic system info
     if (req.body.osType) updateData.osType = req.body.osType;
     if (req.body.osVersion) updateData.osVersion = req.body.osVersion;
+    if (req.body.hostname) updateData.hostname = req.body.hostname;
     if (req.body.ip) updateData.ip = req.body.ip;
     if (req.body.architecture) updateData.architecture = req.body.architecture;
     if (req.body.agentVersion) updateData.agentVersion = req.body.agentVersion;
+    
+    // Hardware Information
+    if (req.body.cpuModel) updateData.cpuModel = req.body.cpuModel;
+    if (req.body.cpuCores) updateData.cpuCores = req.body.cpuCores;
+    if (req.body.ramInstalled) updateData.ramInstalled = req.body.ramInstalled;
+    if (req.body.swapSize !== undefined) updateData.swapSize = req.body.swapSize;
+    if (req.body.diskDetails) updateData.diskDetails = req.body.diskDetails;
+    
+    // Network Information
+    if (req.body.gatewayIp) updateData.gatewayIp = req.body.gatewayIp;
+    if (req.body.dnsServers) updateData.dnsServers = req.body.dnsServers;
+    if (req.body.networkInterfaces) updateData.networkInterfaces = req.body.networkInterfaces;
+    
+    // System Information
+    if (req.body.kernelVersion) updateData.kernelVersion = req.body.kernelVersion;
+    if (req.body.selinuxStatus) updateData.selinuxStatus = req.body.selinuxStatus;
+    if (req.body.systemUptime) updateData.systemUptime = req.body.systemUptime;
+    if (req.body.loadAverage) updateData.loadAverage = req.body.loadAverage;
     
     // If this is the first update (status is 'pending'), change to 'active'
     if (host.status === 'pending') {
@@ -454,6 +490,7 @@ router.get('/info', validateApiCredentials, async (req, res) => {
       where: { id: req.hostRecord.id },
       select: {
         id: true,
+        friendlyName: true,
         hostname: true,
         ip: true,
         osType: true,
@@ -485,12 +522,12 @@ router.post('/ping', validateApiCredentials, async (req, res) => {
     const response = { 
       message: 'Ping successful',
       timestamp: new Date().toISOString(),
-      hostname: req.hostRecord.hostname
+      friendlyName: req.hostRecord.friendlyName
     };
 
     // Check if this is a crontab update trigger
     if (req.body.triggerCrontabUpdate && req.hostRecord.autoUpdate) {
-      console.log(`Triggering crontab update for host: ${req.hostRecord.hostname}`);
+      console.log(`Triggering crontab update for host: ${req.hostRecord.friendlyName}`);
       response.crontabUpdate = {
         shouldUpdate: true,
         message: 'Update interval changed, please run: /usr/local/bin/patchmon-agent.sh update-crontab',
@@ -568,7 +605,7 @@ router.put('/bulk/group', authenticateToken, requireManageHosts, [
     // Check if all hosts exist
     const existingHosts = await prisma.host.findMany({
       where: { id: { in: hostIds } },
-      select: { id: true, hostname: true }
+      select: { id: true, friendlyName: true }
     });
 
     if (existingHosts.length !== hostIds.length) {
@@ -593,7 +630,7 @@ router.put('/bulk/group', authenticateToken, requireManageHosts, [
       where: { id: { in: hostIds } },
       select: {
         id: true,
-        hostname: true,
+        friendlyName: true,
         hostGroup: {
           select: {
             id: true,
@@ -681,6 +718,7 @@ router.get('/admin/list', authenticateToken, requireManageHosts, async (req, res
     const hosts = await prisma.host.findMany({
       select: {
         id: true,
+        friendlyName: true,
         hostname: true,
         ip: true,
         osType: true,
@@ -742,7 +780,7 @@ router.patch('/:hostId/auto-update', authenticateToken, requireManageHosts, [
       message: `Host auto-update ${autoUpdate ? 'enabled' : 'disabled'} successfully`,
       host: {
         id: host.id,
-        hostname: host.hostname,
+        friendlyName: host.friendlyName,
         autoUpdate: host.autoUpdate
       }
     });
@@ -931,6 +969,79 @@ router.delete('/agent/versions/:versionId', authenticateToken, requireManageSett
   } catch (error) {
     console.error('Delete agent version error:', error);
     res.status(500).json({ error: 'Failed to delete agent version' });
+  }
+});
+
+// Update host friendly name (admin only)
+router.patch('/:hostId/friendly-name', authenticateToken, requireManageHosts, [
+  body('friendlyName').isLength({ min: 1, max: 100 }).withMessage('Friendly name must be between 1 and 100 characters')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { hostId } = req.params;
+    const { friendlyName } = req.body;
+
+    // Check if host exists
+    const host = await prisma.host.findUnique({
+      where: { id: hostId }
+    });
+
+    if (!host) {
+      return res.status(404).json({ error: 'Host not found' });
+    }
+
+    // Check if friendly name is already taken by another host
+    const existingHost = await prisma.host.findFirst({
+      where: {
+        friendlyName: friendlyName,
+        id: { not: hostId }
+      }
+    });
+
+    if (existingHost) {
+      return res.status(400).json({ error: 'Friendly name is already taken by another host' });
+    }
+
+    // Update the friendly name
+    const updatedHost = await prisma.host.update({
+      where: { id: hostId },
+      data: { friendlyName },
+      select: {
+        id: true,
+        friendlyName: true,
+        hostname: true,
+        ip: true,
+        osType: true,
+        osVersion: true,
+        architecture: true,
+        lastUpdate: true,
+        status: true,
+        hostGroupId: true,
+        agentVersion: true,
+        autoUpdate: true,
+        createdAt: true,
+        updatedAt: true,
+        hostGroup: {
+          select: {
+            id: true,
+            name: true,
+            color: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      message: 'Friendly name updated successfully',
+      host: updatedHost
+    });
+  } catch (error) {
+    console.error('Update friendly name error:', error);
+    res.status(500).json({ error: 'Failed to update friendly name' });
   }
 });
 

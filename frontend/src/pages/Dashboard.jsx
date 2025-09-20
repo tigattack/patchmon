@@ -28,7 +28,7 @@ const Dashboard = () => {
 
   // Navigation handlers
   const handleTotalHostsClick = () => {
-    navigate('/hosts')
+    navigate('/hosts', { replace: true })
   }
 
   const handleHostsNeedingUpdatesClick = () => {
@@ -52,11 +52,11 @@ const Dashboard = () => {
   }
 
   const handleOSDistributionClick = () => {
-    navigate('/hosts')
+    navigate('/hosts', { replace: true })
   }
 
   const handleUpdateStatusClick = () => {
-    navigate('/hosts')
+    navigate('/hosts', { replace: true })
   }
 
   const handlePackagePriorityClick = () => {

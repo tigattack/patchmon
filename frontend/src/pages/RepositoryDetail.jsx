@@ -339,7 +339,7 @@ const RepositoryDetail = () => {
                         to={`/hosts/${hostRepo.host.id}`}
                         className="text-primary-600 hover:text-primary-700 font-medium"
                       >
-                        {hostRepo.host.hostname}
+                        {hostRepo.host.friendlyName}
                       </Link>
                       <div className="flex items-center gap-4 text-sm text-secondary-500 dark:text-secondary-400 mt-1">
                         <span>IP: {hostRepo.host.ip}</span>

@@ -41,6 +41,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
         hosts: {
           select: {
             id: true,
+            friendlyName: true,
             hostname: true,
             ip: true,
             osType: true,
@@ -201,7 +202,7 @@ router.get('/:id/hosts', authenticateToken, async (req, res) => {
       where: { hostGroupId: id },
       select: {
         id: true,
-        hostname: true,
+        friendlyName: true,
         ip: true,
         osType: true,
         osVersion: true,
@@ -211,7 +212,7 @@ router.get('/:id/hosts', authenticateToken, async (req, res) => {
         createdAt: true
       },
       orderBy: {
-        hostname: 'asc'
+        friendlyName: 'asc'
       }
     });
 

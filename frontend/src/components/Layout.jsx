@@ -20,7 +20,10 @@ import {
   GitBranch,
   Wrench,
   Container,
-  Plus
+  Plus,
+  Activity,
+  Cog,
+  FileText
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -65,7 +68,7 @@ const Layout = ({ children }) => {
         ...(canViewHosts() ? [{ name: 'Hosts', href: '/hosts', icon: Server }] : []),
         ...(canViewPackages() ? [{ name: 'Packages', href: '/packages', icon: Package }] : []),
         ...(canViewHosts() ? [{ name: 'Repos', href: '/repositories', icon: GitBranch }] : []),
-        { name: 'Services', href: '/services', icon: Wrench, comingSoon: true },
+        { name: 'Services', href: '/services', icon: Activity, comingSoon: true },
         { name: 'Docker', href: '/docker', icon: Container, comingSoon: true },
         { name: 'Reporting', href: '/reporting', icon: BarChart3, comingSoon: true },
       ]
@@ -80,16 +83,17 @@ const Layout = ({ children }) => {
     {
       section: 'Settings',
       items: [
+        ...(canManageHosts() ? [{ 
+          name: 'PatchMon Options', 
+          href: '/options', 
+          icon: Settings
+        }] : []),
+        { name: 'Audit Log', href: '/audit-log', icon: FileText, comingSoon: true },
         ...(canManageSettings() ? [{ 
           name: 'Server Config', 
           href: '/settings', 
-          icon: Settings,
+          icon: Wrench,
           showUpgradeIcon: updateAvailable
-        }] : []),
-        ...(canManageHosts() ? [{ 
-          name: 'Options', 
-          href: '/options', 
-          icon: Settings
         }] : []),
       ]
     }
@@ -110,7 +114,8 @@ const Layout = ({ children }) => {
     if (path === '/users') return 'Users'
     if (path === '/permissions') return 'Permissions'
     if (path === '/settings') return 'Settings'
-    if (path === '/options') return 'Options'
+    if (path === '/options') return 'PatchMon Options'
+    if (path === '/audit-log') return 'Audit Log'
     if (path === '/profile') return 'My Profile'
     if (path.startsWith('/hosts/')) return 'Host Details'
     if (path.startsWith('/packages/')) return 'Package Details'

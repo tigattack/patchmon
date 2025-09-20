@@ -31,11 +31,14 @@ import {
   EyeOff as EyeOffIcon
 } from 'lucide-react'
 import { dashboardAPI, adminHostsAPI, settingsAPI, hostGroupsAPI, formatRelativeTime } from '../utils/api'
+import { OSIcon } from '../utils/osIcons.jsx'
+import InlineEdit from '../components/InlineEdit'
+import InlineGroupEdit from '../components/InlineGroupEdit'
 
 // Add Host Modal Component
 const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
-    hostname: '',
+    friendlyName: '',
     hostGroupId: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -59,7 +62,7 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
       const response = await adminHostsAPI.create(formData)
       console.log('Host created successfully:', response.data)
       onSuccess(response.data)
-      setFormData({ hostname: '', hostGroupId: '' })
+      setFormData({ friendlyName: '', hostGroupId: '' })
       onClose()
     } catch (err) {
       console.error('Full error object:', err)
@@ -98,12 +101,12 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">Hostname *</label>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">Friendly Name *</label>
             <input
               type="text"
               required
-              value={formData.hostname}
-              onChange={(e) => setFormData({ ...formData, hostname: e.target.value })}
+              value={formData.friendlyName}
+              onChange={(e) => setFormData({ ...formData, friendlyName: e.target.value })}
               className="block w-full px-3 py-2.5 text-base border-2 border-secondary-300 dark:border-secondary-600 rounded-lg shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white transition-all duration-200"
               placeholder="server.example.com"
             />
@@ -249,7 +252,7 @@ echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo 
 
       fullSetup: `#!/bin/bash
 # Complete PatchMon Agent Setup Script
-# Run this on the target host: ${host?.hostname}
+# Run this on the target host: ${host?.friendlyName}
 
 echo "🔄 Setting up PatchMon agent..."
 
@@ -292,7 +295,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-secondary-900">Host Setup - {host.hostname}</h3>
+          <h3 className="text-lg font-medium text-secondary-900">Host Setup - {host.friendlyName}</h3>
           <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600">
             <X className="h-5 w-5" />
           </button>
@@ -348,7 +351,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
             <div className="bg-green-50 border border-green-200 rounded-md p-4">
               <h4 className="text-sm font-medium text-green-800 mb-2">🚀 One-Line Installation</h4>
               <p className="text-sm text-green-700">
-                Copy and paste this single command on <strong>{host.hostname}</strong> to install and configure the PatchMon agent automatically.
+                Copy and paste this single command on <strong>{host.friendlyName}</strong> to install and configure the PatchMon agent automatically.
               </p>
             </div>
 
@@ -375,7 +378,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
               <ul className="text-sm text-blue-700 space-y-1">
                 <li>• Downloads the PatchMon installation script</li>
                 <li>• Installs the agent to <code>/usr/local/bin/patchmon-agent.sh</code></li>
-                <li>• Configures API credentials for <strong>{host.hostname}</strong></li>
+                <li>• Configures API credentials for <strong>{host.friendlyName}</strong></li>
                 <li>• Tests the connection to PatchMon server</li>
                 <li>• Sends initial package data</li>
                 <li>• Sets up hourly automatic updates via crontab</li>
@@ -441,7 +444,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
             <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
               <h4 className="text-sm font-medium text-amber-800 mb-2">⚠️ Security Note</h4>
               <p className="text-sm text-amber-700">
-                Keep these credentials secure. They provide access to update package information for <strong>{host.hostname}</strong> only.
+                Keep these credentials secure. They provide access to update package information for <strong>{host.friendlyName}</strong> only.
               </p>
             </div>
           </div>
@@ -452,7 +455,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
               <h4 className="text-sm font-medium text-blue-800 mb-2">📋 Step-by-Step Setup</h4>
               <p className="text-sm text-blue-700">
-                Follow these commands on <strong>{host.hostname}</strong> to install and configure the PatchMon agent.
+                Follow these commands on <strong>{host.friendlyName}</strong> to install and configure the PatchMon agent.
               </p>
             </div>
 
@@ -549,7 +552,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
             <div className="bg-green-50 border border-green-200 rounded-md p-4">
               <h4 className="text-sm font-medium text-green-800 mb-2">🚀 Automated Setup</h4>
               <p className="text-sm text-green-700">
-                Copy this complete setup script to <strong>{host.hostname}</strong> and run it to automatically install and configure everything.
+                Copy this complete setup script to <strong>{host.friendlyName}</strong> and run it to automatically install and configure everything.
               </p>
             </div>
 
@@ -570,7 +573,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
               <div className="mt-3 text-sm text-secondary-600">
                 <p><strong>Usage:</strong></p>
                 <p>1. Copy the script above</p>
-                <p>2. Save it to a file on {host.hostname} (e.g., <code>setup-patchmon.sh</code>)</p>
+                <p>2. Save it to a file on {host.friendlyName} (e.g., <code>setup-patchmon.sh</code>)</p>
                 <p>3. Run: <code>chmod +x setup-patchmon.sh && sudo ./setup-patchmon.sh</code></p>
               </div>
             </div>
@@ -642,13 +645,24 @@ const Hosts = () => {
       newSearchParams.delete('action')
       navigate(`/hosts${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ''}`, { replace: true })
     }
+
+    // Handle selected hosts from packages page
+    const selected = searchParams.get('selected')
+    if (selected) {
+      const hostIds = selected.split(',').filter(Boolean)
+      setSelectedHosts(hostIds)
+      // Remove the selected parameter from URL without triggering a page reload
+      const newSearchParams = new URLSearchParams(searchParams)
+      newSearchParams.delete('selected')
+      navigate(`/hosts${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ''}`, { replace: true })
+    }
   }, [searchParams, navigate])
 
   // Column configuration
   const [columnConfig, setColumnConfig] = useState(() => {
     const defaultConfig = [
       { id: 'select', label: 'Select', visible: true, order: 0 },
-      { id: 'host', label: 'Host', visible: true, order: 1 },
+      { id: 'host', label: 'Friendly Name', visible: true, order: 1 },
       { id: 'ip', label: 'IP Address', visible: false, order: 2 },
       { id: 'group', label: 'Group', visible: true, order: 3 },
       { id: 'os', label: 'OS', visible: true, order: 4 },
@@ -732,7 +746,28 @@ const Hosts = () => {
 
   const bulkUpdateGroupMutation = useMutation({
     mutationFn: ({ hostIds, hostGroupId }) => adminHostsAPI.bulkUpdateGroup(hostIds, hostGroupId),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('bulkUpdateGroupMutation success:', data);
+      
+      // Update the cache with the new host data
+      if (data && data.hosts) {
+        queryClient.setQueryData(['hosts'], (oldData) => {
+          if (!oldData) return oldData;
+          return oldData.map(host => {
+            const updatedHost = data.hosts.find(h => h.id === host.id);
+            if (updatedHost) {
+              // Ensure hostGroupId is set correctly
+              return {
+                ...updatedHost,
+                hostGroupId: updatedHost.hostGroup?.id || null
+              };
+            }
+            return host;
+          });
+        });
+      }
+      
+      // Also invalidate to ensure consistency
       queryClient.invalidateQueries(['hosts'])
       setSelectedHosts([])
       setShowBulkAssignModal(false)
@@ -744,6 +779,55 @@ const Hosts = () => {
     mutationFn: ({ hostId, autoUpdate }) => adminHostsAPI.toggleAutoUpdate(hostId, autoUpdate).then(res => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries(['hosts'])
+    }
+  })
+
+  const updateFriendlyNameMutation = useMutation({
+    mutationFn: ({ hostId, friendlyName }) => adminHostsAPI.updateFriendlyName(hostId, friendlyName).then(res => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['hosts'])
+    }
+  })
+
+  const updateHostGroupMutation = useMutation({
+    mutationFn: ({ hostId, hostGroupId }) => {
+      console.log('updateHostGroupMutation called with:', { hostId, hostGroupId });
+      return adminHostsAPI.updateGroup(hostId, hostGroupId).then(res => {
+        console.log('updateGroup API response:', res);
+        return res.data;
+      });
+    },
+    onSuccess: (data) => {
+      console.log('updateHostGroupMutation success:', data);
+      console.log('Updated host data:', data.host);
+      console.log('Host group in response:', data.host.hostGroup);
+      
+      // Update the cache with the new host data
+      queryClient.setQueryData(['hosts'], (oldData) => {
+        console.log('Old cache data before update:', oldData);
+        if (!oldData) return oldData;
+        const updatedData = oldData.map(host => {
+          if (host.id === data.host.id) {
+            console.log('Updating host in cache:', host.id, 'with new data:', data.host);
+            // Ensure hostGroupId is set correctly
+            const updatedHost = {
+              ...data.host,
+              hostGroupId: data.host.hostGroup?.id || null
+            };
+            console.log('Updated host with hostGroupId:', updatedHost);
+            return updatedHost;
+          }
+          return host;
+        });
+        console.log('New cache data after update:', updatedData);
+        return updatedData;
+      });
+      
+      // Also invalidate to ensure consistency
+      queryClient.invalidateQueries(['hosts'])
+    },
+    onError: (error) => {
+      console.error('updateHostGroupMutation error:', error);
     }
   })
 
@@ -775,7 +859,7 @@ const Hosts = () => {
     let filtered = hosts.filter(host => {
       // Search filter
       const matchesSearch = searchTerm === '' || 
-        host.hostname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        host.friendlyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         host.ip?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         host.osType?.toLowerCase().includes(searchTerm.toLowerCase())
 
@@ -808,9 +892,13 @@ const Hosts = () => {
       let aValue, bValue
       
       switch (sortField) {
+        case 'friendlyName':
+          aValue = a.friendlyName.toLowerCase()
+          bValue = b.friendlyName.toLowerCase()
+          break
         case 'hostname':
-          aValue = a.hostname.toLowerCase()
-          bValue = b.hostname.toLowerCase()
+          aValue = a.hostname?.toLowerCase() || 'zzz_no_hostname'
+          bValue = b.hostname?.toLowerCase() || 'zzz_no_hostname'
           break
         case 'ip':
           aValue = a.ip?.toLowerCase() || 'zzz_no_ip'
@@ -929,15 +1017,16 @@ const Hosts = () => {
   const resetColumns = () => {
     const defaultConfig = [
       { id: 'select', label: 'Select', visible: true, order: 0 },
-      { id: 'host', label: 'Host', visible: true, order: 1 },
-      { id: 'ip', label: 'IP Address', visible: false, order: 2 },
-      { id: 'group', label: 'Group', visible: true, order: 3 },
-      { id: 'os', label: 'OS', visible: true, order: 4 },
-      { id: 'osVersion', label: 'OS Version', visible: false, order: 5 },
-      { id: 'status', label: 'Status', visible: true, order: 6 },
-      { id: 'updates', label: 'Updates', visible: true, order: 7 },
-      { id: 'lastUpdate', label: 'Last Update', visible: true, order: 8 },
-      { id: 'actions', label: 'Actions', visible: true, order: 9 }
+      { id: 'host', label: 'Friendly Name', visible: true, order: 1 },
+      { id: 'hostname', label: 'System Hostname', visible: true, order: 2 },
+      { id: 'ip', label: 'IP Address', visible: false, order: 3 },
+      { id: 'group', label: 'Group', visible: true, order: 4 },
+      { id: 'os', label: 'OS', visible: true, order: 5 },
+      { id: 'osVersion', label: 'OS Version', visible: false, order: 6 },
+      { id: 'status', label: 'Status', visible: true, order: 7 },
+      { id: 'updates', label: 'Updates', visible: true, order: 8 },
+      { id: 'lastUpdate', label: 'Last Update', visible: true, order: 9 },
+      { id: 'actions', label: 'Actions', visible: true, order: 10 }
     ]
     updateColumnConfig(defaultConfig)
   }
@@ -965,12 +1054,26 @@ const Hosts = () => {
         )
       case 'host':
         return (
-          <Link
-            to={`/hosts/${host.id}`}
-            className="text-sm font-medium text-primary-600 hover:text-primary-900 hover:underline"
-          >
-            {host.hostname}
-          </Link>
+          <InlineEdit
+            value={host.friendlyName}
+            onSave={(newName) => updateFriendlyNameMutation.mutate({ hostId: host.id, friendlyName: newName })}
+            placeholder="Enter friendly name..."
+            maxLength={100}
+            linkTo={`/hosts/${host.id}`}
+            validate={(value) => {
+              if (!value.trim()) return 'Friendly name is required';
+              if (value.trim().length < 1) return 'Friendly name must be at least 1 character';
+              if (value.trim().length > 100) return 'Friendly name must be less than 100 characters';
+              return null;
+            }}
+            className="w-full"
+          />
+        )
+      case 'hostname':
+        return (
+          <div className="text-sm text-secondary-900 dark:text-white font-mono">
+            {host.hostname || 'N/A'}
+          </div>
         )
       case 'ip':
         return (
@@ -979,22 +1082,27 @@ const Hosts = () => {
           </div>
         )
       case 'group':
-        return host.hostGroup ? (
-          <span 
-            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
-            style={{ backgroundColor: host.hostGroup.color }}
-          >
-            {host.hostGroup.name}
-          </span>
-        ) : (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-800">
-            Ungrouped
-          </span>
+        console.log('Rendering group for host:', {
+          hostId: host.id,
+          hostGroupId: host.hostGroupId,
+          hostGroup: host.hostGroup,
+          availableGroups: hostGroups
+        });
+        return (
+          <InlineGroupEdit
+            key={`${host.id}-${host.hostGroup?.id || 'ungrouped'}-${host.hostGroup?.name || 'ungrouped'}`}
+            value={host.hostGroup?.id}
+            onSave={(newGroupId) => updateHostGroupMutation.mutate({ hostId: host.id, hostGroupId: newGroupId })}
+            options={hostGroups || []}
+            placeholder="Select group..."
+            className="w-full"
+          />
         )
       case 'os':
         return (
-          <div className="text-sm text-secondary-900 dark:text-white">
-            {host.osType}
+          <div className="flex items-center gap-2 text-sm text-secondary-900 dark:text-white">
+            <OSIcon osType={host.osType} className="h-4 w-4" />
+            <span>{host.osType}</span>
           </div>
         )
       case 'osVersion':
@@ -1068,6 +1176,8 @@ const Hosts = () => {
     setGroupBy('none')
     setHideStale(false)
     setShowFilters(false)
+    // Clear URL parameters to ensure no filters are applied
+    navigate('/hosts', { replace: true })
   }
 
   const handleUpToDateClick = () => {
@@ -1402,6 +1512,14 @@ const Hosts = () => {
                           </button>
                         ) : column.id === 'host' ? (
                           <button
+                            onClick={() => handleSort('friendlyName')}
+                            className="flex items-center gap-2 hover:text-secondary-700"
+                          >
+                            {column.label}
+                            {getSortIcon('friendlyName')}
+                          </button>
+                        ) : column.id === 'hostname' ? (
+                          <button
                             onClick={() => handleSort('hostname')}
                             className="flex items-center gap-2 hover:text-secondary-700"
                           >
@@ -1561,7 +1679,7 @@ const BulkAssignModal = ({ selectedHosts, hosts, onClose, onAssign, isLoading })
 
   const selectedHostNames = hosts
     .filter(host => selectedHosts.includes(host.id))
-    .map(host => host.hostname)
+    .map(host => host.friendlyName)
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -1585,9 +1703,9 @@ const BulkAssignModal = ({ selectedHosts, hosts, onClose, onAssign, isLoading })
             Assigning {selectedHosts.length} host{selectedHosts.length !== 1 ? 's' : ''}:
           </p>
           <div className="max-h-32 overflow-y-auto bg-secondary-50 rounded-md p-3">
-            {selectedHostNames.map((hostname, index) => (
+            {selectedHostNames.map((friendlyName, index) => (
               <div key={index} className="text-sm text-secondary-700">
-                • {hostname}
+                • {friendlyName}
                         </div>
             ))}
           </div>

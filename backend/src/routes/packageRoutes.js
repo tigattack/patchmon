@@ -100,6 +100,7 @@ router.get('/', async (req, res) => {
               host: {
                 select: {
                   id: true,
+                  friendlyName: true,
                   hostname: true,
                   osType: true
                 }

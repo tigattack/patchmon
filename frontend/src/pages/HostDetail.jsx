@@ -23,9 +23,19 @@ import {
   ToggleLeft,
   ToggleRight,
   Edit,
-  Check
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Cpu,
+  MemoryStick,
+  Globe,
+  Wifi,
+  Terminal,
+  Activity
 } from 'lucide-react'
 import { dashboardAPI, adminHostsAPI, settingsAPI, formatRelativeTime, formatDate } from '../utils/api'
+import { OSIcon } from '../utils/osIcons.jsx'
+import InlineEdit from '../components/InlineEdit'
 
 const HostDetail = () => {
   const { hostId } = useParams()
@@ -33,8 +43,9 @@ const HostDetail = () => {
   const queryClient = useQueryClient()
   const [showCredentialsModal, setShowCredentialsModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [isEditingHostname, setIsEditingHostname] = useState(false)
-  const [editedHostname, setEditedHostname] = useState('')
+  const [isEditingFriendlyName, setIsEditingFriendlyName] = useState(false)
+  const [editedFriendlyName, setEditedFriendlyName] = useState('')
+  const [showAllUpdates, setShowAllUpdates] = useState(false)
   
   const { data: host, isLoading, error, refetch } = useQuery({
     queryKey: ['host', hostId],
@@ -67,8 +78,16 @@ const HostDetail = () => {
     }
   })
 
+  const updateFriendlyNameMutation = useMutation({
+    mutationFn: (friendlyName) => adminHostsAPI.updateFriendlyName(hostId, friendlyName).then(res => res.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['host', hostId])
+      queryClient.invalidateQueries(['hosts'])
+    }
+  })
+
   const handleDeleteHost = async () => {
-    if (window.confirm(`Are you sure you want to delete host "${host.hostname}"? This action cannot be undone.`)) {
+    if (window.confirm(`Are you sure you want to delete host "${host.friendlyName}"? This action cannot be undone.`)) {
       try {
         await deleteHostMutation.mutateAsync(hostId)
       } catch (error) {
@@ -162,45 +181,48 @@ const HostDetail = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link to="/hosts" className="text-secondary-500 hover:text-secondary-700 dark:text-secondary-400 dark:hover:text-secondary-200">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="text-2xl font-bold text-secondary-900 dark:text-white">{host.hostname}</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowCredentialsModal(true)}
-            className="btn-outline flex items-center gap-2"
-          >
-            <Key className="h-4 w-4" />
-            View Credentials
-          </button>
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className="btn-danger flex items-center gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete Host
-          </button>
-        </div>
-      </div>
-
       {/* Host Information */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Basic Info */}
         <div className="card p-6">
-          <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Host Information</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-secondary-900 dark:text-white">Host Information</h3>
+            <div className="flex items-center gap-2">
+              <Link to="/hosts" className="text-secondary-500 hover:text-secondary-700 dark:text-secondary-400 dark:hover:text-secondary-200">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            </div>
+          </div>
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Server className="h-5 w-5 text-secondary-400" />
-              <div>
-                <p className="text-sm text-secondary-500 dark:text-secondary-300">Hostname</p>
-                <p className="font-medium text-secondary-900 dark:text-white">{host.hostname}</p>
+              <div className="flex-1">
+                <p className="text-sm text-secondary-500 dark:text-secondary-300 mb-1">Friendly Name</p>
+                <InlineEdit
+                  value={host.friendlyName}
+                  onSave={(newName) => updateFriendlyNameMutation.mutate(newName)}
+                  placeholder="Enter friendly name..."
+                  maxLength={100}
+                  validate={(value) => {
+                    if (!value.trim()) return 'Friendly name is required';
+                    if (value.trim().length < 1) return 'Friendly name must be at least 1 character';
+                    if (value.trim().length > 100) return 'Friendly name must be less than 100 characters';
+                    return null;
+                  }}
+                  className="w-full"
+                />
               </div>
             </div>
+            
+            {host.hostname && (
+              <div className="flex items-center gap-3">
+                <Server className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">System Hostname</p>
+                  <p className="font-medium text-secondary-900 dark:text-white font-mono text-sm">{host.hostname}</p>
+                </div>
+              </div>
+            )}
             
             <div className="flex items-center gap-3">
               <Shield className="h-5 w-5 text-secondary-400" />
@@ -225,7 +247,10 @@ const HostDetail = () => {
               <Monitor className="h-5 w-5 text-secondary-400" />
               <div>
                 <p className="text-sm text-secondary-500 dark:text-secondary-300">Operating System</p>
-                <p className="font-medium text-secondary-900 dark:text-white">{host.osType} {host.osVersion}</p>
+                <div className="flex items-center gap-2">
+                  <OSIcon osType={host.osType} className="h-5 w-5" />
+                  <p className="font-medium text-secondary-900 dark:text-white">{host.osType} {host.osVersion}</p>
+                </div>
               </div>
             </div>
             
@@ -289,6 +314,24 @@ const HostDetail = () => {
               </div>
             )}
           </div>
+          
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 pt-4 mt-4 border-t border-secondary-200 dark:border-secondary-600">
+            <button
+              onClick={() => setShowCredentialsModal(true)}
+              className="btn-outline flex items-center gap-2"
+            >
+              <Key className="h-4 w-4" />
+              Deploy Agent
+            </button>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="btn-danger flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Host
+            </button>
+          </div>
         </div>
 
         {/* Statistics */}
@@ -303,13 +346,17 @@ const HostDetail = () => {
               <p className="text-sm text-secondary-500 dark:text-secondary-300">Total Packages</p>
             </div>
             
-            <div className="text-center">
-              <div className="flex items-center justify-center w-12 h-12 bg-warning-100 rounded-lg mx-auto mb-2">
+            <button 
+              onClick={() => navigate(`/packages?host=${hostId}`)}
+              className="text-center w-full p-2 rounded-lg hover:bg-warning-50 dark:hover:bg-warning-900/20 transition-colors group"
+              title="View outdated packages for this host"
+            >
+              <div className="flex items-center justify-center w-12 h-12 bg-warning-100 rounded-lg mx-auto mb-2 group-hover:bg-warning-200 dark:group-hover:bg-warning-800 transition-colors">
                 <Clock className="h-6 w-6 text-warning-600" />
               </div>
               <p className="text-2xl font-bold text-secondary-900 dark:text-white">{host.stats.outdatedPackages}</p>
               <p className="text-sm text-secondary-500 dark:text-secondary-300">Outdated</p>
-            </div>
+            </button>
             
             <div className="text-center">
               <div className="flex items-center justify-center w-12 h-12 bg-danger-100 rounded-lg mx-auto mb-2">
@@ -330,123 +377,276 @@ const HostDetail = () => {
         </div>
       </div>
 
-      {/* Packages */}
-      <div className="card">
-        <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-600">
-          <h3 className="text-lg font-medium text-secondary-900 dark:text-white">Packages</h3>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-secondary-200 dark:divide-secondary-600">
-            <thead className="bg-secondary-50 dark:bg-secondary-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider">
-                  Package
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider">
-                  Current Version
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider">
-                  Available Version
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-secondary-800 divide-y divide-secondary-200 dark:divide-secondary-600">
-              {host.hostPackages?.map((hostPackage) => (
-                <tr key={hostPackage.id} className="hover:bg-secondary-50 dark:hover:bg-secondary-700">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Package className="h-4 w-4 text-secondary-400 mr-3" />
-                      <div>
-                        <div className="text-sm font-medium text-secondary-900 dark:text-white">
-                          {hostPackage.package.name}
-                        </div>
-                        {hostPackage.package.description && (
-                          <div className="text-sm text-secondary-500 dark:text-secondary-300">
-                            {hostPackage.package.description}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-900 dark:text-white">
-                    {hostPackage.currentVersion}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-900 dark:text-white">
-                    {hostPackage.availableVersion || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {hostPackage.needsUpdate ? (
-                      <div className="flex items-center gap-2">
-                        <span className={`badge ${hostPackage.isSecurityUpdate ? 'badge-danger' : 'badge-warning'}`}>
-                          {hostPackage.isSecurityUpdate ? 'Security Update' : 'Update Available'}
-                        </span>
-                        {hostPackage.isSecurityUpdate && (
-                          <Shield className="h-4 w-4 text-danger-600" />
-                        )}
-                      </div>
-                    ) : (
-                      <span className="badge-success">Up to date</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        
-        {host.hostPackages?.length === 0 && (
-          <div className="text-center py-8">
-            <Package className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
-            <p className="text-secondary-500 dark:text-secondary-300">No packages found</p>
-          </div>
-        )}
-      </div>
-
-      {/* Update History */}
-      <div className="card">
-        <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-600">
-          <h3 className="text-lg font-medium text-secondary-900 dark:text-white">Update History</h3>
-        </div>
-        
-        <div className="p-6">
-          {host.updateHistory?.length > 0 ? (
-            <div className="space-y-4">
-              {host.updateHistory.map((update, index) => (
-                <div key={update.id} className="flex items-center justify-between py-3 border-b border-secondary-100 dark:border-secondary-700 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${update.status === 'success' ? 'bg-success-500' : 'bg-danger-500'}`} />
-                    <div>
-                      <p className="text-sm font-medium text-secondary-900 dark:text-white">
-                        {update.status === 'success' ? 'Update Successful' : 'Update Failed'}
-                      </p>
-                      <p className="text-xs text-secondary-500 dark:text-secondary-300">
-                        {formatDate(update.timestamp)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-secondary-900 dark:text-white">
-                      {update.packagesCount} packages
-                    </p>
-                    {update.securityCount > 0 && (
-                      <p className="text-xs text-danger-600">
-                        {update.securityCount} security updates
-                      </p>
-                    )}
-                  </div>
+      {/* Hardware Information */}
+      {(host.cpuModel || host.ramInstalled || host.diskDetails) && (
+        <div className="card p-6">
+          <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Hardware Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {host.cpuModel && (
+              <div className="flex items-center gap-3">
+                <Cpu className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">CPU Model</p>
+                  <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.cpuModel}</p>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Calendar className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
-              <p className="text-secondary-500 dark:text-secondary-300">No update history available</p>
+              </div>
+            )}
+            
+            {host.cpuCores && (
+              <div className="flex items-center gap-3">
+                <Cpu className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">CPU Cores</p>
+                  <p className="font-medium text-secondary-900 dark:text-white">{host.cpuCores}</p>
+                </div>
+              </div>
+            )}
+            
+            {host.ramInstalled && (
+              <div className="flex items-center gap-3">
+                <MemoryStick className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">RAM Installed</p>
+                  <p className="font-medium text-secondary-900 dark:text-white">{host.ramInstalled} GB</p>
+                </div>
+              </div>
+            )}
+            
+            {host.swapSize !== undefined && (
+              <div className="flex items-center gap-3">
+                <HardDrive className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">Swap Size</p>
+                  <p className="font-medium text-secondary-900 dark:text-white">{host.swapSize} GB</p>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {host.diskDetails && Array.isArray(host.diskDetails) && host.diskDetails.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-secondary-200 dark:border-secondary-600">
+              <h4 className="text-sm font-medium text-secondary-900 dark:text-white mb-3">Disk Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {host.diskDetails.map((disk, index) => (
+                  <div key={index} className="bg-secondary-50 dark:bg-secondary-700 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                      <HardDrive className="h-4 w-4 text-secondary-500" />
+                      <span className="font-medium text-secondary-900 dark:text-white text-sm">{disk.name}</span>
+                    </div>
+                    <p className="text-xs text-secondary-600 dark:text-secondary-300">Size: {disk.size}</p>
+                    {disk.mountpoint && (
+                      <p className="text-xs text-secondary-600 dark:text-secondary-300">Mount: {disk.mountpoint}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Network Information */}
+      {(host.gatewayIp || host.dnsServers || host.networkInterfaces) && (
+        <div className="card p-6">
+          <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Network Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {host.gatewayIp && (
+              <div className="flex items-center gap-3">
+                <Globe className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">Gateway IP</p>
+                  <p className="font-medium text-secondary-900 dark:text-white font-mono text-sm">{host.gatewayIp}</p>
+                </div>
+              </div>
+            )}
+            
+            {host.dnsServers && Array.isArray(host.dnsServers) && host.dnsServers.length > 0 && (
+              <div className="flex items-center gap-3">
+                <Globe className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">DNS Servers</p>
+                  <div className="space-y-1">
+                    {host.dnsServers.map((dns, index) => (
+                      <p key={index} className="font-medium text-secondary-900 dark:text-white font-mono text-sm">{dns}</p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {host.networkInterfaces && Array.isArray(host.networkInterfaces) && host.networkInterfaces.length > 0 && (
+              <div className="flex items-center gap-3">
+                <Wifi className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">Network Interfaces</p>
+                  <div className="space-y-1">
+                    {host.networkInterfaces.map((iface, index) => (
+                      <p key={index} className="font-medium text-secondary-900 dark:text-white text-sm">{iface.name}</p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* System Information */}
+      {(host.kernelVersion || host.selinuxStatus || host.systemUptime || host.loadAverage) && (
+        <div className="card p-6">
+          <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">System Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {host.kernelVersion && (
+              <div className="flex items-center gap-3">
+                <Terminal className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">Kernel Version</p>
+                  <p className="font-medium text-secondary-900 dark:text-white font-mono text-sm">{host.kernelVersion}</p>
+                </div>
+              </div>
+            )}
+            
+            {host.selinuxStatus && (
+              <div className="flex items-center gap-3">
+                <Shield className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">SELinux Status</p>
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    host.selinuxStatus === 'enabled' 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : host.selinuxStatus === 'permissive'
+                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                  }`}>
+                    {host.selinuxStatus}
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            {host.systemUptime && (
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">System Uptime</p>
+                  <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.systemUptime}</p>
+                </div>
+              </div>
+            )}
+            
+            {host.loadAverage && Array.isArray(host.loadAverage) && host.loadAverage.length > 0 && (
+              <div className="flex items-center gap-3">
+                <Activity className="h-5 w-5 text-secondary-400" />
+                <div>
+                  <p className="text-sm text-secondary-500 dark:text-secondary-300">Load Average</p>
+                  <p className="font-medium text-secondary-900 dark:text-white text-sm">
+                    {host.loadAverage.map((load, index) => (
+                      <span key={index}>
+                        {load.toFixed(2)}
+                        {index < host.loadAverage.length - 1 && ', '}
+                      </span>
+                    ))}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Update History */}
+      <div className="w-1/2">
+        <div className="card max-h-96">
+        <div className="px-4 py-3 border-b border-secondary-200 dark:border-secondary-600">
+          <h3 className="text-base font-medium text-secondary-900 dark:text-white">Agent Update History</h3>
+        </div>
+        
+        <div className="overflow-x-auto max-h-80">
+          {host.updateHistory?.length > 0 ? (
+            <>
+              <table className="min-w-full divide-y divide-secondary-200 dark:divide-secondary-600">
+                <thead className="bg-secondary-50 dark:bg-secondary-700 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider">
+                      Packages
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider">
+                      Security
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-secondary-800 divide-y divide-secondary-200 dark:divide-secondary-600">
+                  {(showAllUpdates ? host.updateHistory : host.updateHistory.slice(0, 3)).map((update, index) => (
+                    <tr key={update.id} className="hover:bg-secondary-50 dark:hover:bg-secondary-700">
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <div className={`w-1.5 h-1.5 rounded-full ${update.status === 'success' ? 'bg-success-500' : 'bg-danger-500'}`} />
+                          <span className={`text-xs font-medium ${
+                            update.status === 'success' 
+                              ? 'text-success-700 dark:text-success-300' 
+                              : 'text-danger-700 dark:text-danger-300'
+                          }`}>
+                            {update.status === 'success' ? 'Success' : 'Failed'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-xs text-secondary-900 dark:text-white">
+                        {formatDate(update.timestamp)}
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-xs text-secondary-900 dark:text-white">
+                        {update.packagesCount}
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        {update.securityCount > 0 ? (
+                          <div className="flex items-center gap-1">
+                            <Shield className="h-3 w-3 text-danger-600" />
+                            <span className="text-xs text-danger-600 font-medium">
+                              {update.securityCount}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-secondary-500 dark:text-secondary-400">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              
+              {host.updateHistory.length > 3 && (
+                <div className="px-4 py-2 border-t border-secondary-200 dark:border-secondary-600 bg-secondary-50 dark:bg-secondary-700">
+                  <button
+                    onClick={() => setShowAllUpdates(!showAllUpdates)}
+                    className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+                  >
+                    {showAllUpdates ? (
+                      <>
+                        <ChevronUp className="h-3 w-3" />
+                        Show Less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-3 w-3" />
+                        Show All ({host.updateHistory.length} total)
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-6">
+              <Calendar className="h-8 w-8 text-secondary-400 mx-auto mb-2" />
+              <p className="text-sm text-secondary-500 dark:text-secondary-300">No update history available</p>
+            </div>
+          )}
+        </div>
         </div>
       </div>
 
@@ -476,7 +676,7 @@ const HostDetail = () => {
 // Credentials Modal Component
 const CredentialsModal = ({ host, isOpen, onClose }) => {
   const [showApiKey, setShowApiKey] = useState(false)
-  const [activeTab, setActiveTab] = useState('credentials')
+  const [activeTab, setActiveTab] = useState('quick-install')
 
   const { data: serverUrlData } = useQuery({
     queryKey: ['serverUrl'],
@@ -490,7 +690,7 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
   }
 
   const getSetupCommands = () => {
-    return `# Run this on the target host: ${host?.hostname}
+    return `# Run this on the target host: ${host?.friendlyName}
 
 echo "🔄 Setting up PatchMon agent..."
 
@@ -532,7 +732,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-secondary-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-secondary-900 dark:text-white">Host Setup - {host.hostname}</h3>
+          <h3 className="text-lg font-medium text-secondary-900 dark:text-white">Host Setup - {host.friendlyName}</h3>
           <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300">
             <X className="h-5 w-5" />
           </button>
@@ -541,16 +741,6 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
         {/* Tabs */}
         <div className="border-b border-secondary-200 dark:border-secondary-600 mb-6">
           <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('credentials')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'credentials'
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-secondary-500 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300 hover:border-secondary-300 dark:hover:border-secondary-500'
-              }`}
-            >
-              API Credentials
-            </button>
             <button
               onClick={() => setActiveTab('quick-install')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -561,10 +751,168 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
             >
               Quick Install
             </button>
+            <button
+              onClick={() => setActiveTab('credentials')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'credentials'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-secondary-500 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300 hover:border-secondary-300 dark:hover:border-secondary-500'
+              }`}
+            >
+              API Credentials
+            </button>
           </nav>
         </div>
 
         {/* Tab Content */}
+        {activeTab === 'quick-install' && (
+          <div className="space-y-4">
+            <div className="bg-primary-50 dark:bg-primary-900 border border-primary-200 dark:border-primary-700 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-primary-900 dark:text-primary-200 mb-2">One-Line Installation</h4>
+              <p className="text-sm text-primary-700 dark:text-primary-300 mb-3">
+                Copy and run this command on the target host to automatically install and configure the PatchMon agent:
+              </p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={`curl -s ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host.apiId}" "${host.apiKey}"`}
+                  readOnly
+                  className="flex-1 px-3 py-2 border border-primary-300 dark:border-primary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
+                />
+                <button
+                  onClick={() => copyToClipboard(`curl -s ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host.apiId}" "${host.apiKey}"`)}
+                  className="btn-primary flex items-center gap-1"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-secondary-50 dark:bg-secondary-700 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-secondary-900 dark:text-white mb-2">Manual Installation</h4>
+              <p className="text-sm text-secondary-600 dark:text-secondary-300 mb-3">
+                If you prefer to install manually, follow these steps:
+              </p>
+              <div className="space-y-3">
+                <div className="bg-white dark:bg-secondary-800 rounded-md p-3 border border-secondary-200 dark:border-secondary-600">
+                  <h5 className="text-sm font-medium text-secondary-900 dark:text-white mb-2">1. Download Agent Script</h5>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={`curl -o /tmp/patchmon-agent.sh ${serverUrl}/api/v1/hosts/agent/download`}
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
+                    />
+                    <button
+                      onClick={() => copyToClipboard(`curl -o /tmp/patchmon-agent.sh ${serverUrl}/api/v1/hosts/agent/download`)}
+                      className="btn-secondary flex items-center gap-1"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-secondary-800 rounded-md p-3 border border-secondary-200 dark:border-secondary-600">
+                  <h5 className="text-sm font-medium text-secondary-900 dark:text-white mb-2">2. Install Agent</h5>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value="sudo mkdir -p /etc/patchmon && sudo mv /tmp/patchmon-agent.sh /usr/local/bin/patchmon-agent.sh && sudo chmod +x /usr/local/bin/patchmon-agent.sh"
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
+                    />
+                    <button
+                      onClick={() => copyToClipboard("sudo mkdir -p /etc/patchmon && sudo mv /tmp/patchmon-agent.sh /usr/local/bin/patchmon-agent.sh && sudo chmod +x /usr/local/bin/patchmon-agent.sh")}
+                      className="btn-secondary flex items-center gap-1"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-secondary-800 rounded-md p-3 border border-secondary-200 dark:border-secondary-600">
+                  <h5 className="text-sm font-medium text-secondary-900 dark:text-white mb-2">3. Configure Credentials</h5>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={`sudo /usr/local/bin/patchmon-agent.sh configure "${host.apiId}" "${host.apiKey}"`}
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
+                    />
+                    <button
+                      onClick={() => copyToClipboard(`sudo /usr/local/bin/patchmon-agent.sh configure "${host.apiId}" "${host.apiKey}"`)}
+                      className="btn-secondary flex items-center gap-1"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-secondary-800 rounded-md p-3 border border-secondary-200 dark:border-secondary-600">
+                  <h5 className="text-sm font-medium text-secondary-900 dark:text-white mb-2">4. Test Configuration</h5>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value="sudo /usr/local/bin/patchmon-agent.sh test"
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
+                    />
+                    <button
+                      onClick={() => copyToClipboard("sudo /usr/local/bin/patchmon-agent.sh test")}
+                      className="btn-secondary flex items-center gap-1"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-secondary-800 rounded-md p-3 border border-secondary-200 dark:border-secondary-600">
+                  <h5 className="text-sm font-medium text-secondary-900 dark:text-white mb-2">5. Send Initial Data</h5>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value="sudo /usr/local/bin/patchmon-agent.sh update"
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
+                    />
+                    <button
+                      onClick={() => copyToClipboard("sudo /usr/local/bin/patchmon-agent.sh update")}
+                      className="btn-secondary flex items-center gap-1"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-secondary-800 rounded-md p-3 border border-secondary-200 dark:border-secondary-600">
+                  <h5 className="text-sm font-medium text-secondary-900 dark:text-white mb-2">6. Setup Crontab (Optional)</h5>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value='echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -'
+                      readOnly
+                      className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
+                    />
+                    <button
+                      onClick={() => copyToClipboard('echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -')}
+                      className="btn-secondary flex items-center gap-1"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'credentials' && (
           <div className="space-y-6">
             <div className="bg-secondary-50 dark:bg-secondary-700 rounded-lg p-4">
@@ -630,48 +978,6 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
           </div>
         )}
 
-        {activeTab === 'quick-install' && (
-          <div className="space-y-4">
-            <div className="bg-primary-50 dark:bg-primary-900 border border-primary-200 dark:border-primary-700 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-primary-900 dark:text-primary-200 mb-2">One-Line Installation</h4>
-              <p className="text-sm text-primary-700 dark:text-primary-300 mb-3">
-                Copy and run this command on the target host to automatically install and configure the PatchMon agent:
-              </p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={`curl -s ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host.apiId}" "${host.apiKey}"`}
-                  readOnly
-                  className="flex-1 px-3 py-2 border border-primary-300 dark:border-primary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
-                />
-                <button
-                  onClick={() => copyToClipboard(`curl -s ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host.apiId}" "${host.apiKey}"`)}
-                  className="btn-primary flex items-center gap-1"
-                >
-                  <Copy className="h-4 w-4" />
-                  Copy
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-secondary-50 dark:bg-secondary-700 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-secondary-900 dark:text-white mb-3">Manual Installation</h4>
-              <p className="text-sm text-secondary-600 dark:text-secondary-300 mb-3">
-                If you prefer manual installation, run these commands on the target host:
-              </p>
-              <pre className="bg-secondary-900 dark:bg-secondary-800 text-secondary-100 dark:text-secondary-200 p-4 rounded-md text-sm overflow-x-auto">
-                <code>{commands}</code>
-              </pre>
-              <button
-                onClick={() => copyToClipboard(commands)}
-                className="mt-3 btn-outline flex items-center gap-1"
-              >
-                <Copy className="h-4 w-4" />
-                Copy Commands
-              </button>
-            </div>
-          </div>
-        )}
 
         <div className="flex justify-end pt-6">
           <button onClick={onClose} className="btn-primary">
@@ -707,7 +1013,7 @@ const DeleteConfirmationModal = ({ host, isOpen, onClose, onConfirm, isLoading }
         <div className="mb-6">
           <p className="text-secondary-700 dark:text-secondary-300">
             Are you sure you want to delete the host{' '}
-            <span className="font-semibold">"{host.hostname}"</span>?
+            <span className="font-semibold">"{host.friendlyName}"</span>?
           </p>
           <div className="mt-3 p-3 bg-danger-50 dark:bg-danger-900 border border-danger-200 dark:border-danger-700 rounded-md">
             <p className="text-sm text-danger-800 dark:text-danger-200">

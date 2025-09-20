@@ -162,6 +162,7 @@ router.get('/hosts', authenticateToken, requireViewHosts, async (req, res) => {
       // Show all hosts regardless of status
       select: {
         id: true,
+        friendlyName: true,
         hostname: true,
         ip: true,
         osType: true,
@@ -200,6 +201,13 @@ router.get('/hosts', authenticateToken, requireViewHosts, async (req, res) => {
           }
         });
 
+        // Get total packages count for this host
+        const totalPackagesCount = await prisma.hostPackage.count({
+          where: {
+            hostId: host.id
+          }
+        });
+
         // Get the agent update interval setting for stale calculation
         const settings = await prisma.settings.findFirst();
         const updateIntervalMinutes = settings?.updateInterval || 60;
@@ -217,6 +225,7 @@ router.get('/hosts', authenticateToken, requireViewHosts, async (req, res) => {
         return {
           ...host,
           updatesCount,
+          totalPackagesCount,
           isStale,
           effectiveStatus
         };
@@ -256,7 +265,7 @@ router.get('/packages', authenticateToken, requireViewPackages, async (req, res)
             host: {
               select: {
                 id: true,
-                hostname: true,
+                friendlyName: true,
                 osType: true
               }
             }
@@ -278,7 +287,7 @@ router.get('/packages', authenticateToken, requireViewPackages, async (req, res)
       isSecurityUpdate: pkg.hostPackages.some(hp => hp.isSecurityUpdate),
       affectedHosts: pkg.hostPackages.map(hp => ({
         hostId: hp.host.id,
-        hostname: hp.host.hostname,
+        friendlyName: hp.host.friendlyName,
         osType: hp.host.osType,
         currentVersion: hp.currentVersion,
         availableVersion: hp.availableVersion,

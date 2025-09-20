@@ -67,7 +67,8 @@ model HostGroup {
 
 model Host {
   id            String   @id @default(cuid())
-  hostname      String   @unique
+  friendlyName  String   @unique @map("friendly_name")
+  hostname      String?  // Actual system hostname from agent
   ip            String?
   osType        String   @map("os_type")
   osVersion     String   @map("os_version")
@@ -79,6 +80,25 @@ model Host {
   hostGroupId   String?  @map("host_group_id") // Optional group association
   agentVersion  String?  @map("agent_version") // Agent script version
   autoUpdate    Boolean  @map("auto_update") @default(true) // Enable auto-update for this host
+  
+  // Hardware Information
+  cpuModel      String?  @map("cpu_model") // CPU model name
+  cpuCores      Int?     @map("cpu_cores") // Number of CPU cores
+  ramInstalled  Int?     @map("ram_installed") // RAM in GB
+  swapSize      Int?     @map("swap_size") // Swap size in GB
+  diskDetails   Json?    @map("disk_details") // Array of disk objects
+  
+  // Network Information
+  gatewayIp     String?  @map("gateway_ip") // Gateway IP address
+  dnsServers    Json?    @map("dns_servers") // Array of DNS servers
+  networkInterfaces Json? @map("network_interfaces") // Array of network interface objects
+  
+  // System Information
+  kernelVersion String?  @map("kernel_version") // Kernel version
+  selinuxStatus String?  @map("selinux_status") // SELinux status (enabled/disabled/permissive)
+  systemUptime  String?  @map("system_uptime") // System uptime
+  loadAverage   Json?    @map("load_average") // Load average (1min, 5min, 15min)
+  
   createdAt     DateTime @map("created_at") @default(now())
   updatedAt     DateTime @map("updated_at") @updatedAt
   

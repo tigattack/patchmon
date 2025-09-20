@@ -787,8 +787,8 @@ send_update() {
     
     # Merge all JSON objects into one
     local merged_json=$(echo "$hardware_json $network_json $system_json" | jq -s '.[0] * .[1] * .[2]')
-    # Create the base payload and merge with system info
-    local base_payload=$(cat <<EOF
+    
+    local payload=$(cat <<EOF
 {
     "packages": $packages_json,
     "repositories": $repositories_json,
@@ -797,14 +797,11 @@ send_update() {
     "hostname": "$HOSTNAME",
     "ip": "$IP_ADDRESS",
     "architecture": "$ARCHITECTURE",
-    "agentVersion": "$AGENT_VERSION"
+    "agentVersion": "$AGENT_VERSION",
+    $merged_json
 }
 EOF
 )
-    
-    # Merge the base payload with the system information
-    local payload=$(echo "$base_payload $merged_json" | jq -s '.[0] * .[1]')
-    
     
     local response=$(curl -s -X POST \
         -H "Content-Type: application/json" \

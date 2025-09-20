@@ -20,7 +20,7 @@ async function triggerCrontabUpdates() {
       },
       select: {
         id: true,
-        hostname: true,
+        friendlyName: true,
         apiId: true,
         apiKey: true
       }
@@ -32,7 +32,7 @@ async function triggerCrontabUpdates() {
     // This is done by sending a ping with a special flag
     for (const host of hosts) {
       try {
-        console.log(`Triggering crontab update for host: ${host.hostname}`);
+        console.log(`Triggering crontab update for host: ${host.friendlyName}`);
         
         // We'll use the existing ping endpoint but add a special parameter
         // The agent will detect this and run update-crontab command
@@ -64,20 +64,20 @@ async function triggerCrontabUpdates() {
         
         const req = client.request(options, (res) => {
           if (res.statusCode === 200) {
-            console.log(`Successfully triggered crontab update for ${host.hostname}`);
+            console.log(`Successfully triggered crontab update for ${host.friendlyName}`);
           } else {
-            console.error(`Failed to trigger crontab update for ${host.hostname}: ${res.statusCode}`);
+            console.error(`Failed to trigger crontab update for ${host.friendlyName}: ${res.statusCode}`);
           }
         });
         
         req.on('error', (error) => {
-          console.error(`Error triggering crontab update for ${host.hostname}:`, error.message);
+          console.error(`Error triggering crontab update for ${host.friendlyName}:`, error.message);
         });
         
         req.write(postData);
         req.end();
       } catch (error) {
-        console.error(`Error triggering crontab update for ${host.hostname}:`, error.message);
+        console.error(`Error triggering crontab update for ${host.friendlyName}:`, error.message);
       }
     }
     

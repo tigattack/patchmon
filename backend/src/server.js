@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { PrismaClient } = require('@prisma/client');
+const { createPrismaClient, checkDatabaseConnection, disconnectPrisma } = require('./config/database');
 const winston = require('winston');
 
 // Import routes
@@ -20,8 +20,8 @@ const versionRoutes = require('./routes/versionRoutes');
 const tfaRoutes = require('./routes/tfaRoutes');
 const updateScheduler = require('./services/updateScheduler');
 
-// Initialize Prisma client
-const prisma = new PrismaClient();
+// Initialize Prisma client with optimized connection pooling for multiple instances
+const prisma = createPrismaClient();
 
 // Initialize logger - only if logging is enabled
 const logger = process.env.ENABLE_LOGGING === 'true' ? winston.createLogger({
@@ -157,33 +157,53 @@ app.use('*', (req, res) => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  if (process.env.ENABLE_LOGGING === 'true') {
-    logger.info('SIGTERM received, shutting down gracefully');
-  }
-  updateScheduler.stop();
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
 process.on('SIGINT', async () => {
   if (process.env.ENABLE_LOGGING === 'true') {
     logger.info('SIGINT received, shutting down gracefully');
   }
   updateScheduler.stop();
-  await prisma.$disconnect();
+  await disconnectPrisma(prisma);
   process.exit(0);
 });
 
-// Start server
-app.listen(PORT, () => {
+process.on('SIGTERM', async () => {
   if (process.env.ENABLE_LOGGING === 'true') {
-    logger.info(`Server running on port ${PORT}`);
-    logger.info(`Environment: ${process.env.NODE_ENV}`);
+    logger.info('SIGTERM received, shutting down gracefully');
   }
-  
-  // Start update scheduler
-  updateScheduler.start();
+  updateScheduler.stop();
+  await disconnectPrisma(prisma);
+  process.exit(0);
 });
+
+// Start server with database health check
+async function startServer() {
+  try {
+    // Check database connection before starting server
+    const isConnected = await checkDatabaseConnection(prisma);
+    if (!isConnected) {
+      console.error('❌ Database connection failed. Server not started.');
+      process.exit(1);
+    }
+    
+    if (process.env.ENABLE_LOGGING === 'true') {
+      logger.info('✅ Database connection successful');
+    }
+    
+    app.listen(PORT, () => {
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.info(`Server running on port ${PORT}`);
+        logger.info(`Environment: ${process.env.NODE_ENV}`);
+      }
+      
+      // Start update scheduler
+      updateScheduler.start();
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 module.exports = app; 

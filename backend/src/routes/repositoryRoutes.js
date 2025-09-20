@@ -17,7 +17,7 @@ router.get('/', authenticateToken, requireViewHosts, async (req, res) => {
             host: {
               select: {
                 id: true,
-                hostname: true,
+                friendlyName: true,
                 status: true
               }
             }
@@ -43,7 +43,7 @@ router.get('/', authenticateToken, requireViewHosts, async (req, res) => {
       activeHostCount: repo.hostRepositories.filter(hr => hr.host.status === 'active').length,
       hosts: repo.hostRepositories.map(hr => ({
         id: hr.host.id,
-        hostname: hr.host.hostname,
+        friendlyName: hr.host.friendlyName,
         status: hr.host.status,
         isEnabled: hr.isEnabled,
         lastChecked: hr.lastChecked
@@ -69,7 +69,7 @@ router.get('/host/:hostId', authenticateToken, requireViewHosts, async (req, res
         host: {
           select: {
             id: true,
-            hostname: true
+            friendlyName: true
           }
         }
       },
@@ -100,6 +100,7 @@ router.get('/:repositoryId', authenticateToken, requireViewHosts, async (req, re
             host: {
               select: {
                 id: true,
+                friendlyName: true,
                 hostname: true,
                 ip: true,
                 osType: true,
@@ -111,7 +112,7 @@ router.get('/:repositoryId', authenticateToken, requireViewHosts, async (req, re
           },
           orderBy: {
             host: {
-              hostname: 'asc'
+              friendlyName: 'asc'
             }
           }
         }
@@ -197,14 +198,14 @@ router.patch('/host/:hostId/repository/:repositoryId', authenticateToken, requir
         repository: true,
         host: {
           select: {
-            hostname: true
+            friendlyName: true
           }
         }
       }
     });
 
     res.json({
-      message: `Repository ${isEnabled ? 'enabled' : 'disabled'} for host ${hostRepository.host.hostname}`,
+      message: `Repository ${isEnabled ? 'enabled' : 'disabled'} for host ${hostRepository.host.friendlyName}`,
       hostRepository
     });
   } catch (error) {

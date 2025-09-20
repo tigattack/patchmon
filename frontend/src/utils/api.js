@@ -63,7 +63,8 @@ export const adminHostsAPI = {
   regenerateCredentials: (hostId) => api.post(`/hosts/${hostId}/regenerate-credentials`),
   updateGroup: (hostId, hostGroupId) => api.put(`/hosts/${hostId}/group`, { hostGroupId }),
   bulkUpdateGroup: (hostIds, hostGroupId) => api.put('/hosts/bulk/group', { hostIds, hostGroupId }),
-  toggleAutoUpdate: (hostId, autoUpdate) => api.patch(`/hosts/${hostId}/auto-update`, { autoUpdate })
+  toggleAutoUpdate: (hostId, autoUpdate) => api.patch(`/hosts/${hostId}/auto-update`, { autoUpdate }),
+  updateFriendlyName: (hostId, friendlyName) => api.patch(`/hosts/${hostId}/friendly-name`, { friendlyName })
 }
 
 // Host Groups API
