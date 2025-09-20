@@ -14,7 +14,7 @@ const router = express.Router();
 router.get('/current', authenticateToken, async (req, res) => {
   try {
     // For now, return hardcoded version - this should match your agent version
-    const currentVersion = '1.2.4';
+    const currentVersion = '1.2.5';
     
     res.json({
       version: currentVersion,
@@ -149,7 +149,7 @@ router.get('/check-updates', authenticateToken, requireManageSettings, async (re
       return res.status(400).json({ error: 'Settings not found' });
     }
 
-    const currentVersion = '1.2.4';
+    const currentVersion = '1.2.5';
     const latestVersion = settings.latestVersion || currentVersion;
     const isUpdateAvailable = settings.updateAvailable || false;
     const lastUpdateCheck = settings.lastUpdateCheck;

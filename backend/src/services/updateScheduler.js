@@ -100,7 +100,7 @@ class UpdateScheduler {
         return;
       }
 
-      const currentVersion = '1.2.4';
+      const currentVersion = '1.2.5';
       const isUpdateAvailable = this.compareVersions(latestVersion, currentVersion) > 0;
 
       // Update settings with check results
