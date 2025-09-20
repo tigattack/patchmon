@@ -13,8 +13,17 @@ const router = express.Router();
 // Get current version info
 router.get('/current', authenticateToken, async (req, res) => {
   try {
-    // For now, return hardcoded version - this should match your agent version
-    const currentVersion = '1.2.5';
+    // Read version from package.json dynamically
+    let currentVersion = '1.2.5'; // fallback
+    
+    try {
+      const packageJson = require('../../package.json');
+      if (packageJson && packageJson.version) {
+        currentVersion = packageJson.version;
+      }
+    } catch (packageError) {
+      console.warn('Could not read version from package.json, using fallback:', packageError.message);
+    }
     
     res.json({
       version: currentVersion,

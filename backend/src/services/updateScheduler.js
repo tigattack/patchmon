@@ -100,7 +100,16 @@ class UpdateScheduler {
         return;
       }
 
-      const currentVersion = '1.2.5';
+      // Read version from package.json dynamically
+      let currentVersion = '1.2.5'; // fallback
+      try {
+        const packageJson = require('../../package.json');
+        if (packageJson && packageJson.version) {
+          currentVersion = packageJson.version;
+        }
+      } catch (packageError) {
+        console.warn('Could not read version from package.json, using fallback:', packageError.message);
+      }
       const isUpdateAvailable = this.compareVersions(latestVersion, currentVersion) > 0;
 
       // Update settings with check results
