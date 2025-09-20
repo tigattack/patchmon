@@ -47,7 +47,7 @@ const Settings = () => {
 
   // Version checking state
   const [versionInfo, setVersionInfo] = useState({
-    currentVersion: '1.2.4',
+    currentVersion: null, // Will be loaded from API
     latestVersion: null,
     isUpdateAvailable: false,
     checking: false,
@@ -152,6 +152,24 @@ const Settings = () => {
     console.log('Agent versions loading:', agentVersionsLoading);
     console.log('Agent versions error:', agentVersionsError);
   }, [agentVersions, agentVersionsLoading, agentVersionsError]);
+
+  // Load current version on component mount
+  useEffect(() => {
+    const loadCurrentVersion = async () => {
+      try {
+        const response = await versionAPI.getCurrent();
+        const data = response.data;
+        setVersionInfo(prev => ({
+          ...prev,
+          currentVersion: data.version
+        }));
+      } catch (error) {
+        console.error('Error loading current version:', error);
+      }
+    };
+
+    loadCurrentVersion();
+  }, []);
 
   const createAgentVersionMutation = useMutation({
     mutationFn: (data) => agentVersionAPI.create(data).then(res => res.data),

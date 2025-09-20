@@ -202,11 +202,22 @@ class UpdateScheduler {
     try {
       const httpsRepoUrl = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
       
+      // Get current version for User-Agent
+      let currentVersion = '1.2.5'; // fallback
+      try {
+        const packageJson = require('../../package.json');
+        if (packageJson && packageJson.version) {
+          currentVersion = packageJson.version;
+        }
+      } catch (packageError) {
+        console.warn('Could not read version from package.json for User-Agent, using fallback:', packageError.message);
+      }
+
       const response = await fetch(httpsRepoUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'PatchMon-Server/1.2.4'
+          'User-Agent': `PatchMon-Server/${currentVersion}`
         }
       });
       
