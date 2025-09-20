@@ -1,6 +1,6 @@
 {
   "name": "patchmon",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "Linux Patch Monitoring System",
   "private": true,
   "workspaces": [
