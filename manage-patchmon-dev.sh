@@ -1,8 +1,9 @@
 #!/bin/bash
-# PatchMon Unified Management Script
-# Usage: ./manage-patchmon.sh <command> [options]
+# PatchMon Unified Management Script - DEV VERSION
+# Usage: ./manage-patchmon-dev.sh <command> [options]
 # Commands: deploy, update, delete, list, status
 # Options: public-repo (for deploy command)
+# Note: This version always uses the dev branch for updates
 
 set -e
 
@@ -1122,8 +1123,8 @@ create_agent_version() {
             current_version="$db_version"
             print_info "Using existing database version: $current_version"
         else
-            # Final fallback to 1.2.5 if still not found
-            current_version="1.2.5"
+            # Final fallback to 1.2.4 if still not found
+            current_version="1.2.4"
             print_warning "Could not determine version, using fallback: $current_version"
         fi
     fi
@@ -1743,8 +1744,8 @@ setup_timezone_interactive() {
 
 # Deploy new instance
 deploy_instance() {
-    # Set default deployment branch
-    DEPLOYMENT_BRANCH="${DEPLOYMENT_BRANCH:-main}"
+    # Set default deployment branch to dev
+    DEPLOYMENT_BRANCH="${DEPLOYMENT_BRANCH:-dev}"
     
     # Interactive deployment - ask for configuration
     print_info "🚀 PatchMon Interactive Deployment"
@@ -1773,22 +1774,22 @@ deploy_instance() {
     echo ""
     echo -e "${BLUE}Q2) Which deployment branch do you want to use?${NC}"
     echo -e "${YELLOW}   1 - main (stable, production-ready)${NC}"
-    echo -e "${YELLOW}   2 - dev (development, latest features)${NC}"
+    echo -e "${YELLOW}   2 - dev (development, latest features) - DEFAULT${NC}"
     while true; do
-        read -p "   Choose branch (1/2): " branch_choice
+        read -p "   Choose branch (1/2) [default: 2]: " branch_choice
         case $branch_choice in
             1 ) 
                 DEPLOYMENT_BRANCH="main"
                 print_info "Selected branch: main (stable)"
                 break
                 ;;
-            2 ) 
+            2|"" ) 
                 DEPLOYMENT_BRANCH="dev"
                 print_info "Selected branch: dev (development)"
                 break
                 ;;
             * ) 
-                print_error "Please choose 1 for main or 2 for dev"
+                print_error "Please choose 1 for main or 2 for dev (or press Enter for dev)"
                 ;;
         esac
     done
@@ -2327,6 +2328,10 @@ update_single_instance() {
     
     print_info "Updating PatchMon instance for $fqdn..."
     print_info "🔍 Instance details: FQDN=$fqdn, Path=$app_dir, Service=$service_name"
+    print_info "🌿 Using dev branch for update (manage-patchmon-dev.sh)"
+    
+    # Force dev branch for this dev script
+    DEPLOYMENT_BRANCH="dev"
     
     cd "$app_dir"
     
