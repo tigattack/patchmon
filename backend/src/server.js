@@ -273,8 +273,13 @@ app.use(express.urlencoded({ extended: true, limit: process.env.JSON_BODY_LIMIT 
 
 // Request logging - only if logging is enabled
 if (process.env.ENABLE_LOGGING === 'true') {
-  app.use((req, res, next) => {
-    logger.info(`${req.method} ${req.path} - ${req.ip}`);
+  app.use((req, _, next) => {
+    // Log health check requests at debug level to reduce log spam
+    if (req.path === '/health') {
+      logger.debug(`${req.method} ${req.path} - ${req.ip}`);
+    } else {
+      logger.info(`${req.method} ${req.path} - ${req.ip}`);
+    }
     next();
   });
 }
