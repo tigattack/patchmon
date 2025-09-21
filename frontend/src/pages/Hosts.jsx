@@ -226,11 +226,11 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
     enabled: isOpen // Only fetch when modal is open
   })
 
-  const serverUrl = settings?.serverUrl || window.location.origin.replace(':3000', ':3001')
+  const serverUrl = settings?.server_url || window.location.origin.replace(':3000', ':3001')
 
   const getSetupCommands = () => {
     return {
-      oneLine: `curl -sSL ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host?.apiId}" "${host?.apiKey}"`,
+      oneLine: `curl -sSL ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host?.api_id}" "${host?.api_key}"`,
 
       download: `# Download and setup PatchMon agent
 curl -o /tmp/patchmon-agent.sh ${serverUrl}/api/v1/hosts/agent/download
@@ -239,7 +239,7 @@ sudo mv /tmp/patchmon-agent.sh /usr/local/bin/patchmon-agent.sh
 sudo chmod +x /usr/local/bin/patchmon-agent.sh`,
 
       configure: `# Configure API credentials
-sudo /usr/local/bin/patchmon-agent.sh configure "${host?.apiId}" "${host?.apiKey}"`,
+sudo /usr/local/bin/patchmon-agent.sh configure "${host?.api_id}" "${host?.api_key}"`,
 
       test: `# Test the configuration
 sudo /usr/local/bin/patchmon-agent.sh test`,
@@ -265,7 +265,7 @@ sudo chmod +x /usr/local/bin/patchmon-agent.sh
 
 # Configure credentials
 echo "🔑 Configuring API credentials..."
-sudo /usr/local/bin/patchmon-agent.sh configure "${host?.apiId}" "${host?.apiKey}"
+sudo /usr/local/bin/patchmon-agent.sh configure "${host?.api_id}" "${host?.api_key}"
 
 # Test configuration
 echo "🧪 Testing configuration..."
