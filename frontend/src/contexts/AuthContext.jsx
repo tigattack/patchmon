@@ -232,9 +232,7 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const data = await response.json()
         console.log('Admin check response:', data) // Debug log
-        // TEMPORARY DEBUG: Force admin setup for testing
-        // setNeedsFirstTimeSetup(!data.hasAdminUsers)
-        setNeedsFirstTimeSetup(true) // Force setup for testing
+        setNeedsFirstTimeSetup(!data.hasAdminUsers)
       } else {
         console.log('Admin check failed:', response.status, response.statusText) // Debug log
         // If endpoint doesn't exist or fails, assume setup is needed
