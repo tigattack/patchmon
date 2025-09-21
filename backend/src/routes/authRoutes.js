@@ -10,6 +10,107 @@ const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// Check if any admin users exist (for first-time setup)
+router.get('/check-admin-users', async (req, res) => {
+  try {
+    const adminCount = await prisma.users.count({
+      where: { role: 'admin' }
+    });
+    
+    res.json({
+      hasAdminUsers: adminCount > 0,
+      adminCount: adminCount
+    });
+  } catch (error) {
+    console.error('Error checking admin users:', error);
+    res.status(500).json({ 
+      error: 'Failed to check admin users',
+      hasAdminUsers: false 
+    });
+  }
+});
+
+// Create first admin user (for first-time setup)
+router.post('/setup-admin', [
+  body('username').isLength({ min: 1 }).withMessage('Username is required'),
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        error: 'Validation failed',
+        details: errors.array()
+      });
+    }
+
+    const { username, email, password } = req.body;
+
+    // Check if any admin users already exist
+    const adminCount = await prisma.users.count({
+      where: { role: 'admin' }
+    });
+
+    if (adminCount > 0) {
+      return res.status(400).json({ 
+        error: 'Admin users already exist. This endpoint is only for first-time setup.'
+      });
+    }
+
+    // Check if username or email already exists
+    const existingUser = await prisma.users.findFirst({
+      where: {
+        OR: [
+          { username: username.trim() },
+          { email: email.trim() }
+        ]
+      }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ 
+        error: 'Username or email already exists'
+      });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    // Create admin user
+    const user = await prisma.users.create({
+      data: {
+        id: uuidv4(),
+        username: username.trim(),
+        email: email.trim(),
+        password_hash: passwordHash,
+        role: 'admin',
+        is_active: true,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        created_at: true
+      }
+    });
+
+    res.status(201).json({
+      message: 'Admin user created successfully',
+      user: user
+    });
+
+  } catch (error) {
+    console.error('Error creating admin user:', error);
+    res.status(500).json({ 
+      error: 'Failed to create admin user'
+    });
+  }
+});
+
 // Generate JWT token
 const generateToken = (userId) => {
   return jwt.sign(

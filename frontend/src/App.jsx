@@ -1,6 +1,6 @@
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { UpdateNotificationProvider } from './contexts/UpdateNotificationContext'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -18,21 +18,38 @@ import Options from './pages/Options'
 import Profile from './pages/Profile'
 import HostDetail from './pages/HostDetail'
 import PackageDetail from './pages/PackageDetail'
+import FirstTimeAdminSetup from './components/FirstTimeAdminSetup'
 
-function App() {
+function AppRoutes() {
+  const { needsFirstTimeSetup, checkingSetup, isAuthenticated } = useAuth()
+
+  // Show loading while checking if setup is needed
+  if (checkingSetup) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-secondary-900 dark:to-secondary-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-secondary-600 dark:text-secondary-300">Checking system status...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show first-time setup if no admin users exist
+  if (needsFirstTimeSetup && !isAuthenticated) {
+    return <FirstTimeAdminSetup />
+  }
+
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <UpdateNotificationProvider>
-          <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/" element={
-          <ProtectedRoute requirePermission="can_view_dashboard">
-            <Layout>
-              <Dashboard />
-            </Layout>
-          </ProtectedRoute>
-        } />
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/" element={
+        <ProtectedRoute requirePermission="can_view_dashboard">
+          <Layout>
+            <Dashboard />
+          </Layout>
+        </ProtectedRoute>
+      } />
         <Route path="/hosts" element={
           <ProtectedRoute requirePermission="can_view_hosts">
             <Layout>
@@ -110,7 +127,16 @@ function App() {
             </Layout>
           </ProtectedRoute>
         } />
-          </Routes>
+    </Routes>
+  )
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <UpdateNotificationProvider>
+          <AppRoutes />
         </UpdateNotificationProvider>
       </AuthProvider>
     </ThemeProvider>
