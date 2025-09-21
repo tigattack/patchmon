@@ -11,7 +11,6 @@ RUN npm install -g prisma
 
 COPY backend/ .
 
-# Copy agents folder from project root
 COPY agents/ ./agents
 
 RUN npx prisma generate
