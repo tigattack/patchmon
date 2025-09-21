@@ -14,61 +14,62 @@ const prisma = new PrismaClient();
 
 // Public endpoint to download the agent script
 router.get('/agent/download', async (req, res) => {
-  try {
-    const { version } = req.query;
-    
-    let agentVersion;
-    
-    if (version) {
-      // Download specific version
-      agentVersion = await prisma.agent_versions.findUnique({
-        where: { version }
-      });
-      
-      if (!agentVersion) {
-        return res.status(404).json({ error: 'Agent version not found' });
-      }
-    } else {
-      // Download current version (latest)
-      agentVersion = await prisma.agent_versions.findFirst({
-        where: { is_current: true },
-        orderBy: { created_at: 'desc' }
-      });
+    try {
+        const {version} = req.query;
 
-      if (!agentVersion) {
-        // Fallback to default version
-        agentVersion = await prisma.agent_versions.findFirst({
-          where: { is_default: true },
-          orderBy: { created_at: 'desc' }
-        });
-      }
-    }
-    
-    if (!agentVersion) {
-      return res.status(404).json({ error: 'No agent version available' });
-    }
-    
-    // Use script content from database if available, otherwise fallback to file
-    if (agentVersion.script_content) {
-      res.setHeader('Content-Type', 'application/x-shellscript');
-      res.setHeader('Content-Disposition', `attachment; filename="patchmon-agent-${agentVersion.version}.sh"`);
-      res.send(agentVersion.script_content);
-    } else {
-      // Fallback to file system
-      const agentPath = path.join(__dirname, '../../../agents/patchmon-agent.sh');
-      
-      if (!fs.existsSync(agentPath)) {
-        return res.status(404).json({ error: 'Agent script not found' });
-      }
+        let agentVersion;
 
-      res.setHeader('Content-Type', 'application/x-shellscript');
-      res.setHeader('Content-Disposition', `attachment; filename="patchmon-agent-${agentVersion.version}.sh"`);
-      res.sendFile(path.resolve(agentPath));
+        if (version) {
+            // Download specific version
+            agentVersion = await prisma.agent_versions.findUnique({
+                where: {version}
+            });
+
+            if (!agentVersion) {
+                return res.status(404).json({error: 'Agent version not found'});
+            }
+        } else {
+            // Download current version (latest)
+            agentVersion = await prisma.agent_versions.findFirst({
+                where: {is_current: true},
+                orderBy: {created_at: 'desc'}
+            });
+
+            if (!agentVersion) {
+                // Fallback to default version
+                agentVersion = await prisma.agent_versions.findFirst({
+                    where: {is_default: true},
+                    orderBy: {created_at: 'desc'}
+                });
+            }
+        }
+
+        if (!agentVersion) {
+            return res.status(404).json({error: 'No agent version available'});
+        }
+
+        // Use script content from database if available, otherwise fallback to file
+        if (agentVersion.script_content) {
+            // Convert Windows line endings to Unix line endings
+            const scriptContent = agentVersion.script_content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            res.setHeader('Content-Type', 'application/x-shellscript');
+            res.setHeader('Content-Disposition', `attachment; filename="patchmon-agent-${agentVersion.version}.sh"`);
+            res.send(scriptContent);
+        } else {
+            // Fallback to file system
+            const agentPath = path.join(__dirname, '../../../agents/patchmon-agent.sh');
+            if (!fs.existsSync(agentPath)) {
+                return res.status(404).json({error: 'Agent script not found'});
+            }
+            // Read file and convert line endings
+            const scriptContent = fs.readFileSync(agentPath, 'utf8').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            res.setHeader('Content-Type', 'application/x-shellscript');
+            res.setHeader('Content-Disposition', `attachment; filename="patchmon-agent-${agentVersion.version}.sh"`);
+            res.send(scriptContent);
+        }
+    } catch (error) {
+        console.error('Agent download error:', error);
     }
-  } catch (error) {
-    console.error('Agent download error:', error);
-    res.status(500).json({ error: 'Failed to download agent script' });
-  }
 });
 
 // Version check endpoint for agents
@@ -829,26 +830,29 @@ router.get('/install', async (req, res) => {
     if (!fs.existsSync(scriptPath)) {
       return res.status(404).json({ error: 'Installation script not found' });
     }
-    
-    let script = fs.readFileSync(scriptPath, 'utf8');
-    
-    // Get the configured server URL from settings
-    try {
-      const settings = await prisma.settings.findFirst();
-      if (settings) {
-        // Replace the default server URL in the script with the configured one
-        script = script.replace(
-          /PATCHMON_URL="[^"]*"/g,
-          `PATCHMON_URL="${settings.server_url}"`
-        );
+
+      let script = fs.readFileSync(scriptPath, 'utf8');
+
+// Convert Windows line endings to Unix line endings
+      script = script.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+// Get the configured server URL from settings
+      try {
+          const settings = await prisma.settings.findFirst();
+          if (settings) {
+              // Replace the default server URL in the script with the configured one
+              script = script.replace(
+                  /PATCHMON_URL="[^"]*"/g,
+                  `PATCHMON_URL="${settings.server_url}"`
+              );
+          }
+      } catch (settingsError) {
+          console.warn('Could not fetch settings, using default server URL:', settingsError.message);
       }
-    } catch (settingsError) {
-      console.warn('Could not fetch settings, using default server URL:', settingsError.message);
-    }
-    
-    res.setHeader('Content-Type', 'text/plain');
-    res.setHeader('Content-Disposition', 'inline; filename="patchmon_install.sh"');
-    res.send(script);
+
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', 'inline; filename="patchmon_install.sh"');
+      res.send(script);
   } catch (error) {
     console.error('Installation script error:', error);
     res.status(500).json({ error: 'Failed to serve installation script' });
