@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 
@@ -36,52 +37,62 @@ async function populateAgentVersion() {
     
     console.log('Populating agent version:', currentVersion);
     
-    const existingVersion = await prisma.agentVersion.findUnique({
+    const existingVersion = await prisma.agent_versions.findUnique({
       where: { version: currentVersion }
     });
     
     if (existingVersion) {
       console.log('Updating existing agent version', currentVersion, 'with latest script content...');
-      await prisma.agentVersion.update({
+      await prisma.agent_versions.update({
         where: { version: currentVersion },
         data: {
-          scriptContent: agentScript,
-          isCurrent: true,
-          releaseNotes: `Version ${currentVersion} - Updated Agent Script\n\nThis version contains the latest agent script from the Docker container initialization.`
+          script_content: agentScript,
+          is_current: true,
+          release_notes: `Version ${currentVersion} - Updated Agent Script\n\nThis version contains the latest agent script from the Docker container initialization.`,
+          download_url: `/api/v1/hosts/agent/download?version=${currentVersion}`,
+          updated_at: new Date()
         }
       });
       console.log('Agent version', currentVersion, 'updated successfully');
     } else {
       console.log('Creating new agent version', currentVersion, '...');
-      await prisma.agentVersion.create({
+      await prisma.agent_versions.create({
         data: {
+          id: uuidv4(),
           version: currentVersion,
-          scriptContent: agentScript,
-          isCurrent: true,
-          isDefault: true,
-          releaseNotes: `Version ${currentVersion} - Docker Agent Script\n\nThis version contains the agent script from the Docker container initialization.`
+          script_content: agentScript,
+          is_current: true,
+          is_default: true,
+          release_notes: `Version ${currentVersion} - Docker Agent Script\n\nThis version contains the agent script from the Docker container initialization.`,
+          download_url: `/api/v1/hosts/agent/download?version=${currentVersion}`,
+          min_server_version: '1.2.0',
+          updated_at: new Date()
         }
       });
       console.log('Agent version', currentVersion, 'created successfully');
     }
     
-    await prisma.agentVersion.updateMany({
+    await prisma.agent_versions.updateMany({
       where: { version: { not: currentVersion } },
-      data: { isCurrent: false }
+      data: { 
+        is_current: false,
+        updated_at: new Date()
+      }
     });
     
-    const allVersions = await prisma.agentVersion.findMany({
+    const allVersions = await prisma.agent_versions.findMany({
       orderBy: { version: 'desc' }
     });
     
     for (const version of allVersions) {
       if (version.version !== currentVersion && compareVersions(currentVersion, version.version) > 0) {
         console.log('🔄 Updating older version', version.version, 'with new script content...');
-        await prisma.agentVersion.update({
+        await prisma.agent_versions.update({
           where: { id: version.id },
           data: {
-            scriptContent: agentScript,
-            releaseNotes: `Version ${version.version} - Updated with latest script from ${currentVersion}\n\nThis version has been updated with the latest agent script content.`
+            script_content: agentScript,
+            release_notes: `Version ${version.version} - Updated with latest script from ${currentVersion}\n\nThis version has been updated with the latest agent script content.`,
+            updated_at: new Date()
           }
         });
       }
