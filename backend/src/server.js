@@ -172,10 +172,7 @@ const logger = process.env.ENABLE_LOGGING === 'true' ? winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json()
   ),
-  transports: [
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' }),
-  ],
+  transports: [],
 }) : {
   info: () => {},
   error: () => {},
@@ -183,10 +180,34 @@ const logger = process.env.ENABLE_LOGGING === 'true' ? winston.createLogger({
   debug: () => {}
 };
 
-if (process.env.ENABLE_LOGGING === 'true' && process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple()
-  }));
+// Configure transports based on PM_LOG_TO_CONSOLE environment variable
+if (process.env.ENABLE_LOGGING === 'true') {
+  const logToConsole = process.env.PM_LOG_TO_CONSOLE === '1' || process.env.PM_LOG_TO_CONSOLE === 'true';
+
+  if (logToConsole) {
+    // Log to stdout/stderr instead of files
+    logger.add(new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.errors({ stack: true }),
+        winston.format.printf(({ timestamp, level, message, stack }) => {
+          return `${timestamp} [${level.toUpperCase()}]: ${stack || message}`;
+        })
+      ),
+      stderrLevels: ['error', 'warn']
+    }));
+  } else {
+    // Log to files (default behavior)
+    logger.add(new winston.transports.File({ filename: 'logs/error.log', level: 'error' }));
+    logger.add(new winston.transports.File({ filename: 'logs/combined.log' }));
+
+    // Also add console logging for non-production environments
+    if (process.env.NODE_ENV !== 'production') {
+      logger.add(new winston.transports.Console({
+        format: winston.format.simple()
+      }));
+    }
+  }
 }
 
 const app = express();
