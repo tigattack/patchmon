@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 // Get all role permissions
 router.get('/roles', authenticateToken, requireManageSettings, async (req, res) => {
   try {
-    const permissions = await prisma.rolePermissions.findMany({
+    const permissions = await prisma.role_permissions.findMany({
       orderBy: {
         role: 'asc'
       }
@@ -27,7 +27,7 @@ router.get('/roles/:role', authenticateToken, requireManageSettings, async (req,
   try {
     const { role } = req.params;
     
-    const permissions = await prisma.rolePermissions.findUnique({
+    const permissions = await prisma.role_permissions.findUnique({
       where: { role }
     });
 
@@ -64,32 +64,35 @@ router.put('/roles/:role', authenticateToken, requireManageSettings, async (req,
       return res.status(400).json({ error: 'Cannot modify admin role permissions' });
     }
 
-    const permissions = await prisma.rolePermissions.upsert({
+    const permissions = await prisma.role_permissions.upsert({
       where: { role },
       update: {
-        canViewDashboard,
-        canViewHosts,
-        canManageHosts,
-        canViewPackages,
-        canManagePackages,
-        canViewUsers,
-        canManageUsers,
-        canViewReports,
-        canExportData,
-        canManageSettings
+        can_view_dashboard: canViewDashboard,
+        can_view_hosts: canViewHosts,
+        can_manage_hosts: canManageHosts,
+        can_view_packages: canViewPackages,
+        can_manage_packages: canManagePackages,
+        can_view_users: canViewUsers,
+        can_manage_users: canManageUsers,
+        can_view_reports: canViewReports,
+        can_export_data: canExportData,
+        can_manage_settings: canManageSettings,
+        updated_at: new Date()
       },
       create: {
+        id: require('uuid').v4(),
         role,
-        canViewDashboard,
-        canViewHosts,
-        canManageHosts,
-        canViewPackages,
-        canManagePackages,
-        canViewUsers,
-        canManageUsers,
-        canViewReports,
-        canExportData,
-        canManageSettings
+        can_view_dashboard: canViewDashboard,
+        can_view_hosts: canViewHosts,
+        can_manage_hosts: canManageHosts,
+        can_view_packages: canViewPackages,
+        can_manage_packages: canManagePackages,
+        can_view_users: canViewUsers,
+        can_manage_users: canManageUsers,
+        can_view_reports: canViewReports,
+        can_export_data: canExportData,
+        can_manage_settings: canManageSettings,
+        updated_at: new Date()
       }
     });
 
@@ -114,7 +117,7 @@ router.delete('/roles/:role', authenticateToken, requireManageSettings, async (r
     }
 
     // Check if any users are using this role
-    const usersWithRole = await prisma.user.count({
+    const usersWithRole = await prisma.users.count({
       where: { role }
     });
 
@@ -124,7 +127,7 @@ router.delete('/roles/:role', authenticateToken, requireManageSettings, async (r
       });
     }
 
-    await prisma.rolePermissions.delete({
+    await prisma.role_permissions.delete({
       where: { role }
     });
 
@@ -142,7 +145,7 @@ router.get('/user-permissions', authenticateToken, async (req, res) => {
   try {
     const userRole = req.user.role;
     
-    const permissions = await prisma.rolePermissions.findUnique({
+    const permissions = await prisma.role_permissions.findUnique({
       where: { role: userRole }
     });
 

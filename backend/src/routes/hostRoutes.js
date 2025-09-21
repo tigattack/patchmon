@@ -21,7 +21,7 @@ router.get('/agent/download', async (req, res) => {
     
     if (version) {
       // Download specific version
-      agentVersion = await prisma.agentVersion.findUnique({
+      agentVersion = await prisma.agent_versions.findUnique({
         where: { version }
       });
       
@@ -30,16 +30,16 @@ router.get('/agent/download', async (req, res) => {
       }
     } else {
       // Download current version (latest)
-      agentVersion = await prisma.agentVersion.findFirst({
-        where: { isCurrent: true },
-        orderBy: { createdAt: 'desc' }
+      agentVersion = await prisma.agent_versions.findFirst({
+        where: { is_current: true },
+        orderBy: { created_at: 'desc' }
       });
 
       if (!agentVersion) {
         // Fallback to default version
-        agentVersion = await prisma.agentVersion.findFirst({
-          where: { isDefault: true },
-          orderBy: { createdAt: 'desc' }
+        agentVersion = await prisma.agent_versions.findFirst({
+          where: { is_default: true },
+          orderBy: { created_at: 'desc' }
         });
       }
     }
@@ -49,10 +49,10 @@ router.get('/agent/download', async (req, res) => {
     }
     
     // Use script content from database if available, otherwise fallback to file
-    if (agentVersion.scriptContent) {
+    if (agentVersion.script_content) {
       res.setHeader('Content-Type', 'application/x-shellscript');
       res.setHeader('Content-Disposition', `attachment; filename="patchmon-agent-${agentVersion.version}.sh"`);
-      res.send(agentVersion.scriptContent);
+      res.send(agentVersion.script_content);
     } else {
       // Fallback to file system
       const agentPath = path.join(__dirname, '../../../agents/patchmon-agent.sh');
@@ -74,9 +74,9 @@ router.get('/agent/download', async (req, res) => {
 // Version check endpoint for agents
 router.get('/agent/version', async (req, res) => {
   try {
-    const currentVersion = await prisma.agentVersion.findFirst({
-      where: { isCurrent: true },
-      orderBy: { createdAt: 'desc' }
+    const currentVersion = await prisma.agent_versions.findFirst({
+      where: { is_current: true },
+      orderBy: { created_at: 'desc' }
     });
 
     if (!currentVersion) {
@@ -85,9 +85,9 @@ router.get('/agent/version', async (req, res) => {
 
     res.json({
       currentVersion: currentVersion.version,
-      downloadUrl: currentVersion.downloadUrl || `/api/v1/hosts/agent/download`,
-      releaseNotes: currentVersion.releaseNotes,
-      minServerVersion: currentVersion.minServerVersion
+      downloadUrl: currentVersion.download_url || `/api/v1/hosts/agent/download`,
+      releaseNotes: currentVersion.release_notes,
+      minServerVersion: currentVersion.min_server_version
     });
   } catch (error) {
     console.error('Version check error:', error);
@@ -112,10 +112,10 @@ const validateApiCredentials = async (req, res, next) => {
       return res.status(401).json({ error: 'API ID and Key required' });
     }
 
-    const host = await prisma.host.findFirst({
+    const host = await prisma.hosts.findFirst({
       where: { 
-        apiId: apiId,
-        apiKey: apiKey
+        api_id: apiId,
+        api_key: apiKey
       }
     });
 
@@ -148,8 +148,8 @@ router.post('/create', authenticateToken, requireManageHosts, [
     const { apiId, apiKey } = generateApiCredentials();
     
     // Check if host already exists
-    const existingHost = await prisma.host.findUnique({
-      where: { friendlyName }
+    const existingHost = await prisma.hosts.findUnique({
+      where: { friendly_name: friendlyName }
     });
 
     if (existingHost) {
@@ -158,7 +158,7 @@ router.post('/create', authenticateToken, requireManageHosts, [
 
     // If hostGroupId is provided, verify the group exists
     if (hostGroupId) {
-      const hostGroup = await prisma.hostGroup.findUnique({
+      const hostGroup = await prisma.host_groups.findUnique({
         where: { id: hostGroupId }
       });
 
@@ -168,20 +168,22 @@ router.post('/create', authenticateToken, requireManageHosts, [
     }
 
     // Create new host with API credentials - system info will be populated when agent connects
-    const host = await prisma.host.create({
+    const host = await prisma.hosts.create({
       data: {
-        friendlyName,
-        osType: 'unknown', // Will be updated when agent connects
-        osVersion: 'unknown', // Will be updated when agent connects
+        id: uuidv4(),
+        friendly_name: friendlyName,
+        os_type: 'unknown', // Will be updated when agent connects
+        os_version: 'unknown', // Will be updated when agent connects
         ip: null, // Will be updated when agent connects
         architecture: null, // Will be updated when agent connects
-        apiId,
-        apiKey,
-        hostGroupId: hostGroupId || null,
-        status: 'pending' // Will change to 'active' when agent connects
+        api_id: apiId,
+        api_key: apiKey,
+        host_group_id: hostGroupId || null,
+        status: 'pending', // Will change to 'active' when agent connects
+        updated_at: new Date()
       },
       include: {
-        hostGroup: {
+        host_groups: {
           select: {
             id: true,
             name: true,
@@ -194,10 +196,10 @@ router.post('/create', authenticateToken, requireManageHosts, [
     res.status(201).json({
       message: 'Host created successfully',
       hostId: host.id,
-      friendlyName: host.friendlyName,
-      apiId: host.apiId,
-      apiKey: host.apiKey,
-      hostGroup: host.hostGroup,
+      friendlyName: host.friendly_name,
+      apiId: host.api_id,
+      apiKey: host.api_key,
+      hostGroup: host.host_groups,
       instructions: 'Use these credentials in your patchmon agent configuration. System information will be automatically detected when the agent connects.'
     });
   } catch (error) {
@@ -250,40 +252,43 @@ router.post('/update', validateApiCredentials, [
     const host = req.hostRecord;
 
     // Update host last update timestamp and system info if provided
-    const updateData = { lastUpdate: new Date() };
+    const updateData = { 
+      last_update: new Date(),
+      updated_at: new Date()
+    };
     
     // Basic system info
-    if (req.body.osType) updateData.osType = req.body.osType;
-    if (req.body.osVersion) updateData.osVersion = req.body.osVersion;
+    if (req.body.osType) updateData.os_type = req.body.osType;
+    if (req.body.osVersion) updateData.os_version = req.body.osVersion;
     if (req.body.hostname) updateData.hostname = req.body.hostname;
     if (req.body.ip) updateData.ip = req.body.ip;
     if (req.body.architecture) updateData.architecture = req.body.architecture;
-    if (req.body.agentVersion) updateData.agentVersion = req.body.agentVersion;
+    if (req.body.agentVersion) updateData.agent_version = req.body.agentVersion;
     
     // Hardware Information
-    if (req.body.cpuModel) updateData.cpuModel = req.body.cpuModel;
-    if (req.body.cpuCores) updateData.cpuCores = req.body.cpuCores;
-    if (req.body.ramInstalled) updateData.ramInstalled = req.body.ramInstalled;
-    if (req.body.swapSize !== undefined) updateData.swapSize = req.body.swapSize;
-    if (req.body.diskDetails) updateData.diskDetails = req.body.diskDetails;
+    if (req.body.cpuModel) updateData.cpu_model = req.body.cpuModel;
+    if (req.body.cpuCores) updateData.cpu_cores = req.body.cpuCores;
+    if (req.body.ramInstalled) updateData.ram_installed = req.body.ramInstalled;
+    if (req.body.swapSize !== undefined) updateData.swap_size = req.body.swapSize;
+    if (req.body.diskDetails) updateData.disk_details = req.body.diskDetails;
     
     // Network Information
-    if (req.body.gatewayIp) updateData.gatewayIp = req.body.gatewayIp;
-    if (req.body.dnsServers) updateData.dnsServers = req.body.dnsServers;
-    if (req.body.networkInterfaces) updateData.networkInterfaces = req.body.networkInterfaces;
+    if (req.body.gatewayIp) updateData.gateway_ip = req.body.gatewayIp;
+    if (req.body.dnsServers) updateData.dns_servers = req.body.dnsServers;
+    if (req.body.networkInterfaces) updateData.network_interfaces = req.body.networkInterfaces;
     
     // System Information
-    if (req.body.kernelVersion) updateData.kernelVersion = req.body.kernelVersion;
-    if (req.body.selinuxStatus) updateData.selinuxStatus = req.body.selinuxStatus;
-    if (req.body.systemUptime) updateData.systemUptime = req.body.systemUptime;
-    if (req.body.loadAverage) updateData.loadAverage = req.body.loadAverage;
+    if (req.body.kernelVersion) updateData.kernel_version = req.body.kernelVersion;
+    if (req.body.selinuxStatus) updateData.selinux_status = req.body.selinuxStatus;
+    if (req.body.systemUptime) updateData.system_uptime = req.body.systemUptime;
+    if (req.body.loadAverage) updateData.load_average = req.body.loadAverage;
     
     // If this is the first update (status is 'pending'), change to 'active'
     if (host.status === 'pending') {
       updateData.status = 'active';
     }
 
-    await prisma.host.update({
+    await prisma.hosts.update({
       where: { id: host.id },
       data: updateData
     });
@@ -291,46 +296,52 @@ router.post('/update', validateApiCredentials, [
     // Process packages in transaction
     await prisma.$transaction(async (tx) => {
       // Clear existing host packages
-      await tx.hostPackage.deleteMany({
-        where: { hostId: host.id }
+      await tx.host_packages.deleteMany({
+        where: { host_id: host.id }
       });
 
       // Process each package
       for (const packageData of packages) {
         // Find or create package
-        let pkg = await tx.package.findUnique({
+        let pkg = await tx.packages.findUnique({
           where: { name: packageData.name }
         });
 
         if (!pkg) {
-          pkg = await tx.package.create({
+          pkg = await tx.packages.create({
             data: {
+              id: uuidv4(),
               name: packageData.name,
               description: packageData.description || null,
               category: packageData.category || null,
-              latestVersion: packageData.availableVersion || packageData.currentVersion
+              latest_version: packageData.availableVersion || packageData.currentVersion,
+              updated_at: new Date()
             }
           });
         } else {
           // Update package latest version if newer
-          if (packageData.availableVersion && packageData.availableVersion !== pkg.latestVersion) {
-            await tx.package.update({
+          if (packageData.availableVersion && packageData.availableVersion !== pkg.latest_version) {
+            await tx.packages.update({
               where: { id: pkg.id },
-              data: { latestVersion: packageData.availableVersion }
+              data: { 
+                latest_version: packageData.availableVersion,
+                updated_at: new Date()
+              }
             });
           }
         }
 
         // Create host package relationship
-        await tx.hostPackage.create({
+        await tx.host_packages.create({
           data: {
-            hostId: host.id,
-            packageId: pkg.id,
-            currentVersion: packageData.currentVersion,
-            availableVersion: packageData.availableVersion || null,
-            needsUpdate: packageData.needsUpdate,
-            isSecurityUpdate: packageData.isSecurityUpdate || false,
-            lastChecked: new Date()
+            id: uuidv4(),
+            host_id: host.id,
+            package_id: pkg.id,
+            current_version: packageData.currentVersion,
+            available_version: packageData.availableVersion || null,
+            needs_update: packageData.needsUpdate,
+            is_security_update: packageData.isSecurityUpdate || false,
+            last_checked: new Date()
           }
         });
       }
@@ -338,8 +349,8 @@ router.post('/update', validateApiCredentials, [
       // Process repositories if provided
       if (repositories && Array.isArray(repositories)) {
         // Clear existing host repositories
-        await tx.hostRepository.deleteMany({
-          where: { hostId: host.id }
+        await tx.host_repositories.deleteMany({
+          where: { host_id: host.id }
         });
 
         // Deduplicate repositories by URL+distribution+components to avoid constraint violations
@@ -354,7 +365,7 @@ router.post('/update', validateApiCredentials, [
         // Process each unique repository
         for (const repoData of uniqueRepos.values()) {
           // Find or create repository
-          let repo = await tx.repository.findFirst({
+          let repo = await tx.repositories.findFirst({
             where: {
               url: repoData.url,
               distribution: repoData.distribution,
@@ -363,27 +374,30 @@ router.post('/update', validateApiCredentials, [
           });
 
           if (!repo) {
-            repo = await tx.repository.create({
+            repo = await tx.repositories.create({
               data: {
+                id: uuidv4(),
                 name: repoData.name,
                 url: repoData.url,
                 distribution: repoData.distribution,
                 components: repoData.components,
-                repoType: repoData.repoType,
-                isActive: true,
-                isSecure: repoData.isSecure || false,
-                description: `${repoData.repoType} repository for ${repoData.distribution}`
+                repo_type: repoData.repoType,
+                is_active: true,
+                is_secure: repoData.isSecure || false,
+                description: `${repoData.repoType} repository for ${repoData.distribution}`,
+                updated_at: new Date()
               }
             });
           }
 
           // Create host repository relationship
-          await tx.hostRepository.create({
+          await tx.host_repositories.create({
             data: {
-              hostId: host.id,
-              repositoryId: repo.id,
-              isEnabled: repoData.isEnabled !== false, // Default to enabled
-              lastChecked: new Date()
+              id: uuidv4(),
+              host_id: host.id,
+              repository_id: repo.id,
+              is_enabled: repoData.isEnabled !== false, // Default to enabled
+              last_checked: new Date()
             }
           });
         }
@@ -394,11 +408,12 @@ router.post('/update', validateApiCredentials, [
     const securityCount = packages.filter(pkg => pkg.isSecurityUpdate).length;
     const updatesCount = packages.filter(pkg => pkg.needsUpdate).length;
 
-    await prisma.updateHistory.create({
+    await prisma.update_history.create({
       data: {
-        hostId: host.id,
-        packagesCount: updatesCount,
-        securityCount,
+        id: uuidv4(),
+        host_id: host.id,
+        packages_count: updatesCount,
+        security_count: securityCount,
         status: 'success'
       }
     });
@@ -408,15 +423,15 @@ router.post('/update', validateApiCredentials, [
     try {
       const settings = await prisma.settings.findFirst();
       // Check both global auto-update setting AND host-specific auto-update setting
-      if (settings && settings.autoUpdate && host.autoUpdate) {
+      if (settings && settings.auto_update && host.auto_update) {
         // Get current agent version from the request
         const currentAgentVersion = req.body.agentVersion;
         
         if (currentAgentVersion) {
           // Get the latest agent version
-          const latestAgentVersion = await prisma.agentVersion.findFirst({
-            where: { isCurrent: true },
-            orderBy: { createdAt: 'desc' }
+          const latestAgentVersion = await prisma.agent_versions.findFirst({
+            where: { is_current: true },
+            orderBy: { created_at: 'desc' }
           });
           
           if (latestAgentVersion && latestAgentVersion.version !== currentAgentVersion) {
@@ -450,7 +465,7 @@ router.post('/update', validateApiCredentials, [
 
     // Check if crontab update is needed (when update interval changes)
     // This is a simple check - if the host has auto-update enabled, we'll suggest crontab update
-    if (host.autoUpdate) {
+    if (host.auto_update) {
       // For now, we'll always suggest crontab update to ensure it's current
       // In a more sophisticated implementation, we could track when the interval last changed
       response.crontabUpdate = {
@@ -466,13 +481,14 @@ router.post('/update', validateApiCredentials, [
     
     // Log error in update history
     try {
-      await prisma.updateHistory.create({
+      await prisma.update_history.create({
         data: {
-          hostId: req.hostRecord.id,
-          packagesCount: 0,
-          securityCount: 0,
+          id: uuidv4(),
+          host_id: req.hostRecord.id,
+          packages_count: 0,
+          security_count: 0,
           status: 'error',
-          errorMessage: error.message
+          error_message: error.message
         }
       });
     } catch (logError) {
@@ -486,20 +502,20 @@ router.post('/update', validateApiCredentials, [
 // Get host information (now uses API credentials)
 router.get('/info', validateApiCredentials, async (req, res) => {
   try {
-    const host = await prisma.host.findUnique({
+    const host = await prisma.hosts.findUnique({
       where: { id: req.hostRecord.id },
       select: {
         id: true,
-        friendlyName: true,
+        friendly_name: true,
         hostname: true,
         ip: true,
-        osType: true,
-        osVersion: true,
+        os_type: true,
+        os_version: true,
         architecture: true,
-        lastUpdate: true,
+        last_update: true,
         status: true,
-        createdAt: true,
-        apiId: true // Include API ID for reference
+        created_at: true,
+        api_id: true // Include API ID for reference
       }
     });
 
@@ -514,20 +530,23 @@ router.get('/info', validateApiCredentials, async (req, res) => {
 router.post('/ping', validateApiCredentials, async (req, res) => {
   try {
     // Update last update timestamp
-    await prisma.host.update({
+    await prisma.hosts.update({
       where: { id: req.hostRecord.id },
-      data: { lastUpdate: new Date() }
+      data: { 
+        last_update: new Date(),
+        updated_at: new Date()
+      }
     });
 
     const response = { 
       message: 'Ping successful',
       timestamp: new Date().toISOString(),
-      friendlyName: req.hostRecord.friendlyName
+      friendlyName: req.hostRecord.friendly_name
     };
 
     // Check if this is a crontab update trigger
-    if (req.body.triggerCrontabUpdate && req.hostRecord.autoUpdate) {
-      console.log(`Triggering crontab update for host: ${req.hostRecord.friendlyName}`);
+    if (req.body.triggerCrontabUpdate && req.hostRecord.auto_update) {
+      console.log(`Triggering crontab update for host: ${req.hostRecord.friendly_name}`);
       response.crontabUpdate = {
         shouldUpdate: true,
         message: 'Update interval changed, please run: /usr/local/bin/patchmon-agent.sh update-crontab',
@@ -547,7 +566,7 @@ router.post('/:hostId/regenerate-credentials', authenticateToken, requireManageH
   try {
     const { hostId } = req.params;
     
-    const host = await prisma.host.findUnique({
+    const host = await prisma.hosts.findUnique({
       where: { id: hostId }
     });
 
@@ -559,16 +578,20 @@ router.post('/:hostId/regenerate-credentials', authenticateToken, requireManageH
     const { apiId, apiKey } = generateApiCredentials();
 
     // Update host with new credentials
-    const updatedHost = await prisma.host.update({
+    const updatedHost = await prisma.hosts.update({
       where: { id: hostId },
-      data: { apiId, apiKey }
+      data: { 
+        api_id: apiId, 
+        api_key: apiKey,
+        updated_at: new Date()
+      }
     });
 
     res.json({
       message: 'API credentials regenerated successfully',
       hostname: updatedHost.hostname,
-      apiId: updatedHost.apiId,
-      apiKey: updatedHost.apiKey,
+      apiId: updatedHost.api_id,
+      apiKey: updatedHost.api_key,
       warning: 'Previous credentials are now invalid. Update your agent configuration.'
     });
   } catch (error) {
@@ -593,7 +616,7 @@ router.put('/bulk/group', authenticateToken, requireManageHosts, [
 
     // If hostGroupId is provided, verify the group exists
     if (hostGroupId) {
-      const hostGroup = await prisma.hostGroup.findUnique({
+      const hostGroup = await prisma.host_groups.findUnique({
         where: { id: hostGroupId }
       });
 
@@ -603,9 +626,9 @@ router.put('/bulk/group', authenticateToken, requireManageHosts, [
     }
 
     // Check if all hosts exist
-    const existingHosts = await prisma.host.findMany({
+    const existingHosts = await prisma.hosts.findMany({
       where: { id: { in: hostIds } },
-      select: { id: true, friendlyName: true }
+      select: { id: true, friendly_name: true }
     });
 
     if (existingHosts.length !== hostIds.length) {
@@ -618,20 +641,21 @@ router.put('/bulk/group', authenticateToken, requireManageHosts, [
     }
 
     // Bulk update host groups
-    const updateResult = await prisma.host.updateMany({
+    const updateResult = await prisma.hosts.updateMany({
       where: { id: { in: hostIds } },
       data: {
-        hostGroupId: hostGroupId || null
+        host_group_id: hostGroupId || null,
+        updated_at: new Date()
       }
     });
 
     // Get updated hosts with group information
-    const updatedHosts = await prisma.host.findMany({
+    const updatedHosts = await prisma.hosts.findMany({
       where: { id: { in: hostIds } },
       select: {
         id: true,
-        friendlyName: true,
-        hostGroup: {
+        friendly_name: true,
+        host_groups: {
           select: {
             id: true,
             name: true,
@@ -666,7 +690,7 @@ router.put('/:hostId/group', authenticateToken, requireManageHosts, [
     const { hostGroupId } = req.body;
 
     // Check if host exists
-    const host = await prisma.host.findUnique({
+    const host = await prisma.hosts.findUnique({
       where: { id: hostId }
     });
 
@@ -676,7 +700,7 @@ router.put('/:hostId/group', authenticateToken, requireManageHosts, [
 
     // If hostGroupId is provided, verify the group exists
     if (hostGroupId) {
-      const hostGroup = await prisma.hostGroup.findUnique({
+      const hostGroup = await prisma.host_groups.findUnique({
         where: { id: hostGroupId }
       });
 
@@ -686,13 +710,14 @@ router.put('/:hostId/group', authenticateToken, requireManageHosts, [
     }
 
     // Update host group
-    const updatedHost = await prisma.host.update({
+    const updatedHost = await prisma.hosts.update({
       where: { id: hostId },
       data: {
-        hostGroupId: hostGroupId || null
+        host_group_id: hostGroupId || null,
+        updated_at: new Date()
       },
       include: {
-        hostGroup: {
+        host_groups: {
           select: {
             id: true,
             name: true,
@@ -715,23 +740,23 @@ router.put('/:hostId/group', authenticateToken, requireManageHosts, [
 // Admin endpoint to list all hosts
 router.get('/admin/list', authenticateToken, requireManageHosts, async (req, res) => {
   try {
-    const hosts = await prisma.host.findMany({
+    const hosts = await prisma.hosts.findMany({
       select: {
         id: true,
-        friendlyName: true,
+        friendly_name: true,
         hostname: true,
         ip: true,
-        osType: true,
-        osVersion: true,
+        os_type: true,
+        os_version: true,
         architecture: true,
-        lastUpdate: true,
+        last_update: true,
         status: true,
-        apiId: true,
-        agentVersion: true,
-        autoUpdate: true,
-        createdAt: true
+        api_id: true,
+        agent_version: true,
+        auto_update: true,
+        created_at: true
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { created_at: 'desc' }
     });
 
     res.json(hosts);
@@ -747,7 +772,7 @@ router.delete('/:hostId', authenticateToken, requireManageHosts, async (req, res
     const { hostId } = req.params;
     
     // Delete host and all related data (cascade)
-    await prisma.host.delete({
+    await prisma.hosts.delete({
       where: { id: hostId }
     });
 
@@ -771,17 +796,20 @@ router.patch('/:hostId/auto-update', authenticateToken, requireManageHosts, [
     const { hostId } = req.params;
     const { autoUpdate } = req.body;
 
-    const host = await prisma.host.update({
+    const host = await prisma.hosts.update({
       where: { id: hostId },
-      data: { autoUpdate }
+      data: { 
+        auto_update: autoUpdate,
+        updated_at: new Date()
+      }
     });
 
     res.json({
       message: `Host auto-update ${autoUpdate ? 'enabled' : 'disabled'} successfully`,
       host: {
         id: host.id,
-        friendlyName: host.friendlyName,
-        autoUpdate: host.autoUpdate
+        friendlyName: host.friendly_name,
+        autoUpdate: host.auto_update
       }
     });
   } catch (error) {
@@ -811,7 +839,7 @@ router.get('/install', async (req, res) => {
         // Replace the default server URL in the script with the configured one
         script = script.replace(
           /PATCHMON_URL="[^"]*"/g,
-          `PATCHMON_URL="${settings.serverUrl}"`
+          `PATCHMON_URL="${settings.server_url}"`
         );
       }
     } catch (settingsError) {
@@ -832,8 +860,8 @@ router.get('/install', async (req, res) => {
 // Get all agent versions (admin only)
 router.get('/agent/versions', authenticateToken, requireManageSettings, async (req, res) => {
   try {
-    const versions = await prisma.agentVersion.findMany({
-      orderBy: { createdAt: 'desc' }
+    const versions = await prisma.agent_versions.findMany({
+      orderBy: { created_at: 'desc' }
     });
 
     res.json(versions);
@@ -861,7 +889,7 @@ router.post('/agent/versions', authenticateToken, requireManageSettings, [
     const { version, releaseNotes, downloadUrl, minServerVersion, scriptContent, isDefault } = req.body;
 
     // Check if version already exists
-    const existingVersion = await prisma.agentVersion.findUnique({
+    const existingVersion = await prisma.agent_versions.findUnique({
       where: { version }
     });
 
@@ -871,21 +899,26 @@ router.post('/agent/versions', authenticateToken, requireManageSettings, [
 
     // If this is being set as default, unset other defaults
     if (isDefault) {
-      await prisma.agentVersion.updateMany({
-        where: { isDefault: true },
-        data: { isDefault: false }
+      await prisma.agent_versions.updateMany({
+        where: { is_default: true },
+        data: { 
+          is_default: false,
+          updated_at: new Date()
+        }
       });
     }
 
-    const agentVersion = await prisma.agentVersion.create({
+    const agentVersion = await prisma.agent_versions.create({
       data: {
+        id: uuidv4(),
         version,
-        releaseNotes,
-        downloadUrl,
-        minServerVersion,
-        scriptContent,
-        isDefault: isDefault || false,
-        isCurrent: false
+        release_notes: releaseNotes,
+        download_url: downloadUrl,
+        min_server_version: minServerVersion,
+        script_content: scriptContent,
+        is_default: isDefault || false,
+        is_current: false,
+        updated_at: new Date()
       }
     });
 
@@ -902,13 +935,13 @@ router.patch('/agent/versions/:versionId/current', authenticateToken, requireMan
     const { versionId } = req.params;
 
     // First, unset all current versions
-    await prisma.agentVersion.updateMany({
+    await prisma.agent_versions.updateMany({
       where: { isCurrent: true },
       data: { isCurrent: false }
     });
 
     // Set the specified version as current
-    const agentVersion = await prisma.agentVersion.update({
+    const agentVersion = await prisma.agent_versions.update({
       where: { id: versionId },
       data: { isCurrent: true }
     });
@@ -926,13 +959,13 @@ router.patch('/agent/versions/:versionId/default', authenticateToken, requireMan
     const { versionId } = req.params;
 
     // First, unset all default versions
-    await prisma.agentVersion.updateMany({
+    await prisma.agent_versions.updateMany({
       where: { isDefault: true },
       data: { isDefault: false }
     });
 
     // Set the specified version as default
-    const agentVersion = await prisma.agentVersion.update({
+    const agentVersion = await prisma.agent_versions.update({
       where: { id: versionId },
       data: { isDefault: true }
     });
@@ -949,7 +982,7 @@ router.delete('/agent/versions/:versionId', authenticateToken, requireManageSett
   try {
     const { versionId } = req.params;
 
-    const agentVersion = await prisma.agentVersion.findUnique({
+    const agentVersion = await prisma.agent_versions.findUnique({
       where: { id: versionId }
     });
 
@@ -957,11 +990,11 @@ router.delete('/agent/versions/:versionId', authenticateToken, requireManageSett
       return res.status(404).json({ error: 'Agent version not found' });
     }
 
-    if (agentVersion.isCurrent) {
+    if (agentVersion.is_current) {
       return res.status(400).json({ error: 'Cannot delete current agent version' });
     }
 
-    await prisma.agentVersion.delete({
+    await prisma.agent_versions.delete({
       where: { id: versionId }
     });
 
@@ -986,7 +1019,7 @@ router.patch('/:hostId/friendly-name', authenticateToken, requireManageHosts, [
     const { friendlyName } = req.body;
 
     // Check if host exists
-    const host = await prisma.host.findUnique({
+    const host = await prisma.hosts.findUnique({
       where: { id: hostId }
     });
 
@@ -995,7 +1028,7 @@ router.patch('/:hostId/friendly-name', authenticateToken, requireManageHosts, [
     }
 
     // Check if friendly name is already taken by another host
-    const existingHost = await prisma.host.findFirst({
+    const existingHost = await prisma.hosts.findFirst({
       where: {
         friendlyName: friendlyName,
         id: { not: hostId }
@@ -1007,7 +1040,7 @@ router.patch('/:hostId/friendly-name', authenticateToken, requireManageHosts, [
     }
 
     // Update the friendly name
-    const updatedHost = await prisma.host.update({
+    const updatedHost = await prisma.hosts.update({
       where: { id: hostId },
       data: { friendlyName },
       select: {

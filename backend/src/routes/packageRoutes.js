@@ -34,16 +34,16 @@ router.get('/', async (req, res) => {
         category ? { category: { equals: category } } : {},
         // Update status filters
         needsUpdate ? {
-          hostPackages: {
+          host_packages: {
             some: {
-              needsUpdate: needsUpdate === 'true'
+              needs_update: needsUpdate === 'true'
             }
           }
         } : {},
         isSecurityUpdate ? {
-          hostPackages: {
+          host_packages: {
             some: {
-              isSecurityUpdate: isSecurityUpdate === 'true'
+              is_security_update: isSecurityUpdate === 'true'
             }
           }
         } : {}
@@ -52,17 +52,17 @@ router.get('/', async (req, res) => {
 
     // Get packages with counts
     const [packages, totalCount] = await Promise.all([
-      prisma.package.findMany({
+      prisma.packages.findMany({
         where,
         select: {
           id: true,
           name: true,
           description: true,
           category: true,
-          latestVersion: true,
-          createdAt: true,
+          latest_version: true,
+          created_at: true,
           _count: {
-            hostPackages: true
+            host_packages: true
           }
         },
         skip,
@@ -71,38 +71,38 @@ router.get('/', async (req, res) => {
           name: 'asc'
         }
       }),
-      prisma.package.count({ where })
+      prisma.packages.count({ where })
     ]);
 
     // Get additional stats for each package
     const packagesWithStats = await Promise.all(
       packages.map(async (pkg) => {
         const [updatesCount, securityCount, affectedHosts] = await Promise.all([
-          prisma.hostPackage.count({
+          prisma.host_packages.count({
             where: {
-              packageId: pkg.id,
-              needsUpdate: true
+              package_id: pkg.id,
+              needs_update: true
             }
           }),
-          prisma.hostPackage.count({
+          prisma.host_packages.count({
             where: {
-              packageId: pkg.id,
-              needsUpdate: true,
-              isSecurityUpdate: true
+              package_id: pkg.id,
+              needs_update: true,
+              is_security_update: true
             }
           }),
-          prisma.hostPackage.findMany({
+          prisma.host_packages.findMany({
             where: {
-              packageId: pkg.id,
-              needsUpdate: true
+              package_id: pkg.id,
+              needs_update: true
             },
             select: {
-              host: {
+              hosts: {
                 select: {
                   id: true,
-                  friendlyName: true,
+                  friendly_name: true,
                   hostname: true,
-                  osType: true
+                  os_type: true
                 }
               }
             },
@@ -142,7 +142,7 @@ router.get('/:packageId', async (req, res) => {
   try {
     const { packageId } = req.params;
 
-    const packageData = await prisma.package.findUnique({
+    const packageData = await prisma.packages.findUnique({
       where: { id: packageId },
       include: {
         hostPackages: {

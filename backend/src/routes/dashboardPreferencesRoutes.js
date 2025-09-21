@@ -9,8 +9,8 @@ const prisma = new PrismaClient();
 // Get user's dashboard preferences
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const preferences = await prisma.dashboardPreferences.findMany({
-      where: { userId: req.user.id },
+    const preferences = await prisma.dashboard_preferences.findMany({
+      where: { user_id: req.user.id },
       orderBy: { order: 'asc' }
     });
     
@@ -38,19 +38,21 @@ router.put('/', authenticateToken, [
     const userId = req.user.id;
 
     // Delete existing preferences for this user
-    await prisma.dashboardPreferences.deleteMany({
-      where: { userId }
+    await prisma.dashboard_preferences.deleteMany({
+      where: { user_id: userId }
     });
 
     // Create new preferences
     const newPreferences = preferences.map(pref => ({
-      userId,
-      cardId: pref.cardId,
+      id: require('uuid').v4(),
+      user_id: userId,
+      card_id: pref.cardId,
       enabled: pref.enabled,
-      order: pref.order
+      order: pref.order,
+      updated_at: new Date()
     }));
 
-    const createdPreferences = await prisma.dashboardPreferences.createMany({
+    const createdPreferences = await prisma.dashboard_preferences.createMany({
       data: newPreferences
     });
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { PrismaClient } = require('@prisma/client');
+const { v4: uuidv4 } = require('uuid');
 const { authenticateToken } = require('../middleware/auth');
 const { requireManageSettings } = require('../middleware/permissions');
 
@@ -96,13 +97,15 @@ router.get('/', authenticateToken, requireManageSettings, async (req, res) => {
     if (!settings) {
       settings = await prisma.settings.create({
         data: {
-          serverUrl: 'http://localhost:3001',
-          serverProtocol: 'http',
-          serverHost: 'localhost',
-          serverPort: 3001,
-          frontendUrl: 'http://localhost:3000',
-          updateInterval: 60,
-          autoUpdate: false
+          id: uuidv4(),
+          server_url: 'http://localhost:3001',
+          server_protocol: 'http',
+          server_host: 'localhost',
+          server_port: 3001,
+          frontend_url: 'http://localhost:3000',
+          update_interval: 60,
+          auto_update: false,
+          updated_at: new Date()
         }
       });
     }
@@ -171,16 +174,17 @@ router.put('/', authenticateToken, requireManageSettings, [
       settings = await prisma.settings.update({
         where: { id: settings.id },
         data: {
-          serverUrl,
-          serverProtocol,
-          serverHost,
-          serverPort,
-          frontendUrl,
-          updateInterval: updateInterval || 60,
-          autoUpdate: autoUpdate || false,
-          githubRepoUrl: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
-          repositoryType: repositoryType || 'public',
-          sshKeyPath: sshKeyPath || null
+          server_url: serverUrl,
+          server_protocol: serverProtocol,
+          server_host: serverHost,
+          server_port: serverPort,
+          frontend_url: frontendUrl,
+          update_interval: updateInterval || 60,
+          auto_update: autoUpdate || false,
+          github_repo_url: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
+          repository_type: repositoryType || 'public',
+          ssh_key_path: sshKeyPath || null,
+          updated_at: new Date()
         }
       });
       console.log('Settings updated successfully:', settings);
@@ -194,16 +198,18 @@ router.put('/', authenticateToken, requireManageSettings, [
       // Create new settings
       settings = await prisma.settings.create({
         data: {
-          serverUrl,
-          serverProtocol,
-          serverHost,
-          serverPort,
-          frontendUrl,
-          updateInterval: updateInterval || 60,
-          autoUpdate: autoUpdate || false,
-          githubRepoUrl: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
-          repositoryType: repositoryType || 'public',
-          sshKeyPath: sshKeyPath || null
+          id: uuidv4(),
+          server_url: serverUrl,
+          server_protocol: serverProtocol,
+          server_host: serverHost,
+          server_port: serverPort,
+          frontend_url: frontendUrl,
+          update_interval: updateInterval || 60,
+          auto_update: autoUpdate || false,
+          github_repo_url: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
+          repository_type: repositoryType || 'public',
+          ssh_key_path: sshKeyPath || null,
+          updated_at: new Date()
         }
       });
     }
