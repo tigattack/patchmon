@@ -10,9 +10,20 @@ const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Check if any admin users exist (for first-time setup)
+// Check if any admin users exist (for first-time setup) - INTERNAL ONLY
 router.get('/check-admin-users', async (req, res) => {
   try {
+    // Only allow this check from localhost or internal requests
+    const clientIP = req.ip || req.connection.remoteAddress;
+    const isLocalhost = clientIP === '127.0.0.1' || clientIP === '::1' || clientIP === '::ffff:127.0.0.1';
+    
+    if (!isLocalhost && !req.headers.host?.includes('localhost')) {
+      return res.status(403).json({ 
+        error: 'Access denied - admin check only available locally',
+        hasAdminUsers: true // Assume admin exists for security
+      });
+    }
+    
     const adminCount = await prisma.users.count({
       where: { role: 'admin' }
     });
@@ -25,7 +36,7 @@ router.get('/check-admin-users', async (req, res) => {
     console.error('Error checking admin users:', error);
     res.status(500).json({ 
       error: 'Failed to check admin users',
-      hasAdminUsers: false 
+      hasAdminUsers: true // Assume admin exists for security
     });
   }
 });
