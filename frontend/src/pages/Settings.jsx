@@ -73,18 +73,18 @@ const Settings = () => {
   useEffect(() => {
     if (settings) {
       console.log('Settings loaded:', settings);
-      console.log('updateInterval from settings:', settings.updateInterval);
+      console.log('updateInterval from settings:', settings.update_interval);
       const newFormData = {
-        serverProtocol: settings.serverProtocol || 'http',
-        serverHost: settings.serverHost || 'localhost',
-        serverPort: settings.serverPort || 3001,
-        frontendUrl: settings.frontendUrl || 'http://localhost:3000',
-        updateInterval: settings.updateInterval || 60,
-        autoUpdate: settings.autoUpdate || false,
-        githubRepoUrl: settings.githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git',
-        repositoryType: settings.repositoryType || 'public',
-        sshKeyPath: settings.sshKeyPath || '',
-        useCustomSshKey: !!settings.sshKeyPath
+        serverProtocol: settings.server_protocol || 'http',
+        serverHost: settings.server_host || 'localhost',
+        serverPort: settings.server_port || 3001,
+        frontendUrl: settings.frontend_url || 'http://localhost:3000',
+        updateInterval: settings.update_interval || 60,
+        autoUpdate: settings.auto_update || false,
+        githubRepoUrl: settings.github_repo_url || 'git@github.com:9technologygroup/patchmon.net.git',
+        repositoryType: settings.repository_type || 'public',
+        sshKeyPath: settings.ssh_key_path || '',
+        useCustomSshKey: !!settings.ssh_key_path
       };
       console.log('Setting form data to:', newFormData);
       setFormData(newFormData);
@@ -107,16 +107,16 @@ const Settings = () => {
       queryClient.invalidateQueries(['settings']);
       // Update form data with the returned data
       setFormData({
-        serverProtocol: data.settings?.serverProtocol || data.serverProtocol || 'http',
-        serverHost: data.settings?.serverHost || data.serverHost || 'localhost',
-        serverPort: data.settings?.serverPort || data.serverPort || 3001,
-        frontendUrl: data.settings?.frontendUrl || data.frontendUrl || 'http://localhost:3000',
-        updateInterval: data.settings?.updateInterval || data.updateInterval || 60,
-        autoUpdate: data.settings?.autoUpdate || data.autoUpdate || false,
-        githubRepoUrl: data.settings?.githubRepoUrl || data.githubRepoUrl || 'git@github.com:9technologygroup/patchmon.net.git',
-        repositoryType: data.settings?.repositoryType || data.repositoryType || 'public',
-        sshKeyPath: data.settings?.sshKeyPath || data.sshKeyPath || '',
-        useCustomSshKey: !!(data.settings?.sshKeyPath || data.sshKeyPath)
+        serverProtocol: data.settings?.server_protocol || data.server_protocol || 'http',
+        serverHost: data.settings?.server_host || data.server_host || 'localhost',
+        serverPort: data.settings?.server_port || data.server_port || 3001,
+        frontendUrl: data.settings?.frontend_url || data.frontend_url || 'http://localhost:3000',
+        updateInterval: data.settings?.update_interval || data.update_interval || 60,
+        autoUpdate: data.settings?.auto_update || data.auto_update || false,
+        githubRepoUrl: data.settings?.github_repo_url || data.github_repo_url || 'git@github.com:9technologygroup/patchmon.net.git',
+        repositoryType: data.settings?.repository_type || data.repository_type || 'public',
+        sshKeyPath: data.settings?.ssh_key_path || data.ssh_key_path || '',
+        useCustomSshKey: !!(data.settings?.ssh_key_path || data.ssh_key_path)
       });
       setIsDirty(false);
       setErrors({});
