@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { PrismaClient } = require('@prisma/client');
+const { v4: uuidv4 } = require('uuid');
 const { authenticateToken } = require('../middleware/auth');
 const { requireManageSettings } = require('../middleware/permissions');
 
@@ -13,16 +14,16 @@ async function triggerCrontabUpdates() {
     console.log('Triggering crontab updates on all hosts with auto-update enabled...');
     
     // Get all hosts that have auto-update enabled
-    const hosts = await prisma.host.findMany({
+    const hosts = await prisma.hosts.findMany({
       where: { 
-        autoUpdate: true,
+        auto_update: true,
         status: 'active' // Only update active hosts
       },
       select: {
         id: true,
-        friendlyName: true,
-        apiId: true,
-        apiKey: true
+        friendly_name: true,
+        api_id: true,
+        api_key: true
       }
     });
     
@@ -32,14 +33,15 @@ async function triggerCrontabUpdates() {
     // This is done by sending a ping with a special flag
     for (const host of hosts) {
       try {
-        console.log(`Triggering crontab update for host: ${host.friendlyName}`);
+        console.log(`Triggering crontab update for host: ${host.friendly_name}`);
         
         // We'll use the existing ping endpoint but add a special parameter
         // The agent will detect this and run update-crontab command
         const http = require('http');
         const https = require('https');
-        
-        const serverUrl = process.env.SERVER_URL || 'http://localhost:3001';
+
+        const settings = await prisma.settings.findFirst();
+        const serverUrl = settings?.server_url || process.env.SERVER_URL || 'http://localhost:3001';
         const url = new URL(`${serverUrl}/api/v1/hosts/ping`);
         const isHttps = url.protocol === 'https:';
         const client = isHttps ? https : http;
@@ -57,27 +59,27 @@ async function triggerCrontabUpdates() {
           headers: {
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(postData),
-            'X-API-ID': host.apiId,
-            'X-API-KEY': host.apiKey
+            'X-API-ID': host.api_id,
+            'X-API-KEY': host.api_key
           }
         };
         
         const req = client.request(options, (res) => {
           if (res.statusCode === 200) {
-            console.log(`Successfully triggered crontab update for ${host.friendlyName}`);
+            console.log(`Successfully triggered crontab update for ${host.friendly_name}`);
           } else {
-            console.error(`Failed to trigger crontab update for ${host.friendlyName}: ${res.statusCode}`);
+            console.error(`Failed to trigger crontab update for ${host.friendly_name}: ${res.statusCode}`);
           }
         });
         
         req.on('error', (error) => {
-          console.error(`Error triggering crontab update for ${host.friendlyName}:`, error.message);
+          console.error(`Error triggering crontab update for ${host.friendly_name}:`, error.message);
         });
         
         req.write(postData);
         req.end();
       } catch (error) {
-        console.error(`Error triggering crontab update for ${host.friendlyName}:`, error.message);
+        console.error(`Error triggering crontab update for ${host.friendly_name}:`, error.message);
       }
     }
     
@@ -96,17 +98,19 @@ router.get('/', authenticateToken, requireManageSettings, async (req, res) => {
     if (!settings) {
       settings = await prisma.settings.create({
         data: {
-          serverUrl: 'http://localhost:3001',
-          serverProtocol: 'http',
-          serverHost: 'localhost',
-          serverPort: 3001,
-          frontendUrl: 'http://localhost:3000',
-          updateInterval: 60,
-          autoUpdate: false
+          id: uuidv4(),
+          server_url: 'http://localhost:3001',
+          server_protocol: 'http',
+          server_host: 'localhost',
+          server_port: 3001,
+          frontend_url: 'http://localhost:3000',
+          update_interval: 60,
+          auto_update: false,
+          updated_at: new Date()
         }
       });
     }
-    
+
     console.log('Returning settings:', settings);
     res.json(settings);
   } catch (error) {
@@ -166,21 +170,22 @@ router.put('/', authenticateToken, requireManageSettings, [
         repositoryType: repositoryType || 'public'
       });
       console.log('Final githubRepoUrl value being saved:', githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git');
-      const oldUpdateInterval = settings.updateInterval;
+      const oldUpdateInterval = settings.update_interval;
       
       settings = await prisma.settings.update({
         where: { id: settings.id },
         data: {
-          serverUrl,
-          serverProtocol,
-          serverHost,
-          serverPort,
-          frontendUrl,
-          updateInterval: updateInterval || 60,
-          autoUpdate: autoUpdate || false,
-          githubRepoUrl: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
-          repositoryType: repositoryType || 'public',
-          sshKeyPath: sshKeyPath || null
+          server_url: serverUrl,
+          server_protocol: serverProtocol,
+          server_host: serverHost,
+          server_port: serverPort,
+          frontend_url: frontendUrl,
+          update_interval: updateInterval || 60,
+          auto_update: autoUpdate || false,
+          github_repo_url: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
+          repository_type: repositoryType || 'public',
+          ssh_key_path: sshKeyPath || null,
+          updated_at: new Date()
         }
       });
       console.log('Settings updated successfully:', settings);
@@ -194,16 +199,18 @@ router.put('/', authenticateToken, requireManageSettings, [
       // Create new settings
       settings = await prisma.settings.create({
         data: {
-          serverUrl,
-          serverProtocol,
-          serverHost,
-          serverPort,
-          frontendUrl,
-          updateInterval: updateInterval || 60,
-          autoUpdate: autoUpdate || false,
-          githubRepoUrl: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
-          repositoryType: repositoryType || 'public',
-          sshKeyPath: sshKeyPath || null
+          id: uuidv4(),
+          server_url: serverUrl,
+          server_protocol: serverProtocol,
+          server_host: serverHost,
+          server_port: serverPort,
+          frontend_url: frontendUrl,
+          update_interval: updateInterval || 60,
+          auto_update: autoUpdate || false,
+          github_repo_url: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
+          repository_type: repositoryType || 'public',
+          ssh_key_path: sshKeyPath || null,
+          updated_at: new Date()
         }
       });
     }
@@ -224,13 +231,13 @@ router.get('/server-url', async (req, res) => {
     const settings = await prisma.settings.findFirst();
     
     if (!settings) {
-      return res.json({ serverUrl: 'http://localhost:3001' });
+      return res.json({ server_url: 'http://localhost:3001' });
     }
     
-    res.json({ serverUrl: settings.serverUrl });
+    res.json({ server_url: settings.server_url });
   } catch (error) {
     console.error('Server URL fetch error:', error);
-    res.json({ serverUrl: 'http://localhost:3001' });
+    res.json({ server_url: 'http://localhost:3001' });
   }
 });
 
@@ -244,8 +251,8 @@ router.get('/update-interval', async (req, res) => {
     }
     
     res.json({ 
-      updateInterval: settings.updateInterval,
-      cronExpression: `*/${settings.updateInterval} * * * *` // Generate cron expression
+      updateInterval: settings.update_interval,
+      cronExpression: `*/${settings.update_interval} * * * *` // Generate cron expression
     });
   } catch (error) {
     console.error('Update interval fetch error:', error);
@@ -263,7 +270,7 @@ router.get('/auto-update', async (req, res) => {
     }
     
     res.json({ 
-      autoUpdate: settings.autoUpdate || false
+      autoUpdate: settings.auto_update || false
     });
   } catch (error) {
     console.error('Auto-update fetch error:', error);

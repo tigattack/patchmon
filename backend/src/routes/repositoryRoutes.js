@@ -10,14 +10,14 @@ const prisma = new PrismaClient();
 // Get all repositories with host count
 router.get('/', authenticateToken, requireViewHosts, async (req, res) => {
   try {
-    const repositories = await prisma.repository.findMany({
+    const repositories = await prisma.repositories.findMany({
       include: {
-        hostRepositories: {
+        host_repositories: {
           include: {
-            host: {
+            hosts: {
               select: {
                 id: true,
-                friendlyName: true,
+                friendly_name: true,
                 status: true
               }
             }
@@ -25,7 +25,7 @@ router.get('/', authenticateToken, requireViewHosts, async (req, res) => {
         },
         _count: {
           select: {
-            hostRepositories: true
+            host_repositories: true
           }
         }
       },
@@ -38,15 +38,15 @@ router.get('/', authenticateToken, requireViewHosts, async (req, res) => {
     // Transform data to include host counts and status
     const transformedRepos = repositories.map(repo => ({
       ...repo,
-      hostCount: repo._count.hostRepositories,
-      enabledHostCount: repo.hostRepositories.filter(hr => hr.isEnabled).length,
-      activeHostCount: repo.hostRepositories.filter(hr => hr.host.status === 'active').length,
-      hosts: repo.hostRepositories.map(hr => ({
-        id: hr.host.id,
-        friendlyName: hr.host.friendlyName,
-        status: hr.host.status,
-        isEnabled: hr.isEnabled,
-        lastChecked: hr.lastChecked
+      hostCount: repo._count.host_repositories,
+      enabledHostCount: repo.host_repositories.filter(hr => hr.is_enabled).length,
+      activeHostCount: repo.host_repositories.filter(hr => hr.hosts.status === 'active').length,
+      hosts: repo.host_repositories.map(hr => ({
+        id: hr.hosts.id,
+        friendlyName: hr.hosts.friendly_name,
+        status: hr.hosts.status,
+        isEnabled: hr.is_enabled,
+        lastChecked: hr.last_checked
       }))
     }));
 
@@ -62,19 +62,19 @@ router.get('/host/:hostId', authenticateToken, requireViewHosts, async (req, res
   try {
     const { hostId } = req.params;
 
-    const hostRepositories = await prisma.hostRepository.findMany({
-      where: { hostId },
+    const hostRepositories = await prisma.host_repositories.findMany({
+      where: { host_id: hostId },
       include: {
-        repository: true,
-        host: {
+        repositories: true,
+        hosts: {
           select: {
             id: true,
-            friendlyName: true
+            friendly_name: true
           }
         }
       },
       orderBy: {
-        repository: {
+        repositories: {
           name: 'asc'
         }
       }
@@ -92,27 +92,27 @@ router.get('/:repositoryId', authenticateToken, requireViewHosts, async (req, re
   try {
     const { repositoryId } = req.params;
 
-    const repository = await prisma.repository.findUnique({
+    const repository = await prisma.repositories.findUnique({
       where: { id: repositoryId },
       include: {
-        hostRepositories: {
+        host_repositories: {
           include: {
-            host: {
+            hosts: {
               select: {
                 id: true,
-                friendlyName: true,
+                friendly_name: true,
                 hostname: true,
                 ip: true,
-                osType: true,
-                osVersion: true,
+                os_type: true,
+                os_version: true,
                 status: true,
-                lastUpdate: true
+                last_update: true
               }
             }
           },
           orderBy: {
-            host: {
-              friendlyName: 'asc'
+            hosts: {
+              friendly_name: 'asc'
             }
           }
         }
@@ -146,18 +146,18 @@ router.put('/:repositoryId', authenticateToken, requireManageHosts, [
     const { repositoryId } = req.params;
     const { name, description, isActive, priority } = req.body;
 
-    const repository = await prisma.repository.update({
+    const repository = await prisma.repositories.update({
       where: { id: repositoryId },
       data: {
         ...(name && { name }),
         ...(description !== undefined && { description }),
-        ...(isActive !== undefined && { isActive }),
+        ...(isActive !== undefined && { is_active: isActive }),
         ...(priority !== undefined && { priority })
       },
       include: {
         _count: {
           select: {
-            hostRepositories: true
+            host_repositories: true
           }
         }
       }
@@ -183,29 +183,29 @@ router.patch('/host/:hostId/repository/:repositoryId', authenticateToken, requir
     const { hostId, repositoryId } = req.params;
     const { isEnabled } = req.body;
 
-    const hostRepository = await prisma.hostRepository.update({
+    const hostRepository = await prisma.host_repositories.update({
       where: {
-        hostId_repositoryId: {
-          hostId,
-          repositoryId
+        host_id_repository_id: {
+          host_id: hostId,
+          repository_id: repositoryId
         }
       },
       data: {
-        isEnabled,
-        lastChecked: new Date()
+        is_enabled: isEnabled,
+        last_checked: new Date()
       },
       include: {
-        repository: true,
-        host: {
+        repositories: true,
+        hosts: {
           select: {
-            friendlyName: true
+            friendly_name: true
           }
         }
       }
     });
 
     res.json({
-      message: `Repository ${isEnabled ? 'enabled' : 'disabled'} for host ${hostRepository.host.friendlyName}`,
+      message: `Repository ${isEnabled ? 'enabled' : 'disabled'} for host ${hostRepository.hosts.friendly_name}`,
       hostRepository
     });
   } catch (error) {
@@ -217,25 +217,25 @@ router.patch('/host/:hostId/repository/:repositoryId', authenticateToken, requir
 // Get repository statistics
 router.get('/stats/summary', authenticateToken, requireViewHosts, async (req, res) => {
   try {
-    const stats = await prisma.repository.aggregate({
+    const stats = await prisma.repositories.aggregate({
       _count: true
     });
 
-    const hostRepoStats = await prisma.hostRepository.aggregate({
+    const hostRepoStats = await prisma.host_repositories.aggregate({
       _count: {
-        isEnabled: true
+          is_enabled: true
       },
       where: {
-        isEnabled: true
+          is_enabled: true
       }
     });
 
-    const secureRepos = await prisma.repository.count({
-      where: { isSecure: true }
+    const secureRepos = await prisma.repositories.count({
+      where: { is_secure: true }
     });
 
-    const activeRepos = await prisma.repository.count({
-      where: { isActive: true }
+    const activeRepos = await prisma.repositories.count({
+      where: { is_active: true }
     });
 
     res.json({
@@ -257,9 +257,9 @@ router.delete('/cleanup/orphaned', authenticateToken, requireManageHosts, async 
     console.log('Cleaning up orphaned repositories...');
     
     // Find repositories with no host relationships
-    const orphanedRepos = await prisma.repository.findMany({
+    const orphanedRepos = await prisma.repositories.findMany({
       where: {
-        hostRepositories: {
+          host_repositories: {
           none: {}
         }
       }
@@ -274,7 +274,7 @@ router.delete('/cleanup/orphaned', authenticateToken, requireManageHosts, async 
     }
 
     // Delete orphaned repositories
-    const deleteResult = await prisma.repository.deleteMany({
+    const deleteResult = await prisma.repositories.deleteMany({
       where: {
         hostRepositories: {
           none: {}

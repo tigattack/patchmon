@@ -18,7 +18,7 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
     
     // Get the agent update interval setting
     const settings = await prisma.settings.findFirst();
-    const updateIntervalMinutes = settings?.updateInterval || 60; // Default to 60 minutes if no setting
+    const updateIntervalMinutes = settings?.update_interval || 60; // Default to 60 minutes if no setting
     
     // Calculate the threshold based on the actual update interval
     // Use 2x the update interval as the threshold for "errored" hosts
@@ -37,66 +37,66 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
       updateTrends
     ] = await Promise.all([
       // Total hosts count
-      prisma.host.count({
+      prisma.hosts.count({
         where: { status: 'active' }
       }),
 
       // Hosts needing updates (distinct hosts with packages needing updates)
-      prisma.host.count({
+      prisma.hosts.count({
         where: {
           status: 'active',
-          hostPackages: {
+          host_packages: {
             some: {
-              needsUpdate: true
+              needs_update: true
             }
           }
         }
       }),
 
       // Total outdated packages across all hosts
-      prisma.hostPackage.count({
-        where: { needsUpdate: true }
+      prisma.host_packages.count({
+        where: { needs_update: true }
       }),
 
       // Errored hosts (not updated within threshold based on update interval)
-      prisma.host.count({
+      prisma.hosts.count({
         where: {
           status: 'active',
-          lastUpdate: {
+          last_update: {
             lt: thresholdTime
           }
         }
       }),
 
       // Security updates count
-      prisma.hostPackage.count({
+      prisma.host_packages.count({
         where: {
-          needsUpdate: true,
-          isSecurityUpdate: true
+          needs_update: true,
+          is_security_update: true
         }
       }),
 
       // Offline/Stale hosts (not updated within 3x the update interval)
-      prisma.host.count({
+      prisma.hosts.count({
         where: {
           status: 'active',
-          lastUpdate: {
+          last_update: {
             lt: moment(now).subtract(updateIntervalMinutes * 3, 'minutes').toDate()
           }
         }
       }),
 
       // OS distribution for pie chart
-      prisma.host.groupBy({
-        by: ['osType'],
+      prisma.hosts.groupBy({
+        by: ['os_type'],
         where: { status: 'active' },
         _count: {
-          osType: true
+          os_type: true
         }
       }),
 
       // Update trends for the last 7 days
-      prisma.updateHistory.groupBy({
+      prisma.update_history.groupBy({
         by: ['timestamp'],
         where: {
           timestamp: {
@@ -107,16 +107,16 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
           id: true
         },
         _sum: {
-          packagesCount: true,
-          securityCount: true
+          packages_count: true,
+          security_count: true
         }
       })
     ]);
 
     // Format OS distribution for pie chart
     const osDistributionFormatted = osDistribution.map(item => ({
-      name: item.osType,
-      count: item._count.osType
+      name: item.os_type,
+      count: item._count.os_type
     }));
 
     // Calculate update status distribution
@@ -158,20 +158,20 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
 // Get hosts with their update status
 router.get('/hosts', authenticateToken, requireViewHosts, async (req, res) => {
   try {
-    const hosts = await prisma.host.findMany({
+    const hosts = await prisma.hosts.findMany({
       // Show all hosts regardless of status
       select: {
         id: true,
-        friendlyName: true,
+        friendly_name: true,
         hostname: true,
         ip: true,
-        osType: true,
-        osVersion: true,
-        lastUpdate: true,
+        os_type: true,
+        os_version: true,
+        last_update: true,
         status: true,
-        agentVersion: true,
-        autoUpdate: true,
-        hostGroup: {
+        agent_version: true,
+        auto_update: true,
+        host_groups: {
           select: {
             id: true,
             name: true,
@@ -180,41 +180,41 @@ router.get('/hosts', authenticateToken, requireViewHosts, async (req, res) => {
         },
         _count: {
           select: {
-            hostPackages: {
+            host_packages: {
               where: {
-                needsUpdate: true
+                needs_update: true
               }
             }
           }
         }
       },
-      orderBy: { lastUpdate: 'desc' }
+      orderBy: { last_update: 'desc' }
     });
 
     // Get update counts for each host separately
     const hostsWithUpdateInfo = await Promise.all(
       hosts.map(async (host) => {
-        const updatesCount = await prisma.hostPackage.count({
+        const updatesCount = await prisma.host_packages.count({
           where: {
-            hostId: host.id,
-            needsUpdate: true
+            host_id: host.id,
+            needs_update: true
           }
         });
 
         // Get total packages count for this host
-        const totalPackagesCount = await prisma.hostPackage.count({
+        const totalPackagesCount = await prisma.host_packages.count({
           where: {
-            hostId: host.id
+            host_id: host.id
           }
         });
 
         // Get the agent update interval setting for stale calculation
         const settings = await prisma.settings.findFirst();
-        const updateIntervalMinutes = settings?.updateInterval || 60;
+        const updateIntervalMinutes = settings?.update_interval || 60;
         const thresholdMinutes = updateIntervalMinutes * 2;
 
         // Calculate effective status based on reporting interval
-        const isStale = moment(host.lastUpdate).isBefore(moment().subtract(thresholdMinutes, 'minutes'));
+        const isStale = moment(host.last_update).isBefore(moment().subtract(thresholdMinutes, 'minutes'));
         let effectiveStatus = host.status;
         
         // Override status if host hasn't reported within threshold
@@ -242,11 +242,11 @@ router.get('/hosts', authenticateToken, requireViewHosts, async (req, res) => {
 // Get packages that need updates across all hosts
 router.get('/packages', authenticateToken, requireViewPackages, async (req, res) => {
   try {
-    const packages = await prisma.package.findMany({
+    const packages = await prisma.packages.findMany({
       where: {
-        hostPackages: {
+        host_packages: {
           some: {
-            needsUpdate: true
+            needs_update: true
           }
         }
       },
@@ -255,18 +255,18 @@ router.get('/packages', authenticateToken, requireViewPackages, async (req, res)
         name: true,
         description: true,
         category: true,
-        latestVersion: true,
-        hostPackages: {
-          where: { needsUpdate: true },
+        latest_version: true,
+        host_packages: {
+          where: { needs_update: true },
           select: {
-            currentVersion: true,
-            availableVersion: true,
-            isSecurityUpdate: true,
-            host: {
+            current_version: true,
+            available_version: true,
+            is_security_update: true,
+            hosts: {
               select: {
                 id: true,
-                friendlyName: true,
-                osType: true
+                friendly_name: true,
+                os_type: true
               }
             }
           }
@@ -282,16 +282,16 @@ router.get('/packages', authenticateToken, requireViewPackages, async (req, res)
       name: pkg.name,
       description: pkg.description,
       category: pkg.category,
-      latestVersion: pkg.latestVersion,
-      affectedHostsCount: pkg.hostPackages.length,
-      isSecurityUpdate: pkg.hostPackages.some(hp => hp.isSecurityUpdate),
-      affectedHosts: pkg.hostPackages.map(hp => ({
-        hostId: hp.host.id,
-        friendlyName: hp.host.friendlyName,
-        osType: hp.host.osType,
-        currentVersion: hp.currentVersion,
-        availableVersion: hp.availableVersion,
-        isSecurityUpdate: hp.isSecurityUpdate
+      latestVersion: pkg.latest_version,
+      affectedHostsCount: pkg.host_packages.length,
+      isSecurityUpdate: pkg.host_packages.some(hp => hp.is_security_update),
+      affectedHosts: pkg.host_packages.map(hp => ({
+        hostId: hp.hosts.id,
+        friendlyName: hp.hosts.friendly_name,
+        osType: hp.hosts.os_type,
+        currentVersion: hp.current_version,
+        availableVersion: hp.available_version,
+        isSecurityUpdate: hp.is_security_update
       }))
     }));
 
@@ -307,25 +307,25 @@ router.get('/hosts/:hostId', authenticateToken, requireViewHosts, async (req, re
   try {
     const { hostId } = req.params;
     
-    const host = await prisma.host.findUnique({
+    const host = await prisma.hosts.findUnique({
       where: { id: hostId },
       include: {
-        hostGroup: {
+        host_groups: {
           select: {
             id: true,
             name: true,
             color: true
           }
         },
-        hostPackages: {
+        host_packages: {
           include: {
-            package: true
+            packages: true
           },
           orderBy: {
-            needsUpdate: 'desc'
+            needs_update: 'desc'
           }
         },
-        updateHistory: {
+        update_history: {
           orderBy: {
             timestamp: 'desc'
           },
@@ -341,9 +341,9 @@ router.get('/hosts/:hostId', authenticateToken, requireViewHosts, async (req, re
     const hostWithStats = {
       ...host,
       stats: {
-        totalPackages: host.hostPackages.length,
-        outdatedPackages: host.hostPackages.filter(hp => hp.needsUpdate).length,
-        securityUpdates: host.hostPackages.filter(hp => hp.needsUpdate && hp.isSecurityUpdate).length
+        totalPackages: host.host_packages.length,
+        outdatedPackages: host.host_packages.filter(hp => hp.needs_update).length,
+        securityUpdates: host.host_packages.filter(hp => hp.needs_update && hp.is_security_update).length
       }
     };
 

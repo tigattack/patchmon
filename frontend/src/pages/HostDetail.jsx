@@ -738,8 +738,8 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
     queryKey: ['serverUrl'],
     queryFn: () => settingsAPI.getServerUrl().then(res => res.data),
   })
-  
-  const serverUrl = serverUrlData?.serverUrl || 'http://localhost:3001'
+
+  const serverUrl = serverUrlData?.server_url || 'http://localhost:3001'
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text)
@@ -831,12 +831,12 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  value={`curl -s ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host.apiId}" "${host.apiKey}"`}
+                  value={`curl -s ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host.api_id}" "${host.api_key}"`}
                   readOnly
                   className="flex-1 px-3 py-2 border border-primary-300 dark:border-primary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
                 />
                 <button
-                  onClick={() => copyToClipboard(`curl -s ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host.apiId}" "${host.apiKey}"`)}
+                  onClick={() => copyToClipboard(`curl -s ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host.api_id}" "${host.api_key}"`)}
                   className="btn-primary flex items-center gap-1"
                 >
                   <Copy className="h-4 w-4" />
@@ -894,12 +894,12 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
-                      value={`sudo /usr/local/bin/patchmon-agent.sh configure "${host.apiId}" "${host.apiKey}"`}
+                      value={`sudo /usr/local/bin/patchmon-agent.sh configure "${host.api_id}" "${host.api_key}"`}
                       readOnly
                       className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
                     />
                     <button
-                      onClick={() => copyToClipboard(`sudo /usr/local/bin/patchmon-agent.sh configure "${host.apiId}" "${host.apiKey}"`)}
+                      onClick={() => copyToClipboard(`sudo /usr/local/bin/patchmon-agent.sh configure "${host.api_id}" "${host.api_key}"`)}
                       className="btn-secondary flex items-center gap-1"
                     >
                       <Copy className="h-4 w-4" />

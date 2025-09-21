@@ -14,12 +14,12 @@ router.get('/setup', authenticateToken, async (req, res) => {
     const userId = req.user.id;
     
     // Check if user already has TFA enabled
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: { tfaEnabled: true, tfaSecret: true }
     });
 
-    if (user.tfaEnabled) {
+    if (user.tfa_enabled) {
       return res.status(400).json({ 
         error: 'Two-factor authentication is already enabled for this account' 
       });
@@ -36,9 +36,9 @@ router.get('/setup', authenticateToken, async (req, res) => {
     const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);
 
     // Store the secret temporarily (not enabled yet)
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: userId },
-      data: { tfaSecret: secret.base32 }
+      data: { tfa_secret: secret.base32 }
     });
 
     res.json({
@@ -67,18 +67,18 @@ router.post('/verify-setup', authenticateToken, [
     const userId = req.user.id;
 
     // Get user's TFA secret
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
-      select: { tfaSecret: true, tfaEnabled: true }
+      select: { tfa_secret: true, tfa_enabled: true }
     });
 
-    if (!user.tfaSecret) {
+    if (!user.tfa_secret) {
       return res.status(400).json({ 
         error: 'No TFA secret found. Please start the setup process first.' 
       });
     }
 
-    if (user.tfaEnabled) {
+    if (user.tfa_enabled) {
       return res.status(400).json({ 
         error: 'Two-factor authentication is already enabled for this account' 
       });
@@ -104,11 +104,11 @@ router.post('/verify-setup', authenticateToken, [
     );
 
     // Enable TFA and store backup codes
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: userId },
       data: {
-        tfaEnabled: true,
-        tfaBackupCodes: JSON.stringify(backupCodes)
+        tfa_enabled: true,
+        tfa_backup_codes: JSON.stringify(backupCodes)
       }
     });
 
@@ -136,12 +136,12 @@ router.post('/disable', authenticateToken, [
     const userId = req.user.id;
 
     // Verify password
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
-      select: { passwordHash: true, tfaEnabled: true }
+      select: { password_hash: true, tfa_enabled: true }
     });
 
-    if (!user.tfaEnabled) {
+    if (!user.tfa_enabled) {
       return res.status(400).json({ 
         error: 'Two-factor authentication is not enabled for this account' 
       });
@@ -151,12 +151,12 @@ router.post('/disable', authenticateToken, [
     // For now, we'll skip password verification for simplicity
 
     // Disable TFA
-    await prisma.user.update({
-      where: { id: userId },
+    await prisma.users.update({
+      where: { id: id },
       data: {
-        tfaEnabled: false,
-        tfaSecret: null,
-        tfaBackupCodes: null
+        tfa_enabled: false,
+        tfa_secret: null,
+        tfa_backup_codes: null
       }
     });
 
@@ -174,18 +174,18 @@ router.get('/status', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: { 
-        tfaEnabled: true,
-        tfaSecret: true,
-        tfaBackupCodes: true
+        tfa_enabled: true,
+        tfa_secret: true,
+        tfa_backup_codes: true
       }
     });
 
     res.json({
-      enabled: user.tfaEnabled,
-      hasBackupCodes: !!user.tfaBackupCodes
+      enabled: user.tfa_enabled,
+      hasBackupCodes: !!user.tfa_backup_codes
     });
   } catch (error) {
     console.error('TFA status error:', error);
@@ -199,12 +199,12 @@ router.post('/regenerate-backup-codes', authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     // Check if TFA is enabled
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: { tfaEnabled: true }
     });
 
-    if (!user.tfaEnabled) {
+    if (!user.tfa_enabled) {
       return res.status(400).json({ 
         error: 'Two-factor authentication is not enabled for this account' 
       });
@@ -216,7 +216,7 @@ router.post('/regenerate-backup-codes', authenticateToken, async (req, res) => {
     );
 
     // Update backup codes
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: userId },
       data: {
         tfaBackupCodes: JSON.stringify(backupCodes)
@@ -248,17 +248,17 @@ router.post('/verify', [
     const { username, token } = req.body;
 
     // Get user's TFA secret
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { username },
       select: { 
         id: true,
-        tfaEnabled: true, 
-        tfaSecret: true,
-        tfaBackupCodes: true
+        tfa_enabled: true,
+        tfa_secret: true,
+        tfa_backup_codes: true
       }
     });
 
-    if (!user || !user.tfaEnabled || !user.tfaSecret) {
+    if (!user || !user.tfa_enabled || !user.tfa_secret) {
       return res.status(400).json({ 
         error: 'Two-factor authentication is not enabled for this account' 
       });
@@ -273,7 +273,7 @@ router.post('/verify', [
     if (isBackupCode) {
       // Remove the used backup code
       const updatedBackupCodes = backupCodes.filter(code => code !== token);
-      await prisma.user.update({
+      await prisma.users.update({
         where: { id: user.id },
         data: {
           tfaBackupCodes: JSON.stringify(updatedBackupCodes)
@@ -283,7 +283,7 @@ router.post('/verify', [
     } else {
       // Verify TOTP token
       verified = speakeasy.totp.verify({
-        secret: user.tfaSecret,
+        secret: user.tfa_secret,
         encoding: 'base32',
         token: token,
         window: 2

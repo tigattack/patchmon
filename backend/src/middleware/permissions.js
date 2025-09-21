@@ -6,7 +6,7 @@ const requirePermission = (permission) => {
   return async (req, res, next) => {
     try {
       // Get user's role permissions
-      const rolePermissions = await prisma.rolePermissions.findUnique({
+      const rolePermissions = await prisma.role_permissions.findUnique({
         where: { role: req.user.role }
       });
 

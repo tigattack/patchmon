@@ -159,21 +159,21 @@ router.get('/check-updates', authenticateToken, requireManageSettings, async (re
     }
 
     const currentVersion = '1.2.6';
-    const latestVersion = settings.latestVersion || currentVersion;
-    const isUpdateAvailable = settings.updateAvailable || false;
-    const lastUpdateCheck = settings.lastUpdateCheck;
+    const latestVersion = settings.latest_version || currentVersion;
+    const isUpdateAvailable = settings.update_available || false;
+    const lastUpdateCheck = settings.last_update_check || null;
 
     res.json({
       currentVersion,
       latestVersion,
       isUpdateAvailable,
       lastUpdateCheck,
-      repositoryType: settings.repositoryType || 'public',
+      repositoryType: settings.repository_type || 'public',
       latestRelease: {
         tagName: latestVersion ? `v${latestVersion}` : null,
         version: latestVersion,
-        repository: settings.githubRepoUrl ? settings.githubRepoUrl.split('/').slice(-2).join('/') : null,
-        accessMethod: settings.repositoryType === 'private' ? 'ssh' : 'api'
+        repository: settings.github_repo_url ? settings.github_repo_url.split('/').slice(-2).join('/') : null,
+        accessMethod: settings.repository_type === 'private' ? 'ssh' : 'api'
       }
     });
 

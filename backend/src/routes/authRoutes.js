@@ -5,6 +5,7 @@ const { PrismaClient } = require('@prisma/client');
 const { body, validationResult } = require('express-validator');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { requireViewUsers, requireManageUsers } = require('../middleware/permissions');
+const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -21,19 +22,19 @@ const generateToken = (userId) => {
 // Admin endpoint to list all users
 router.get('/admin/users', authenticateToken, requireViewUsers, async (req, res) => {
   try {
-    const users = await prisma.user.findMany({
+    const users = await prisma.users.findMany({
       select: {
         id: true,
         username: true,
         email: true,
         role: true,
-        isActive: true,
-        lastLogin: true,
-        createdAt: true,
-        updatedAt: true
+        is_active: true,
+        last_login: true,
+        created_at: true,
+        updated_at: true
       },
       orderBy: {
-        createdAt: 'desc'
+        created_at: 'desc'
       }
     })
 
@@ -51,7 +52,7 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('role').optional().custom(async (value) => {
     if (!value) return true; // Optional field
-    const rolePermissions = await prisma.rolePermissions.findUnique({
+    const rolePermissions = await prisma.role_permissions.findUnique({
       where: { role: value }
     });
     if (!rolePermissions) {
@@ -69,7 +70,7 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
     const { username, email, password, role = 'user' } = req.body;
 
     // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await prisma.users.findFirst({
       where: {
         OR: [
           { username },
@@ -86,11 +87,11 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
     const passwordHash = await bcrypt.hash(password, 12);
 
     // Create user
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         username,
         email,
-        passwordHash,
+        password_hash: passwordHash,
         role
       },
       select: {
@@ -98,8 +99,8 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
         username: true,
         email: true,
         role: true,
-        isActive: true,
-        createdAt: true
+        is_active: true,
+        created_at: true
       }
     });
 
@@ -119,7 +120,7 @@ router.put('/admin/users/:userId', authenticateToken, requireManageUsers, [
   body('email').optional().isEmail().withMessage('Valid email is required'),
   body('role').optional().custom(async (value) => {
     if (!value) return true; // Optional field
-    const rolePermissions = await prisma.rolePermissions.findUnique({
+    const rolePermissions = await prisma.role_permissions.findUnique({
       where: { role: value }
     });
     if (!rolePermissions) {
@@ -143,10 +144,10 @@ router.put('/admin/users/:userId', authenticateToken, requireManageUsers, [
     if (username) updateData.username = username;
     if (email) updateData.email = email;
     if (role) updateData.role = role;
-    if (typeof isActive === 'boolean') updateData.isActive = isActive;
+    if (typeof isActive === 'boolean') updateData.is_active = isActive;
 
     // Check if user exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.users.findUnique({
       where: { id: userId }
     });
 
@@ -156,7 +157,7 @@ router.put('/admin/users/:userId', authenticateToken, requireManageUsers, [
 
     // Check if username/email already exists (excluding current user)
     if (username || email) {
-      const duplicateUser = await prisma.user.findFirst({
+      const duplicateUser = await prisma.users.findFirst({
         where: {
           AND: [
             { id: { not: userId } },
@@ -177,10 +178,10 @@ router.put('/admin/users/:userId', authenticateToken, requireManageUsers, [
 
     // Prevent deactivating the last admin
     if (isActive === false && existingUser.role === 'admin') {
-      const adminCount = await prisma.user.count({
+      const adminCount = await prisma.users.count({
         where: { 
           role: 'admin',
-          isActive: true
+          is_active: true
         }
       });
 
@@ -190,7 +191,7 @@ router.put('/admin/users/:userId', authenticateToken, requireManageUsers, [
     }
 
     // Update user
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.users.update({
       where: { id: userId },
       data: updateData,
       select: {
@@ -198,10 +199,10 @@ router.put('/admin/users/:userId', authenticateToken, requireManageUsers, [
         username: true,
         email: true,
         role: true,
-        isActive: true,
-        lastLogin: true,
-        createdAt: true,
-        updatedAt: true
+        is_active: true,
+        last_login: true,
+        created_at: true,
+        updated_at: true
       }
     });
 
@@ -226,7 +227,7 @@ router.delete('/admin/users/:userId', authenticateToken, requireManageUsers, asy
     }
 
     // Check if user exists
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId }
     });
 
@@ -236,10 +237,10 @@ router.delete('/admin/users/:userId', authenticateToken, requireManageUsers, asy
 
     // Prevent deleting the last admin
     if (user.role === 'admin') {
-      const adminCount = await prisma.user.count({
+      const adminCount = await prisma.users.count({
         where: { 
           role: 'admin',
-          isActive: true
+          is_active: true
         }
       });
 
@@ -249,7 +250,7 @@ router.delete('/admin/users/:userId', authenticateToken, requireManageUsers, asy
     }
 
     // Delete user
-    await prisma.user.delete({
+    await prisma.users.delete({
       where: { id: userId }
     });
 
@@ -277,14 +278,14 @@ router.post('/admin/users/:userId/reset-password', authenticateToken, requireMan
     const { newPassword } = req.body;
 
     // Check if user exists
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: userId },
       select: {
         id: true,
         username: true,
         email: true,
         role: true,
-        isActive: true
+        is_active: true
       }
     });
 
@@ -293,7 +294,7 @@ router.post('/admin/users/:userId/reset-password', authenticateToken, requireMan
     }
 
     // Prevent resetting password of inactive users
-    if (!user.isActive) {
+    if (!user.is_active) {
       return res.status(400).json({ error: 'Cannot reset password for inactive user' });
     }
 
@@ -301,9 +302,9 @@ router.post('/admin/users/:userId/reset-password', authenticateToken, requireMan
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
     // Update user password
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: userId },
-      data: { passwordHash }
+      data: { password_hash: passwordHash }
     });
 
     // Log the password reset action (you might want to add an audit log table)
@@ -323,6 +324,80 @@ router.post('/admin/users/:userId/reset-password', authenticateToken, requireMan
   }
 });
 
+// Public signup endpoint
+router.post('/signup', [
+  body('username').isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { username, email, password } = req.body;
+
+    // Check if user already exists
+    const existingUser = await prisma.users.findFirst({
+      where: {
+        OR: [
+          { username },
+          { email }
+        ]
+      }
+    });
+
+    if (existingUser) {
+      return res.status(409).json({ error: 'Username or email already exists' });
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    // Create user with default 'user' role
+    const user = await prisma.users.create({
+      data: {
+        id: uuidv4(),
+        username,
+        email,
+        password_hash: passwordHash,
+        role: 'user',
+        updated_at: new Date()
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        is_active: true,
+        created_at: true
+      }
+    });
+
+    console.log(`New user registered: ${user.username} (${user.email})`);
+
+    // Generate token for immediate login
+    const token = generateToken(user.id);
+
+    res.status(201).json({
+      message: 'Account created successfully',
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Signup error:', error);
+    console.error('Signup error message:', error.message);
+    console.error('Signup error stack:', error.stack);
+    res.status(500).json({ error: 'Failed to create account' });
+  }
+});
+
 // Login
 router.post('/login', [
   body('username').notEmpty().withMessage('Username is required'),
@@ -337,21 +412,21 @@ router.post('/login', [
     const { username, password } = req.body;
 
     // Find user by username or email
-    const user = await prisma.user.findFirst({
+    const user = await prisma.users.findFirst({
       where: {
         OR: [
           { username },
           { email: username }
         ],
-        isActive: true
+        is_active: true
       },
       select: {
         id: true,
         username: true,
         email: true,
-        passwordHash: true,
+        password_hash: true,
         role: true,
-        tfaEnabled: true
+        tfa_enabled: true
       }
     });
 
@@ -360,13 +435,13 @@ router.post('/login', [
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Check if TFA is enabled
-    if (user.tfaEnabled) {
+    if (user.tfa_enabled) {
       return res.status(200).json({
         message: 'TFA verification required',
         requiresTfa: true,
@@ -375,9 +450,12 @@ router.post('/login', [
     }
 
     // Update last login
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: user.id },
-      data: { lastLogin: new Date() }
+      data: { 
+        last_login: new Date(),
+        updated_at: new Date()
+      }
     });
 
     // Generate token
@@ -414,22 +492,22 @@ router.post('/verify-tfa', [
     const { username, token } = req.body;
 
     // Find user
-    const user = await prisma.user.findFirst({
+    const user = await prisma.users.findFirst({
       where: {
         OR: [
           { username },
           { email: username }
         ],
-        isActive: true,
-        tfaEnabled: true
+        is_active: true,
+        tfa_enabled: true
       },
       select: {
         id: true,
         username: true,
         email: true,
         role: true,
-        tfaSecret: true,
-        tfaBackupCodes: true
+        tfa_secret: true,
+        tfa_backup_codes: true
       }
     });
 
@@ -441,7 +519,7 @@ router.post('/verify-tfa', [
     const speakeasy = require('speakeasy');
     
     // Check if it's a backup code
-    const backupCodes = user.tfaBackupCodes ? JSON.parse(user.tfaBackupCodes) : [];
+    const backupCodes = user.tfa_backup_codes ? JSON.parse(user.tfa_backup_codes) : [];
     const isBackupCode = backupCodes.includes(token);
 
     let verified = false;
@@ -449,17 +527,17 @@ router.post('/verify-tfa', [
     if (isBackupCode) {
       // Remove the used backup code
       const updatedBackupCodes = backupCodes.filter(code => code !== token);
-      await prisma.user.update({
+      await prisma.users.update({
         where: { id: user.id },
         data: {
-          tfaBackupCodes: JSON.stringify(updatedBackupCodes)
+          tfa_backup_codes: JSON.stringify(updatedBackupCodes)
         }
       });
       verified = true;
     } else {
       // Verify TOTP token
       verified = speakeasy.totp.verify({
-        secret: user.tfaSecret,
+        secret: user.tfa_secret,
         encoding: 'base32',
         token: token,
         window: 2
@@ -471,9 +549,9 @@ router.post('/verify-tfa', [
     }
 
     // Update last login
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: user.id },
-      data: { lastLogin: new Date() }
+      data: { last_login: new Date() }
     });
 
     // Generate token
@@ -526,7 +604,7 @@ router.put('/profile', authenticateToken, [
 
     // Check if username/email already exists (excluding current user)
     if (username || email) {
-      const existingUser = await prisma.user.findFirst({
+      const existingUser = await prisma.users.findFirst({
         where: {
           AND: [
             { id: { not: req.user.id } },
@@ -545,7 +623,7 @@ router.put('/profile', authenticateToken, [
       }
     }
 
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.users.update({
       where: { id: req.user.id },
       data: updateData,
       select: {
@@ -553,9 +631,9 @@ router.put('/profile', authenticateToken, [
         username: true,
         email: true,
         role: true,
-        isActive: true,
-        lastLogin: true,
-        updatedAt: true
+        is_active: true,
+        last_login: true,
+        updated_at: true
       }
     });
 
@@ -583,12 +661,12 @@ router.put('/change-password', authenticateToken, [
     const { currentPassword, newPassword } = req.body;
 
     // Get user with password hash
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: req.user.id }
     });
 
     // Verify current password
-    const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
@@ -597,9 +675,9 @@ router.put('/change-password', authenticateToken, [
     const newPasswordHash = await bcrypt.hash(newPassword, 12);
 
     // Update password
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: req.user.id },
-      data: { passwordHash: newPasswordHash }
+      data: { password_hash: newPasswordHash }
     });
 
     res.json({

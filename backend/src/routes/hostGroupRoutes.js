@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 // Get all host groups
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const hostGroups = await prisma.hostGroup.findMany({
+    const hostGroups = await prisma.host_groups.findMany({
       include: {
         _count: {
           select: {
@@ -35,7 +35,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const hostGroup = await prisma.hostGroup.findUnique({
+    const hostGroup = await prisma.host_groups.findUnique({
       where: { id },
       include: {
         hosts: {
@@ -79,7 +79,7 @@ router.post('/', authenticateToken, requireManageHosts, [
     const { name, description, color } = req.body;
 
     // Check if host group with this name already exists
-    const existingGroup = await prisma.hostGroup.findUnique({
+    const existingGroup = await prisma.host_groups.findUnique({
       where: { name }
     });
 
@@ -87,7 +87,7 @@ router.post('/', authenticateToken, requireManageHosts, [
       return res.status(400).json({ error: 'A host group with this name already exists' });
     }
 
-    const hostGroup = await prisma.hostGroup.create({
+    const hostGroup = await prisma.host_groups.create({
       data: {
         name,
         description: description || null,
@@ -118,7 +118,7 @@ router.put('/:id', authenticateToken, requireManageHosts, [
     const { name, description, color } = req.body;
 
     // Check if host group exists
-    const existingGroup = await prisma.hostGroup.findUnique({
+    const existingGroup = await prisma.host_groups.findUnique({
       where: { id }
     });
 
@@ -127,7 +127,7 @@ router.put('/:id', authenticateToken, requireManageHosts, [
     }
 
     // Check if another host group with this name already exists
-    const duplicateGroup = await prisma.hostGroup.findFirst({
+    const duplicateGroup = await prisma.host_groups.findFirst({
       where: {
         name,
         id: { not: id }
@@ -138,7 +138,7 @@ router.put('/:id', authenticateToken, requireManageHosts, [
       return res.status(400).json({ error: 'A host group with this name already exists' });
     }
 
-    const hostGroup = await prisma.hostGroup.update({
+    const hostGroup = await prisma.host_groups.update({
       where: { id },
       data: {
         name,
@@ -160,7 +160,7 @@ router.delete('/:id', authenticateToken, requireManageHosts, async (req, res) =>
     const { id } = req.params;
 
     // Check if host group exists
-    const existingGroup = await prisma.hostGroup.findUnique({
+    const existingGroup = await prisma.host_groups.findUnique({
       where: { id },
       include: {
         _count: {
@@ -182,7 +182,7 @@ router.delete('/:id', authenticateToken, requireManageHosts, async (req, res) =>
       });
     }
 
-    await prisma.hostGroup.delete({
+    await prisma.host_groups.delete({
       where: { id }
     });
 
@@ -198,7 +198,7 @@ router.get('/:id/hosts', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const hosts = await prisma.host.findMany({
+    const hosts = await prisma.hosts.findMany({
       where: { hostGroupId: id },
       select: {
         id: true,

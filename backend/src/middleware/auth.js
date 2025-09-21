@@ -17,26 +17,29 @@ const authenticateToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
     
     // Get user from database
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: decoded.userId },
       select: {
         id: true,
         username: true,
         email: true,
         role: true,
-        isActive: true,
-        lastLogin: true
+        is_active: true,
+        last_login: true
       }
     });
 
-    if (!user || !user.isActive) {
+    if (!user || !user.is_active) {
       return res.status(401).json({ error: 'Invalid or inactive user' });
     }
 
     // Update last login
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: user.id },
-      data: { lastLogin: new Date() }
+      data: { 
+        last_login: new Date(),
+        updated_at: new Date()
+      }
     });
 
     req.user = user;
@@ -69,18 +72,18 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: decoded.userId },
         select: {
           id: true,
           username: true,
           email: true,
           role: true,
-          isActive: true
+          is_active: true
         }
       });
 
-      if (user && user.isActive) {
+      if (user && user.is_active) {
         req.user = user;
       }
     }
