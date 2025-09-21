@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,239 +7,192 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id            String   @id @default(cuid())
-  username      String   @unique
-  email         String   @unique
-  passwordHash  String   @map("password_hash")
-  role          String   @default("admin") // admin, user
-  isActive      Boolean  @default(true) @map("is_active")
-  lastLogin     DateTime? @map("last_login")
-  createdAt     DateTime @map("created_at") @default(now())
-  updatedAt     DateTime @map("updated_at") @updatedAt
-  
-  // Two-Factor Authentication
-  tfaEnabled    Boolean  @default(false) @map("tfa_enabled")
-  tfaSecret     String?  @map("tfa_secret")
-  tfaBackupCodes String? @map("tfa_backup_codes") // JSON array of backup codes
-  
-  // Relationships
-  dashboardPreferences DashboardPreferences[]
-  
-  @@map("users")
+model agent_versions {
+  id                 String   @id
+  version            String   @unique
+  is_current         Boolean  @default(false)
+  release_notes      String?
+  download_url       String?
+  min_server_version String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime
+  is_default         Boolean  @default(false)
+  script_content     String?
 }
 
-model RolePermissions {
-  id                    String   @id @default(cuid())
-  role                  String   @unique // admin, user, custom roles
-  canViewDashboard      Boolean  @default(true) @map("can_view_dashboard")
-  canViewHosts          Boolean  @default(true) @map("can_view_hosts")
-  canManageHosts        Boolean  @default(false) @map("can_manage_hosts")
-  canViewPackages       Boolean  @default(true) @map("can_view_packages")
-  canManagePackages     Boolean  @default(false) @map("can_manage_packages")
-  canViewUsers          Boolean  @default(false) @map("can_view_users")
-  canManageUsers        Boolean  @default(false) @map("can_manage_users")
-  canViewReports        Boolean  @default(true) @map("can_view_reports")
-  canExportData         Boolean  @default(false) @map("can_export_data")
-  canManageSettings     Boolean  @default(false) @map("can_manage_settings")
-  createdAt             DateTime @map("created_at") @default(now())
-  updatedAt             DateTime @map("updated_at") @updatedAt
-  
-  @@map("role_permissions")
+model dashboard_preferences {
+  id         String   @id
+  user_id    String
+  card_id    String
+  enabled    Boolean  @default(true)
+  order      Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, card_id])
 }
 
-model HostGroup {
-  id            String   @id @default(cuid())
-  name          String   @unique
-  description   String?
-  color         String?  @default("#3B82F6") // Hex color for UI display
-  createdAt     DateTime @map("created_at") @default(now())
-  updatedAt     DateTime @map("updated_at") @updatedAt
-  
-  // Relationships
-  hosts         Host[]
-  
-  @@map("host_groups")
+model host_groups {
+  id          String   @id
+  name        String   @unique
+  description String?
+  color       String?  @default("#3B82F6")
+  created_at  DateTime @default(now())
+  updated_at  DateTime
+  hosts       hosts[]
 }
 
-model Host {
-  id            String   @id @default(cuid())
-  friendlyName  String   @unique @map("friendly_name")
-  hostname      String?  // Actual system hostname from agent
-  ip            String?
-  osType        String   @map("os_type")
-  osVersion     String   @map("os_version")
-  architecture  String?
-  lastUpdate    DateTime @map("last_update") @default(now())
-  status        String   @default("active") // active, inactive, error
-  apiId         String   @unique @map("api_id") // New API ID for authentication
-  apiKey        String   @unique @map("api_key") // New API Key for authentication
-  hostGroupId   String?  @map("host_group_id") // Optional group association
-  agentVersion  String?  @map("agent_version") // Agent script version
-  autoUpdate    Boolean  @map("auto_update") @default(true) // Enable auto-update for this host
-  
-  // Hardware Information
-  cpuModel      String?  @map("cpu_model") // CPU model name
-  cpuCores      Int?     @map("cpu_cores") // Number of CPU cores
-  ramInstalled  Int?     @map("ram_installed") // RAM in GB
-  swapSize      Int?     @map("swap_size") // Swap size in GB
-  diskDetails   Json?    @map("disk_details") // Array of disk objects
-  
-  // Network Information
-  gatewayIp     String?  @map("gateway_ip") // Gateway IP address
-  dnsServers    Json?    @map("dns_servers") // Array of DNS servers
-  networkInterfaces Json? @map("network_interfaces") // Array of network interface objects
-  
-  // System Information
-  kernelVersion String?  @map("kernel_version") // Kernel version
-  selinuxStatus String?  @map("selinux_status") // SELinux status (enabled/disabled/permissive)
-  systemUptime  String?  @map("system_uptime") // System uptime
-  loadAverage   Json?    @map("load_average") // Load average (1min, 5min, 15min)
-  
-  createdAt     DateTime @map("created_at") @default(now())
-  updatedAt     DateTime @map("updated_at") @updatedAt
-  
-  // Relationships
-  hostPackages  HostPackage[]
-  updateHistory UpdateHistory[]
-  hostRepositories HostRepository[]
-  hostGroup     HostGroup? @relation(fields: [hostGroupId], references: [id], onDelete: SetNull)
-  
-  @@map("hosts")
+model host_packages {
+  id                 String   @id
+  host_id            String
+  package_id         String
+  current_version    String
+  available_version  String?
+  needs_update       Boolean  @default(false)
+  is_security_update Boolean  @default(false)
+  last_checked       DateTime @default(now())
+  hosts              hosts    @relation(fields: [host_id], references: [id], onDelete: Cascade)
+  packages           packages @relation(fields: [package_id], references: [id], onDelete: Cascade)
+
+  @@unique([host_id, package_id])
 }
 
-model Package {
-  id            String   @id @default(cuid())
-  name          String   @unique
-  description   String?
-  category      String?  // system, security, development, etc.
-  latestVersion String?  @map("latest_version")
-  createdAt     DateTime @map("created_at") @default(now())
-  updatedAt     DateTime @map("updated_at") @updatedAt
-  
-  // Relationships
-  hostPackages  HostPackage[]
-  
-  @@map("packages")
+model host_repositories {
+  id            String       @id
+  host_id       String
+  repository_id String
+  is_enabled    Boolean      @default(true)
+  last_checked  DateTime     @default(now())
+  hosts         hosts        @relation(fields: [host_id], references: [id], onDelete: Cascade)
+  repositories  repositories @relation(fields: [repository_id], references: [id], onDelete: Cascade)
+
+  @@unique([host_id, repository_id])
 }
 
-model HostPackage {
-  id               String   @id @default(cuid())
-  hostId           String   @map("host_id")
-  packageId        String   @map("package_id")
-  currentVersion   String   @map("current_version")
-  availableVersion String?  @map("available_version")
-  needsUpdate      Boolean  @map("needs_update") @default(false)
-  isSecurityUpdate Boolean  @map("is_security_update") @default(false)
-  lastChecked      DateTime @map("last_checked") @default(now())
-  
-  // Relationships
-  host             Host     @relation(fields: [hostId], references: [id], onDelete: Cascade)
-  package          Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  
-  @@unique([hostId, packageId])
-  @@map("host_packages")
+model hosts {
+  id                 String              @id
+  friendly_name      String              @unique
+  ip                 String?
+  os_type            String
+  os_version         String
+  architecture       String?
+  last_update        DateTime            @default(now())
+  status             String              @default("active")
+  created_at         DateTime            @default(now())
+  updated_at         DateTime
+  api_id             String              @unique
+  api_key            String              @unique
+  host_group_id      String?
+  agent_version      String?
+  auto_update        Boolean             @default(true)
+  cpu_cores          Int?
+  cpu_model          String?
+  disk_details       Json?
+  dns_servers        Json?
+  gateway_ip         String?
+  hostname           String?
+  kernel_version     String?
+  load_average       Json?
+  network_interfaces Json?
+  ram_installed      Int?
+  selinux_status     String?
+  swap_size          Int?
+  system_uptime      String?
+  host_packages      host_packages[]
+  host_repositories  host_repositories[]
+  host_groups        host_groups?        @relation(fields: [host_group_id], references: [id])
+  update_history     update_history[]
 }
 
-model UpdateHistory {
-  id             String   @id @default(cuid())
-  hostId         String   @map("host_id")
-  packagesCount  Int      @map("packages_count")
-  securityCount  Int      @map("security_count")
-  timestamp      DateTime @default(now())
-  status         String   @default("success") // success, error
-  errorMessage   String?  @map("error_message")
-  
-  // Relationships
-  host           Host     @relation(fields: [hostId], references: [id], onDelete: Cascade)
-  
-  @@map("update_history")
+model packages {
+  id             String          @id
+  name           String          @unique
+  description    String?
+  category       String?
+  latest_version String?
+  created_at     DateTime        @default(now())
+  updated_at     DateTime
+  host_packages  host_packages[]
 }
 
-model Repository {
-  id            String   @id @default(cuid())
-  name          String   // Repository name (e.g., "focal", "focal-updates")
-  url           String   // Repository URL
-  distribution  String   // Distribution (e.g., "focal", "jammy")
-  components    String   // Components (e.g., "main restricted universe multiverse")
-  repoType      String   @map("repo_type") // "deb" or "deb-src"
-  isActive      Boolean  @map("is_active") @default(true)
-  isSecure      Boolean  @map("is_secure") @default(true) // HTTPS vs HTTP
-  priority      Int?     // Repository priority
-  description   String?  // Optional description
-  createdAt     DateTime @map("created_at") @default(now())
-  updatedAt     DateTime @map("updated_at") @updatedAt
-  
-  // Relationships
-  hostRepositories HostRepository[]
-  
+model repositories {
+  id                String              @id
+  name              String
+  url               String
+  distribution      String
+  components        String
+  repo_type         String
+  is_active         Boolean             @default(true)
+  is_secure         Boolean             @default(true)
+  priority          Int?
+  description       String?
+  created_at        DateTime            @default(now())
+  updated_at        DateTime
+  host_repositories host_repositories[]
+
   @@unique([url, distribution, components])
-  @@map("repositories")
 }
 
-model HostRepository {
-  id           String   @id @default(cuid())
-  hostId       String   @map("host_id")
-  repositoryId String   @map("repository_id")
-  isEnabled    Boolean  @map("is_enabled") @default(true)
-  lastChecked  DateTime @map("last_checked") @default(now())
-  
-  // Relationships
-  host         Host       @relation(fields: [hostId], references: [id], onDelete: Cascade)
-  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  
-  @@unique([hostId, repositoryId])
-  @@map("host_repositories")
+model role_permissions {
+  id                  String   @id
+  role                String   @unique
+  can_view_dashboard  Boolean  @default(true)
+  can_view_hosts      Boolean  @default(true)
+  can_manage_hosts    Boolean  @default(false)
+  can_view_packages   Boolean  @default(true)
+  can_manage_packages Boolean  @default(false)
+  can_view_users      Boolean  @default(false)
+  can_manage_users    Boolean  @default(false)
+  can_view_reports    Boolean  @default(true)
+  can_export_data     Boolean  @default(false)
+  can_manage_settings Boolean  @default(false)
+  created_at          DateTime @default(now())
+  updated_at          DateTime
 }
 
-model Settings {
-  id              String   @id @default(cuid())
-  serverUrl       String   @map("server_url") @default("http://localhost:3001")
-  serverProtocol  String   @map("server_protocol") @default("http") // http, https
-  serverHost      String   @map("server_host") @default("localhost")
-  serverPort      Int      @map("server_port") @default(3001)
-  frontendUrl     String   @map("frontend_url") @default("http://localhost:3000")
-  updateInterval  Int      @map("update_interval") @default(60) // Update interval in minutes
-  autoUpdate      Boolean  @map("auto_update") @default(false) // Enable automatic agent updates
-  githubRepoUrl   String   @map("github_repo_url") @default("git@github.com:9technologygroup/patchmon.net.git") // GitHub repository URL for version checking
-  repositoryType  String   @map("repository_type") @default("public") // "public" or "private"
-  sshKeyPath      String?  @map("ssh_key_path") // Optional SSH key path for deploy key authentication
-  lastUpdateCheck DateTime? @map("last_update_check") // When the system last checked for updates
-  updateAvailable Boolean  @map("update_available") @default(false) // Whether an update is available
-  latestVersion   String?  @map("latest_version") // Latest available version
-  createdAt       DateTime @map("created_at") @default(now())
-  updatedAt       DateTime @map("updated_at") @updatedAt
-
-  @@map("settings")
+model settings {
+  id                String    @id
+  server_url        String    @default("http://localhost:3001")
+  server_protocol   String    @default("http")
+  server_host       String    @default("localhost")
+  server_port       Int       @default(3001)
+  frontend_url      String    @default("http://localhost:3000")
+  created_at        DateTime  @default(now())
+  updated_at        DateTime
+  update_interval   Int       @default(60)
+  auto_update       Boolean   @default(false)
+  github_repo_url   String    @default("git@github.com:9technologygroup/patchmon.net.git")
+  ssh_key_path      String?
+  repository_type   String    @default("public")
+  last_update_check DateTime?
+  latest_version    String?
+  update_available  Boolean   @default(false)
 }
 
-model DashboardPreferences {
-  id              String   @id @default(cuid())
-  userId          String   @map("user_id")
-  cardId          String   @map("card_id") // e.g., "totalHosts", "securityUpdates", etc.
-  enabled         Boolean  @default(true)
-  order           Int      @default(0)
-  createdAt       DateTime @map("created_at") @default(now())
-  updatedAt       DateTime @map("updated_at") @updatedAt
-  
-  // Relationships
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@unique([userId, cardId])
-  @@map("dashboard_preferences")
+model update_history {
+  id             String   @id
+  host_id        String
+  packages_count Int
+  security_count Int
+  timestamp      DateTime @default(now())
+  status         String   @default("success")
+  error_message  String?
+  hosts          hosts    @relation(fields: [host_id], references: [id], onDelete: Cascade)
 }
 
-model AgentVersion {
-  id              String   @id @default(cuid())
-  version         String   @unique // e.g., "1.0.0", "1.1.0"
-  isCurrent       Boolean  @default(false) @map("is_current") // Only one version can be current
-  releaseNotes    String?  @map("release_notes")
-  downloadUrl     String?  @map("download_url") // URL to download the agent script
-  minServerVersion String? @map("min_server_version") // Minimum server version required
-  scriptContent   String?  @map("script_content") // The actual agent script content
-  isDefault       Boolean  @default(false) @map("is_default") // Default version for new installations
-  createdAt       DateTime @map("created_at") @default(now())
-  updatedAt       DateTime @map("updated_at") @updatedAt
-  
-  @@map("agent_versions")
-} 
+model users {
+  id                    String                  @id
+  username              String                  @unique
+  email                 String                  @unique
+  password_hash         String
+  role                  String                  @default("admin")
+  is_active             Boolean                 @default(true)
+  last_login            DateTime?
+  created_at            DateTime                @default(now())
+  updated_at            DateTime
+  tfa_backup_codes      String?
+  tfa_enabled           Boolean                 @default(false)
+  tfa_secret            String?
+  dashboard_preferences dashboard_preferences[]
+}

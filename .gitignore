@@ -140,6 +140,7 @@ test-results.xml
 deploy-patchmon.sh
 manage-instances.sh
 manage-patchmon.sh
+manage-patchmon-dev.sh
 setup-installer-site.sh
 install-server.*
 notify-clients-upgrade.sh

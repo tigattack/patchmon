@@ -101,16 +101,16 @@ const Packages = () => {
   const { data: packages, isLoading, error, refetch } = useQuery({
     queryKey: ['packages'],
     queryFn: () => dashboardAPI.getPackages().then(res => res.data),
-    refetchInterval: 60000,
-    staleTime: 30000,
+    refetchInterval: 300000, // Refresh every 5 minutes instead of 1 minute
+    staleTime: 120000, // Consider data stale after 2 minutes
   })
 
   // Fetch hosts data to get total packages count
   const { data: hosts } = useQuery({
     queryKey: ['hosts'],
     queryFn: () => dashboardAPI.getHosts().then(res => res.data),
-    refetchInterval: 60000,
-    staleTime: 30000,
+    refetchInterval: 300000, // Refresh every 5 minutes instead of 1 minute
+    staleTime: 120000, // Consider data stale after 2 minutes
   })
 
   // Filter and sort packages
