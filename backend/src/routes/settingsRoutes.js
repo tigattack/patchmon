@@ -39,8 +39,9 @@ async function triggerCrontabUpdates() {
         // The agent will detect this and run update-crontab command
         const http = require('http');
         const https = require('https');
-        
-        const serverUrl = process.env.SERVER_URL || 'http://localhost:3001';
+
+        const settings = await prisma.settings.findFirst();
+        const serverUrl = settings?.server_url || process.env.SERVER_URL || 'http://localhost:3001';
         const url = new URL(`${serverUrl}/api/v1/hosts/ping`);
         const isHttps = url.protocol === 'https:';
         const client = isHttps ? https : http;

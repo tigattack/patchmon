@@ -168,12 +168,12 @@ router.get('/check-updates', authenticateToken, requireManageSettings, async (re
       latestVersion,
       isUpdateAvailable,
       lastUpdateCheck,
-      repositoryType: settings.repo_type || 'public',
+      repositoryType: settings.repository_type || 'public',
       latestRelease: {
         tagName: latestVersion ? `v${latestVersion}` : null,
         version: latestVersion,
-        repository: settings.github_repo_url ? settings.githubRepoUrl.split('/').slice(-2).join('/') : null,
-        accessMethod: settings.repo_type === 'private' ? 'ssh' : 'api'
+        repository: settings.github_repo_url ? settings.github_repo_url.split('/').slice(-2).join('/') : null,
+        accessMethod: settings.repository_type === 'private' ? 'ssh' : 'api'
       }
     });
 
