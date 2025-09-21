@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { createPrismaClient, checkDatabaseConnection, disconnectPrisma } = require('./config/database');
+const { createPrismaClient, waitForDatabase, disconnectPrisma } = require('./config/database');
 const winston = require('winston');
 
 // Import routes
@@ -27,24 +27,24 @@ const prisma = createPrismaClient();
 function compareVersions(version1, version2) {
   const v1Parts = version1.split('.').map(Number);
   const v2Parts = version2.split('.').map(Number);
-  
+
   // Ensure both arrays have the same length
   const maxLength = Math.max(v1Parts.length, v2Parts.length);
   while (v1Parts.length < maxLength) v1Parts.push(0);
   while (v2Parts.length < maxLength) v2Parts.push(0);
-  
+
   for (let i = 0; i < maxLength; i++) {
     if (v1Parts[i] > v2Parts[i]) return true;
     if (v1Parts[i] < v2Parts[i]) return false;
   }
-  
+
   return false; // versions are equal
 }
 
 // Function to check and import agent version on startup
 async function checkAndImportAgentVersion() {
   console.log('🔍 Starting agent version auto-import check...');
-  
+
   // Skip if auto-import is disabled
   if (process.env.AUTO_IMPORT_AGENT_VERSION === 'false') {
     console.log('❌ Auto-import of agent version is disabled');
@@ -53,16 +53,16 @@ async function checkAndImportAgentVersion() {
     }
     return;
   }
-  
+
   try {
     const fs = require('fs');
     const path = require('path');
     const crypto = require('crypto');
-    
+
     // Path to the agent script file
     const agentScriptPath = path.join(__dirname, '../../agents/patchmon-agent.sh');
     console.log('📁 Agent script path:', agentScriptPath);
-    
+
     // Check if file exists
     if (!fs.existsSync(agentScriptPath)) {
       console.log('❌ Agent script file not found, skipping version check');
@@ -72,10 +72,10 @@ async function checkAndImportAgentVersion() {
       return;
     }
     console.log('✅ Agent script file found');
-    
+
     // Read the file content
     const scriptContent = fs.readFileSync(agentScriptPath, 'utf8');
-    
+
     // Extract version from script content
     const versionMatch = scriptContent.match(/AGENT_VERSION="([^"]+)"/);
     if (!versionMatch) {
@@ -85,15 +85,15 @@ async function checkAndImportAgentVersion() {
       }
       return;
     }
-    
+
     const localVersion = versionMatch[1];
     console.log('📋 Local version:', localVersion);
-    
+
     // Check if this version already exists in database
     const existingVersion = await prisma.agent_versions.findUnique({
       where: { version: localVersion }
     });
-    
+
     if (existingVersion) {
       console.log(`✅ Agent version ${localVersion} already exists in database`);
       if (process.env.ENABLE_LOGGING === 'true') {
@@ -102,21 +102,21 @@ async function checkAndImportAgentVersion() {
       return;
     }
     console.log(`🆕 Agent version ${localVersion} not found in database`);
-    
+
     // Check if there are any existing versions to compare with
     const allVersions = await prisma.agent_versions.findMany({
       select: { version: true },
       orderBy: { created_at: 'desc' }
     });
-    
+
     if (allVersions.length > 0) {
       console.log(`📊 Found ${allVersions.length} existing versions in database`);
       console.log(`📊 Latest version: ${allVersions[0].version}`);
-      
+
       // Simple version comparison (assuming semantic versioning)
       const isNewer = compareVersions(localVersion, allVersions[0].version);
       console.log(`🔄 Version comparison: ${localVersion} > ${allVersions[0].version} = ${isNewer}`);
-      
+
       if (!isNewer) {
         console.log(`❌ Agent version ${localVersion} is not newer than existing versions, skipping import`);
         if (process.env.ENABLE_LOGGING === 'true') {
@@ -125,7 +125,7 @@ async function checkAndImportAgentVersion() {
         return;
       }
     }
-    
+
     // Version doesn't exist, create it
     const agentVersion = await prisma.agent_versions.create({
       data: {
@@ -150,12 +150,12 @@ async function checkAndImportAgentVersion() {
         updated_at: new Date()
       }
     });
-    
+
     console.log(`🎉 Successfully auto-imported new agent version ${localVersion} on startup`);
     if (process.env.ENABLE_LOGGING === 'true') {
       logger.info(`✅ Auto-imported new agent version ${localVersion} on startup`);
     }
-    
+
   } catch (error) {
     console.error('❌ Failed to check/import agent version on startup:', error.message);
     if (process.env.ENABLE_LOGGING === 'true') {
@@ -308,9 +308,9 @@ app.use((err, req, res, next) => {
   if (process.env.ENABLE_LOGGING === 'true') {
     logger.error(err.stack);
   }
-  res.status(500).json({ 
-    error: 'Something went wrong!', 
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined 
+  res.status(500).json({
+    error: 'Something went wrong!',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
 
@@ -341,26 +341,22 @@ process.on('SIGTERM', async () => {
 // Start server with database health check
 async function startServer() {
   try {
-    // Check database connection before starting server
-    const isConnected = await checkDatabaseConnection(prisma);
-    if (!isConnected) {
-      console.error('❌ Database connection failed. Server not started.');
-      process.exit(1);
-    }
-    
+    // Wait for database to be available
+    await waitForDatabase(prisma);
+
     if (process.env.ENABLE_LOGGING === 'true') {
       logger.info('✅ Database connection successful');
     }
-    
+
     // Check and import agent version on startup
     await checkAndImportAgentVersion();
-    
+
     app.listen(PORT, () => {
       if (process.env.ENABLE_LOGGING === 'true') {
         logger.info(`Server running on port ${PORT}`);
         logger.info(`Environment: ${process.env.NODE_ENV}`);
       }
-      
+
       // Start update scheduler
       updateScheduler.start();
     });
@@ -372,4 +368,4 @@ async function startServer() {
 
 startServer();
 
-module.exports = app; 
+module.exports = app;
