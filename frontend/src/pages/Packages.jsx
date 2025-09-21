@@ -98,19 +98,19 @@ const Packages = () => {
     }
   }, [searchParams])
 
-  const { data: packages, isLoading, error, refetch } = useQuery({
+  const { data: packages, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['packages'],
     queryFn: () => dashboardAPI.getPackages().then(res => res.data),
-    refetchInterval: 300000, // Refresh every 5 minutes instead of 1 minute
-    staleTime: 120000, // Consider data stale after 2 minutes
+    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   })
 
   // Fetch hosts data to get total packages count
   const { data: hosts } = useQuery({
     queryKey: ['hosts'],
     queryFn: () => dashboardAPI.getHosts().then(res => res.data),
-    refetchInterval: 300000, // Refresh every 5 minutes instead of 1 minute
-    staleTime: 120000, // Consider data stale after 2 minutes
+    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   })
 
   // Filter and sort packages
@@ -330,6 +330,26 @@ const Packages = () => {
 
   return (
     <div className="h-[calc(100vh-7rem)] flex flex-col overflow-hidden">
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-secondary-900 dark:text-white">Packages</h1>
+          <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
+            Manage package updates and security patches
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="btn-outline flex items-center gap-2"
+            title="Refresh packages data"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
+      </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 flex-shrink-0">

@@ -732,7 +732,7 @@ const Settings = () => {
                         </div>
                       )}
                       <p className="text-xs text-secondary-400 dark:text-secondary-400 mt-1">
-                        Created: {new Date(version.createdAt).toLocaleDateString()}
+                        Created: {new Date(version.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   </div>

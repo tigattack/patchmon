@@ -38,7 +38,7 @@ import InlineGroupEdit from '../components/InlineGroupEdit'
 // Add Host Modal Component
 const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
-    friendlyName: '',
+    friendly_name: '',
     hostGroupId: ''
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -62,7 +62,7 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
       const response = await adminHostsAPI.create(formData)
       console.log('Host created successfully:', response.data)
       onSuccess(response.data)
-      setFormData({ friendlyName: '', hostGroupId: '' })
+      setFormData({ friendly_name: '', hostGroupId: '' })
       onClose()
     } catch (err) {
       console.error('Full error object:', err)
@@ -105,8 +105,8 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
             <input
               type="text"
               required
-              value={formData.friendlyName}
-              onChange={(e) => setFormData({ ...formData, friendlyName: e.target.value })}
+              value={formData.friendly_name}
+              onChange={(e) => setFormData({ ...formData, friendly_name: e.target.value })}
               className="block w-full px-3 py-2.5 text-base border-2 border-secondary-300 dark:border-secondary-600 rounded-lg shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white transition-all duration-200"
               placeholder="server.example.com"
             />
@@ -252,7 +252,7 @@ echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo 
 
       fullSetup: `#!/bin/bash
 # Complete PatchMon Agent Setup Script
-# Run this on the target host: ${host?.friendlyName}
+# Run this on the target host: ${host?.friendly_name}
 
 echo "🔄 Setting up PatchMon agent..."
 
@@ -295,7 +295,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-secondary-900">Host Setup - {host.friendlyName}</h3>
+          <h3 className="text-lg font-medium text-secondary-900">Host Setup - {host.friendly_name}</h3>
           <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600">
             <X className="h-5 w-5" />
           </button>
@@ -351,7 +351,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
             <div className="bg-green-50 border border-green-200 rounded-md p-4">
               <h4 className="text-sm font-medium text-green-800 mb-2">🚀 One-Line Installation</h4>
               <p className="text-sm text-green-700">
-                Copy and paste this single command on <strong>{host.friendlyName}</strong> to install and configure the PatchMon agent automatically.
+                Copy and paste this single command on <strong>{host.friendly_name}</strong> to install and configure the PatchMon agent automatically.
               </p>
             </div>
 
@@ -378,7 +378,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
               <ul className="text-sm text-blue-700 space-y-1">
                 <li>• Downloads the PatchMon installation script</li>
                 <li>• Installs the agent to <code>/usr/local/bin/patchmon-agent.sh</code></li>
-                <li>• Configures API credentials for <strong>{host.friendlyName}</strong></li>
+                <li>• Configures API credentials for <strong>{host.friendly_name}</strong></li>
                 <li>• Tests the connection to PatchMon server</li>
                 <li>• Sends initial package data</li>
                 <li>• Sets up hourly automatic updates via crontab</li>
@@ -444,7 +444,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
             <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
               <h4 className="text-sm font-medium text-amber-800 mb-2">⚠️ Security Note</h4>
               <p className="text-sm text-amber-700">
-                Keep these credentials secure. They provide access to update package information for <strong>{host.friendlyName}</strong> only.
+                Keep these credentials secure. They provide access to update package information for <strong>{host.friendly_name}</strong> only.
               </p>
             </div>
           </div>
@@ -455,7 +455,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
             <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
               <h4 className="text-sm font-medium text-blue-800 mb-2">📋 Step-by-Step Setup</h4>
               <p className="text-sm text-blue-700">
-                Follow these commands on <strong>{host.friendlyName}</strong> to install and configure the PatchMon agent.
+                Follow these commands on <strong>{host.friendly_name}</strong> to install and configure the PatchMon agent.
               </p>
             </div>
 
@@ -552,7 +552,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
             <div className="bg-green-50 border border-green-200 rounded-md p-4">
               <h4 className="text-sm font-medium text-green-800 mb-2">🚀 Automated Setup</h4>
               <p className="text-sm text-green-700">
-                Copy this complete setup script to <strong>{host.friendlyName}</strong> and run it to automatically install and configure everything.
+                Copy this complete setup script to <strong>{host.friendly_name}</strong> and run it to automatically install and configure everything.
               </p>
             </div>
 
@@ -573,7 +573,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
               <div className="mt-3 text-sm text-secondary-600">
                 <p><strong>Usage:</strong></p>
                 <p>1. Copy the script above</p>
-                <p>2. Save it to a file on {host.friendlyName} (e.g., <code>setup-patchmon.sh</code>)</p>
+                <p>2. Save it to a file on {host.friendly_name} (e.g., <code>setup-patchmon.sh</code>)</p>
                 <p>3. Run: <code>chmod +x setup-patchmon.sh && sudo ./setup-patchmon.sh</code></p>
               </div>
             </div>
@@ -666,65 +666,38 @@ const Hosts = () => {
       { id: 'ip', label: 'IP Address', visible: false, order: 2 },
       { id: 'group', label: 'Group', visible: true, order: 3 },
       { id: 'os', label: 'OS', visible: true, order: 4 },
-      { id: 'osVersion', label: 'OS Version', visible: false, order: 5 },
-      { id: 'agentVersion', label: 'Agent Version', visible: true, order: 6 },
-      { id: 'autoUpdate', label: 'Auto-update', visible: true, order: 7 },
+      { id: 'os_version', label: 'OS Version', visible: false, order: 5 },
+      { id: 'agent_version', label: 'Agent Version', visible: true, order: 6 },
+      { id: 'auto_update', label: 'Auto-update', visible: true, order: 7 },
       { id: 'status', label: 'Status', visible: true, order: 8 },
       { id: 'updates', label: 'Updates', visible: true, order: 9 },
-      { id: 'lastUpdate', label: 'Last Update', visible: true, order: 10 },
+      { id: 'last_update', label: 'Last Update', visible: true, order: 10 },
       { id: 'actions', label: 'Actions', visible: true, order: 11 }
     ]
 
     const saved = localStorage.getItem('hosts-column-config')
     if (saved) {
-      const savedConfig = JSON.parse(saved)
-      
-      // Check if agentVersion column exists in saved config
-      const hasAgentVersion = savedConfig.some(col => col.id === 'agentVersion')
-      const hasAutoUpdate = savedConfig.some(col => col.id === 'autoUpdate')
-      
-      let needsUpdate = false
-      let updatedConfig = [...savedConfig]
-      
-      if (!hasAgentVersion) {
-        // Add agentVersion column to saved config
-        const agentVersionColumn = { id: 'agentVersion', label: 'Agent Version', visible: true, order: 6 }
+      try {
+        const savedConfig = JSON.parse(saved)
         
-        // Insert agentVersion column at the correct position
-        updatedConfig = updatedConfig.map(col => {
-          if (col.order >= 6) {
-            return { ...col, order: col.order + 1 }
-          }
-          return col
-        })
+        // Check if we have old camelCase column IDs that need to be migrated
+        const hasOldColumns = savedConfig.some(col => 
+          col.id === 'agentVersion' || col.id === 'autoUpdate' || col.id === 'osVersion' || col.id === 'lastUpdate'
+        )
         
-        updatedConfig.push(agentVersionColumn)
-        needsUpdate = true
+        if (hasOldColumns) {
+          // Clear the old configuration and use the default snake_case configuration
+          localStorage.removeItem('hosts-column-config')
+          return defaultConfig
+        } else {
+          // Use the existing configuration
+          return savedConfig
+        }
+      } catch (error) {
+        // If there's an error parsing the config, clear it and use default
+        localStorage.removeItem('hosts-column-config')
+        return defaultConfig
       }
-      
-      if (!hasAutoUpdate) {
-        // Add autoUpdate column to saved config
-        const autoUpdateColumn = { id: 'autoUpdate', label: 'Auto-update', visible: true, order: 7 }
-        
-        // Insert autoUpdate column at the correct position
-        updatedConfig = updatedConfig.map(col => {
-          if (col.order >= 7) {
-            return { ...col, order: col.order + 1 }
-          }
-          return col
-        })
-        
-        updatedConfig.push(autoUpdateColumn)
-        needsUpdate = true
-      }
-      
-      if (needsUpdate) {
-        updatedConfig.sort((a, b) => a.order - b.order)
-        localStorage.setItem('hosts-column-config', JSON.stringify(updatedConfig))
-        return updatedConfig
-      }
-      
-      return savedConfig
     }
     
     return defaultConfig
@@ -732,11 +705,11 @@ const Hosts = () => {
   
   const queryClient = useQueryClient()
 
-  const { data: hosts, isLoading, error, refetch } = useQuery({
+  const { data: hosts, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['hosts'],
     queryFn: () => dashboardAPI.getHosts().then(res => res.data),
-      refetchInterval: 300000, // Refresh every 5 minutes instead of 1 minute
-      staleTime: 120000, // Consider data stale after 2 minutes
+    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   })
 
   const { data: hostGroups } = useQuery({
@@ -776,7 +749,7 @@ const Hosts = () => {
 
   // Toggle auto-update mutation
   const toggleAutoUpdateMutation = useMutation({
-    mutationFn: ({ hostId, autoUpdate }) => adminHostsAPI.toggleAutoUpdate(hostId, autoUpdate).then(res => res.data),
+    mutationFn: ({ hostId, auto_update }) => adminHostsAPI.toggleAutoUpdate(hostId, auto_update).then(res => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries(['hosts'])
     }
@@ -859,9 +832,9 @@ const Hosts = () => {
     let filtered = hosts.filter(host => {
       // Search filter
       const matchesSearch = searchTerm === '' || 
-        host.friendlyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        host.friendly_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         host.ip?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        host.osType?.toLowerCase().includes(searchTerm.toLowerCase())
+        host.os_type?.toLowerCase().includes(searchTerm.toLowerCase())
 
       // Group filter
       const matchesGroup = groupFilter === 'all' || 
@@ -872,7 +845,7 @@ const Hosts = () => {
       const matchesStatus = statusFilter === 'all' || (host.effectiveStatus || host.status) === statusFilter
 
       // OS filter
-      const matchesOs = osFilter === 'all' || host.osType?.toLowerCase() === osFilter.toLowerCase()
+      const matchesOs = osFilter === 'all' || host.os_type?.toLowerCase() === osFilter.toLowerCase()
 
       // URL filter for hosts needing updates, inactive hosts, or up-to-date hosts
       const filter = searchParams.get('filter')
@@ -893,8 +866,8 @@ const Hosts = () => {
       
       switch (sortField) {
         case 'friendlyName':
-          aValue = a.friendlyName.toLowerCase()
-          bValue = b.friendlyName.toLowerCase()
+          aValue = a.friendly_name.toLowerCase()
+          bValue = b.friendly_name.toLowerCase()
           break
         case 'hostname':
           aValue = a.hostname?.toLowerCase() || 'zzz_no_hostname'
@@ -909,16 +882,16 @@ const Hosts = () => {
           bValue = b.hostGroup?.name || 'zzz_ungrouped'
           break
         case 'os':
-          aValue = a.osType?.toLowerCase() || 'zzz_unknown'
-          bValue = b.osType?.toLowerCase() || 'zzz_unknown'
+          aValue = a.os_type?.toLowerCase() || 'zzz_unknown'
+          bValue = b.os_type?.toLowerCase() || 'zzz_unknown'
           break
-        case 'osVersion':
-          aValue = a.osVersion?.toLowerCase() || 'zzz_unknown'
-          bValue = b.osVersion?.toLowerCase() || 'zzz_unknown'
+        case 'os_version':
+          aValue = a.os_version?.toLowerCase() || 'zzz_unknown'
+          bValue = b.os_version?.toLowerCase() || 'zzz_unknown'
           break
-        case 'agentVersion':
-          aValue = a.agentVersion?.toLowerCase() || 'zzz_no_version'
-          bValue = b.agentVersion?.toLowerCase() || 'zzz_no_version'
+        case 'agent_version':
+          aValue = a.agent_version?.toLowerCase() || 'zzz_no_version'
+          bValue = b.agent_version?.toLowerCase() || 'zzz_no_version'
           break
         case 'status':
           aValue = a.effectiveStatus || a.status
@@ -928,9 +901,9 @@ const Hosts = () => {
           aValue = a.updatesCount || 0
           bValue = b.updatesCount || 0
           break
-        case 'lastUpdate':
-          aValue = new Date(a.lastUpdate)
-          bValue = new Date(b.lastUpdate)
+        case 'last_update':
+          aValue = new Date(a.last_update)
+          bValue = new Date(b.last_update)
           break
         default:
           aValue = a[sortField]
@@ -962,7 +935,7 @@ const Hosts = () => {
           groupKey = (host.effectiveStatus || host.status).charAt(0).toUpperCase() + (host.effectiveStatus || host.status).slice(1)
           break
         case 'os':
-          groupKey = host.osType || 'Unknown'
+          groupKey = host.os_type || 'Unknown'
           break
         default:
           groupKey = 'All Hosts'
@@ -1022,10 +995,10 @@ const Hosts = () => {
       { id: 'ip', label: 'IP Address', visible: false, order: 3 },
       { id: 'group', label: 'Group', visible: true, order: 4 },
       { id: 'os', label: 'OS', visible: true, order: 5 },
-      { id: 'osVersion', label: 'OS Version', visible: false, order: 6 },
+      { id: 'os_version', label: 'OS Version', visible: false, order: 6 },
       { id: 'status', label: 'Status', visible: true, order: 7 },
       { id: 'updates', label: 'Updates', visible: true, order: 8 },
-      { id: 'lastUpdate', label: 'Last Update', visible: true, order: 9 },
+      { id: 'last_update', label: 'Last Update', visible: true, order: 9 },
       { id: 'actions', label: 'Actions', visible: true, order: 10 }
     ]
     updateColumnConfig(defaultConfig)
@@ -1055,7 +1028,7 @@ const Hosts = () => {
       case 'host':
         return (
           <InlineEdit
-            value={host.friendlyName}
+            value={host.friendly_name}
             onSave={(newName) => updateFriendlyNameMutation.mutate({ hostId: host.id, friendlyName: newName })}
             placeholder="Enter friendly name..."
             maxLength={100}
@@ -1101,30 +1074,30 @@ const Hosts = () => {
       case 'os':
         return (
           <div className="flex items-center gap-2 text-sm text-secondary-900 dark:text-white">
-            <OSIcon osType={host.osType} className="h-4 w-4" />
-            <span>{host.osType}</span>
+            <OSIcon osType={host.os_type} className="h-4 w-4" />
+            <span>{host.os_type}</span>
           </div>
         )
-      case 'osVersion':
+      case 'os_version':
         return (
           <div className="text-sm text-secondary-900 dark:text-white">
-            {host.osVersion || 'N/A'}
+            {host.os_version || 'N/A'}
           </div>
         )
-      case 'agentVersion':
+      case 'agent_version':
         return (
           <div className="text-sm text-secondary-900 dark:text-white">
-            {host.agentVersion || 'N/A'}
+            {host.agent_version || 'N/A'}
           </div>
         )
-      case 'autoUpdate':
+      case 'auto_update':
         return (
           <span className={`text-sm font-medium ${
-            host.autoUpdate 
+            host.auto_update 
               ? 'text-green-600 dark:text-green-400' 
               : 'text-red-600 dark:text-red-400'
           }`}>
-            {host.autoUpdate ? 'Yes' : 'No'}
+            {host.auto_update ? 'Yes' : 'No'}
           </span>
         )
       case 'status':
@@ -1139,10 +1112,10 @@ const Hosts = () => {
             {host.updatesCount || 0}
           </div>
         )
-      case 'lastUpdate':
+      case 'last_update':
         return (
           <div className="text-sm text-secondary-500 dark:text-secondary-300">
-            {formatRelativeTime(host.lastUpdate)}
+            {formatRelativeTime(host.last_update)}
           </div>
         )
       case 'actions':
@@ -1260,6 +1233,33 @@ const Hosts = () => {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-secondary-900 dark:text-white">Hosts</h1>
+          <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
+            Manage and monitor your connected hosts
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="btn-outline flex items-center gap-2"
+            title="Refresh hosts data"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Refreshing...' : 'Refresh'}
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Host
+          </button>
+        </div>
+      </div>
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
@@ -1550,23 +1550,23 @@ const Hosts = () => {
                             {column.label}
                             {getSortIcon('os')}
                           </button>
-                        ) : column.id === 'osVersion' ? (
+                        ) : column.id === 'os_version' ? (
                           <button
-                            onClick={() => handleSort('osVersion')}
+                            onClick={() => handleSort('os_version')}
                             className="flex items-center gap-2 hover:text-secondary-700"
                           >
                             {column.label}
-                            {getSortIcon('osVersion')}
+                            {getSortIcon('os_version')}
                           </button>
-                        ) : column.id === 'agentVersion' ? (
+                        ) : column.id === 'agent_version' ? (
                           <button
-                            onClick={() => handleSort('agentVersion')}
+                            onClick={() => handleSort('agent_version')}
                             className="flex items-center gap-2 hover:text-secondary-700"
                           >
                             {column.label}
-                            {getSortIcon('agentVersion')}
+                            {getSortIcon('agent_version')}
                           </button>
-                        ) : column.id === 'autoUpdate' ? (
+                        ) : column.id === 'auto_update' ? (
                           <div className="flex items-center gap-2 font-normal text-xs text-secondary-500 dark:text-secondary-300 normal-case tracking-wider">
                             {column.label}
                           </div>
@@ -1586,13 +1586,13 @@ const Hosts = () => {
                             {column.label}
                             {getSortIcon('updates')}
                           </button>
-                        ) : column.id === 'lastUpdate' ? (
+                        ) : column.id === 'last_update' ? (
                           <button
-                            onClick={() => handleSort('lastUpdate')}
+                            onClick={() => handleSort('last_update')}
                             className="flex items-center gap-2 hover:text-secondary-700"
                           >
                             {column.label}
-                            {getSortIcon('lastUpdate')}
+                            {getSortIcon('last_update')}
                           </button>
                         ) : (
                           column.label
@@ -1679,7 +1679,7 @@ const BulkAssignModal = ({ selectedHosts, hosts, onClose, onAssign, isLoading })
 
   const selectedHostNames = hosts
     .filter(host => selectedHosts.includes(host.id))
-    .map(host => host.friendlyName)
+    .map(host => host.friendly_name)
 
   const handleSubmit = (e) => {
     e.preventDefault()

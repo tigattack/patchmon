@@ -19,7 +19,8 @@ export const UpdateNotificationProvider = ({ children }) => {
   const { data: updateData, isLoading, error } = useQuery({
     queryKey: ['updateCheck'],
     queryFn: () => versionAPI.checkUpdates().then(res => res.data),
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    staleTime: 10 * 60 * 1000, // Data stays fresh for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
     retry: 1
   })
 

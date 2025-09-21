@@ -140,7 +140,7 @@ const Users = () => {
                           <Shield className="h-3 w-3 mr-1" />
                           {user.role.charAt(0).toUpperCase() + user.role.slice(1).replace('_', ' ')}
                         </span>
-                        {user.isActive ? (
+                        {user.is_active ? (
                           <CheckCircle className="ml-2 h-4 w-4 text-green-500" />
                         ) : (
                           <XCircle className="ml-2 h-4 w-4 text-red-500" />
@@ -152,11 +152,11 @@ const Users = () => {
                       </div>
                       <div className="flex items-center mt-1 text-sm text-secondary-500 dark:text-secondary-300">
                         <Calendar className="h-4 w-4 mr-1" />
-                        Created: {new Date(user.createdAt).toLocaleDateString()}
-                        {user.lastLogin && (
+                        Created: {new Date(user.created_at).toLocaleDateString()}
+                        {user.last_login && (
                           <>
                             <span className="mx-2">•</span>
-                            Last login: {new Date(user.lastLogin).toLocaleDateString()}
+                            Last login: {new Date(user.last_login).toLocaleDateString()}
                           </>
                         )}
                       </div>
@@ -174,11 +174,11 @@ const Users = () => {
                       onClick={() => handleResetPassword(user)}
                       className="text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-300 disabled:text-gray-300 disabled:cursor-not-allowed"
                       title={
-                        !user.isActive 
+                        !user.is_active 
                           ? "Cannot reset password for inactive user"
                           : "Reset password"
                       }
-                      disabled={!user.isActive}
+                      disabled={!user.is_active}
                     >
                       <Key className="h-4 w-4" />
                     </button>
@@ -394,7 +394,7 @@ const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
     username: user?.username || '',
     email: user?.email || '',
     role: user?.role || 'user',
-    isActive: user?.isActive ?? true
+    is_active: user?.is_active ?? true
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -486,8 +486,8 @@ const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
           <div className="flex items-center">
             <input
               type="checkbox"
-              name="isActive"
-              checked={formData.isActive}
+              name="is_active"
+              checked={formData.is_active}
               onChange={handleInputChange}
               className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
             />

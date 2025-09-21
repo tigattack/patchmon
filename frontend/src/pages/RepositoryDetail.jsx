@@ -45,7 +45,7 @@ const RepositoryDetail = () => {
     setFormData({
       name: repository.name,
       description: repository.description || '',
-      isActive: repository.isActive,
+      is_active: repository.is_active,
       priority: repository.priority || ''
     });
     setEditMode(true);
@@ -139,11 +139,11 @@ const RepositoryDetail = () => {
                 {repository.name}
               </h1>
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                repository.isActive
+                repository.is_active
                   ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
                   : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
               }`}>
-                {repository.isActive ? 'Active' : 'Inactive'}
+                {repository.is_active ? 'Active' : 'Inactive'}
               </span>
             </div>
             <p className="text-secondary-500 dark:text-secondary-300 mt-1">
@@ -228,12 +228,12 @@ const RepositoryDetail = () => {
               <div className="flex items-center">
                 <input
                   type="checkbox"
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  id="is_active"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                   className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
                 />
-                <label htmlFor="isActive" className="ml-2 block text-sm text-secondary-900 dark:text-white">
+                <label htmlFor="is_active" className="ml-2 block text-sm text-secondary-900 dark:text-white">
                   Repository is active
                 </label>
               </div>
@@ -295,7 +295,7 @@ const RepositoryDetail = () => {
                   <div className="flex items-center mt-1">
                     <Calendar className="h-4 w-4 text-secondary-400 mr-2" />
                     <span className="text-secondary-900 dark:text-white">
-                      {new Date(repository.createdAt).toLocaleDateString()}
+                      {new Date(repository.created_at).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -339,7 +339,7 @@ const RepositoryDetail = () => {
                         to={`/hosts/${hostRepo.host.id}`}
                         className="text-primary-600 hover:text-primary-700 font-medium"
                       >
-                        {hostRepo.host.friendlyName}
+                        {hostRepo.host.friendly_name}
                       </Link>
                       <div className="flex items-center gap-4 text-sm text-secondary-500 dark:text-secondary-400 mt-1">
                         <span>IP: {hostRepo.host.ip}</span>

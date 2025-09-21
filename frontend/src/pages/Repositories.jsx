@@ -148,8 +148,8 @@ const Repositories = () => {
                          (filterType === 'insecure' && !isSecure);
       
       const matchesStatus = filterStatus === 'all' ||
-                           (filterStatus === 'active' && repo.isActive === true) ||
-                           (filterStatus === 'inactive' && repo.isActive === false);
+                           (filterStatus === 'active' && repo.is_active === true) ||
+                           (filterStatus === 'inactive' && repo.is_active === false);
       
       console.log('Filter results:', {
         matchesSearch,
@@ -171,8 +171,8 @@ const Repositories = () => {
         aValue = a.isSecure ? 'Secure' : 'Insecure';
         bValue = b.isSecure ? 'Secure' : 'Insecure';
       } else if (sortField === 'status') {
-        aValue = a.isActive ? 'Active' : 'Inactive';
-        bValue = b.isActive ? 'Active' : 'Inactive';
+        aValue = a.is_active ? 'Active' : 'Inactive';
+        bValue = b.is_active ? 'Active' : 'Inactive';
       }
 
       if (typeof aValue === 'string') {
@@ -426,11 +426,11 @@ const Repositories = () => {
       case 'status':
         return (
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            repo.isActive
+            repo.is_active
               ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
               : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
           }`}>
-            {repo.isActive ? 'Active' : 'Inactive'}
+            {repo.is_active ? 'Active' : 'Inactive'}
           </span>
         )
       case 'hostCount':

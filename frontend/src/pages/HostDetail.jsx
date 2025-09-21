@@ -46,14 +46,24 @@ const HostDetail = () => {
   const [isEditingFriendlyName, setIsEditingFriendlyName] = useState(false)
   const [editedFriendlyName, setEditedFriendlyName] = useState('')
   const [showAllUpdates, setShowAllUpdates] = useState(false)
-  const [activeTab, setActiveTab] = useState('host')
+  const [activeTab, setActiveTab] = useState(() => {
+    // Restore tab state from localStorage
+    const savedTab = localStorage.getItem(`host-detail-tab-${hostId}`)
+    return savedTab || 'host'
+  })
   
-  const { data: host, isLoading, error, refetch } = useQuery({
+  const { data: host, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['host', hostId],
     queryFn: () => dashboardAPI.getHostDetail(hostId).then(res => res.data),
-    refetchInterval: 60000,
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh longer
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   })
+
+  // Save tab state to localStorage when it changes
+  const handleTabChange = (tabName) => {
+    setActiveTab(tabName)
+    localStorage.setItem(`host-detail-tab-${hostId}`, tabName)
+  }
 
   // Auto-show credentials modal for new/pending hosts
   React.useEffect(() => {
@@ -72,7 +82,7 @@ const HostDetail = () => {
 
   // Toggle auto-update mutation
   const toggleAutoUpdateMutation = useMutation({
-    mutationFn: (autoUpdate) => adminHostsAPI.toggleAutoUpdate(hostId, autoUpdate).then(res => res.data),
+    mutationFn: (auto_update) => adminHostsAPI.toggleAutoUpdate(hostId, auto_update).then(res => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries(['host', hostId])
       queryClient.invalidateQueries(['hosts'])
@@ -88,7 +98,7 @@ const HostDetail = () => {
   })
 
   const handleDeleteHost = async () => {
-    if (window.confirm(`Are you sure you want to delete host "${host.friendlyName}"? This action cannot be undone.`)) {
+    if (window.confirm(`Are you sure you want to delete host "${host.friendly_name}"? This action cannot be undone.`)) {
       try {
         await deleteHostMutation.mutateAsync(hostId)
       } catch (error) {
@@ -178,7 +188,7 @@ const HostDetail = () => {
     return 'Up to Date'
   }
 
-  const isStale = new Date() - new Date(host.lastUpdate) > 24 * 60 * 60 * 1000
+  const isStale = new Date() - new Date(host.last_update) > 24 * 60 * 60 * 1000
 
   return (
     <div className="h-screen flex flex-col">
@@ -188,18 +198,18 @@ const HostDetail = () => {
           <Link to="/hosts" className="text-secondary-500 hover:text-secondary-700 dark:text-secondary-400 dark:hover:text-secondary-200">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <h1 className="text-xl font-semibold text-secondary-900 dark:text-white">{host.friendlyName}</h1>
-          {host.systemUptime && (
+          <h1 className="text-xl font-semibold text-secondary-900 dark:text-white">{host.friendly_name}</h1>
+          {host.system_uptime && (
             <div className="flex items-center gap-1 text-sm text-secondary-600 dark:text-secondary-400">
               <Clock className="h-4 w-4" />
               <span className="text-xs font-medium">Uptime:</span>
-              <span>{host.systemUptime}</span>
+              <span>{host.system_uptime}</span>
             </div>
           )}
           <div className="flex items-center gap-1 text-sm text-secondary-600 dark:text-secondary-400">
             <Clock className="h-4 w-4" />
             <span className="text-xs font-medium">Last updated:</span>
-            <span>{formatRelativeTime(host.lastUpdate)}</span>
+            <span>{formatRelativeTime(host.last_update)}</span>
           </div>
           <div className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(isStale, host.stats.outdatedPackages > 0)}`}>
             {getStatusIcon(isStale, host.stats.outdatedPackages > 0)}
@@ -207,6 +217,15 @@ const HostDetail = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="btn-outline flex items-center gap-2 text-sm"
+            title="Refresh host data"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Refreshing...' : 'Refresh'}
+          </button>
           <button
             onClick={() => setShowCredentialsModal(true)}
             className="btn-outline flex items-center gap-2 text-sm"
@@ -232,7 +251,7 @@ const HostDetail = () => {
           <div className="card">
             <div className="flex border-b border-secondary-200 dark:border-secondary-600">
               <button 
-                onClick={() => setActiveTab('host')}
+                onClick={() => handleTabChange('host')}
                 className={`px-4 py-2 text-sm font-medium ${
                   activeTab === 'host' 
                     ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500' 
@@ -242,17 +261,7 @@ const HostDetail = () => {
                 Host Info
               </button>
               <button 
-                onClick={() => setActiveTab('hardware')}
-                className={`px-4 py-2 text-sm font-medium ${
-                  activeTab === 'hardware' 
-                    ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500' 
-                    : 'text-secondary-500 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300'
-                }`}
-              >
-                Hardware
-              </button>
-              <button 
-                onClick={() => setActiveTab('network')}
+                onClick={() => handleTabChange('network')}
                 className={`px-4 py-2 text-sm font-medium ${
                   activeTab === 'network' 
                     ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500' 
@@ -262,7 +271,7 @@ const HostDetail = () => {
                 Network
               </button>
               <button 
-                onClick={() => setActiveTab('system')}
+                onClick={() => handleTabChange('system')}
                 className={`px-4 py-2 text-sm font-medium ${
                   activeTab === 'system' 
                     ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500' 
@@ -272,17 +281,17 @@ const HostDetail = () => {
                 System
               </button>
               <button 
-                onClick={() => setActiveTab('monitoring')}
+                onClick={() => handleTabChange('monitoring')}
                 className={`px-4 py-2 text-sm font-medium ${
                   activeTab === 'monitoring' 
                     ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500' 
                     : 'text-secondary-500 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300'
                 }`}
               >
-                Resource Monitor
+                Resource
               </button>
               <button 
-                onClick={() => setActiveTab('history')}
+                onClick={() => handleTabChange('history')}
                 className={`px-4 py-2 text-sm font-medium ${
                   activeTab === 'history' 
                     ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500' 
@@ -301,7 +310,7 @@ const HostDetail = () => {
                     <div>
                       <p className="text-xs text-secondary-500 dark:text-secondary-300 mb-1">Friendly Name</p>
                       <InlineEdit
-                        value={host.friendlyName}
+                        value={host.friendly_name}
                         onSave={(newName) => updateFriendlyNameMutation.mutate(newName)}
                         placeholder="Enter friendly name..."
                         maxLength={100}
@@ -341,8 +350,8 @@ const HostDetail = () => {
                     <div>
                       <p className="text-xs text-secondary-500 dark:text-secondary-300">Operating System</p>
                       <div className="flex items-center gap-2">
-                        <OSIcon osType={host.osType} className="h-4 w-4" />
-                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.osType} {host.osVersion}</p>
+                        <OSIcon osType={host.os_type} className="h-4 w-4" />
+                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.os_type} {host.os_version}</p>
                       </div>
                     </div>
                     
@@ -356,29 +365,29 @@ const HostDetail = () => {
                     
                     <div>
                       <p className="text-xs text-secondary-500 dark:text-secondary-300">Last Update</p>
-                      <p className="font-medium text-secondary-900 dark:text-white text-sm">{formatRelativeTime(host.lastUpdate)}</p>
+                      <p className="font-medium text-secondary-900 dark:text-white text-sm">{formatRelativeTime(host.last_update)}</p>
                     </div>
                     
-                    {host.agentVersion && (
+                    {host.agent_version && (
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-xs text-secondary-500 dark:text-secondary-300">Agent Version</p>
-                          <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.agentVersion}</p>
+                          <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.agent_version}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-secondary-500 dark:text-secondary-300">Auto-update</span>
                           <button
-                            onClick={() => toggleAutoUpdateMutation.mutate(!host.autoUpdate)}
+                            onClick={() => toggleAutoUpdateMutation.mutate(!host.auto_update)}
                             disabled={toggleAutoUpdateMutation.isPending}
                             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-                              host.autoUpdate 
+                              host.auto_update 
                                 ? 'bg-primary-600 dark:bg-primary-500' 
                                 : 'bg-secondary-200 dark:bg-secondary-600'
                             }`}
                           >
                             <span
                               className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                                host.autoUpdate ? 'translate-x-5' : 'translate-x-1'
+                                host.auto_update ? 'translate-x-5' : 'translate-x-1'
                               }`}
                             />
                           </button>
@@ -389,88 +398,34 @@ const HostDetail = () => {
                 </div>
               )}
 
-              {/* Hardware Information */}
-              {activeTab === 'hardware' && (host.cpuModel || host.ramInstalled || host.diskDetails) && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {host.cpuModel && (
-                      <div>
-                        <p className="text-xs text-secondary-500 dark:text-secondary-300">CPU Model</p>
-                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.cpuModel}</p>
-                      </div>
-                    )}
-                    
-                    {host.cpuCores && (
-                      <div>
-                        <p className="text-xs text-secondary-500 dark:text-secondary-300">CPU Cores</p>
-                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.cpuCores}</p>
-                      </div>
-                    )}
-                    
-                    {host.ramInstalled && (
-                      <div>
-                        <p className="text-xs text-secondary-500 dark:text-secondary-300">RAM Installed</p>
-                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.ramInstalled} GB</p>
-                      </div>
-                    )}
-                    
-                    {host.swapSize !== undefined && (
-                      <div>
-                        <p className="text-xs text-secondary-500 dark:text-secondary-300">Swap Size</p>
-                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.swapSize} GB</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {host.diskDetails && Array.isArray(host.diskDetails) && host.diskDetails.length > 0 && (
-                    <div className="pt-4 border-t border-secondary-200 dark:border-secondary-600">
-                      <h4 className="text-sm font-medium text-secondary-900 dark:text-white mb-3">Disk Details</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {host.diskDetails.map((disk, index) => (
-                          <div key={index} className="bg-secondary-50 dark:bg-secondary-700 p-3 rounded-lg">
-                            <div className="flex items-center gap-2 mb-1">
-                              <HardDrive className="h-4 w-4 text-secondary-500" />
-                              <span className="font-medium text-secondary-900 dark:text-white text-sm">{disk.name}</span>
-                            </div>
-                            <p className="text-xs text-secondary-600 dark:text-secondary-300">Size: {disk.size}</p>
-                            {disk.mountpoint && (
-                              <p className="text-xs text-secondary-600 dark:text-secondary-300">Mount: {disk.mountpoint}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Network Information */}
-              {activeTab === 'network' && (host.gatewayIp || host.dnsServers || host.networkInterfaces) && (
+              {activeTab === 'network' && (host.gateway_ip || host.dns_servers || host.network_interfaces) && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {host.gatewayIp && (
+                    {host.gateway_ip && (
                       <div>
                         <p className="text-xs text-secondary-500 dark:text-secondary-300">Gateway IP</p>
-                        <p className="font-medium text-secondary-900 dark:text-white font-mono text-sm">{host.gatewayIp}</p>
+                        <p className="font-medium text-secondary-900 dark:text-white font-mono text-sm">{host.gateway_ip}</p>
                       </div>
                     )}
                     
-                    {host.dnsServers && Array.isArray(host.dnsServers) && host.dnsServers.length > 0 && (
+                    {host.dns_servers && Array.isArray(host.dns_servers) && host.dns_servers.length > 0 && (
                       <div>
                         <p className="text-xs text-secondary-500 dark:text-secondary-300">DNS Servers</p>
                         <div className="space-y-1">
-                          {host.dnsServers.map((dns, index) => (
+                          {host.dns_servers.map((dns, index) => (
                             <p key={index} className="font-medium text-secondary-900 dark:text-white font-mono text-sm">{dns}</p>
                           ))}
                         </div>
                       </div>
                     )}
                     
-                    {host.networkInterfaces && Array.isArray(host.networkInterfaces) && host.networkInterfaces.length > 0 && (
+                    {host.network_interfaces && Array.isArray(host.network_interfaces) && host.network_interfaces.length > 0 && (
                       <div>
                         <p className="text-xs text-secondary-500 dark:text-secondary-300">Network Interfaces</p>
                         <div className="space-y-1">
-                          {host.networkInterfaces.map((iface, index) => (
+                          {host.network_interfaces.map((iface, index) => (
                             <p key={index} className="font-medium text-secondary-900 dark:text-white text-sm">{iface.name}</p>
                           ))}
                         </div>
@@ -481,7 +436,7 @@ const HostDetail = () => {
               )}
 
               {/* System Information */}
-              {activeTab === 'system' && (host.kernelVersion || host.selinuxStatus || host.architecture) && (
+              {activeTab === 'system' && (host.kernel_version || host.selinux_status || host.architecture) && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {host.architecture && (
@@ -491,24 +446,24 @@ const HostDetail = () => {
                       </div>
                     )}
                     
-                    {host.kernelVersion && (
+                    {host.kernel_version && (
                       <div>
                         <p className="text-xs text-secondary-500 dark:text-secondary-300">Kernel Version</p>
-                        <p className="font-medium text-secondary-900 dark:text-white font-mono text-sm">{host.kernelVersion}</p>
+                        <p className="font-medium text-secondary-900 dark:text-white font-mono text-sm">{host.kernel_version}</p>
                       </div>
                     )}
                     
-                    {host.selinuxStatus && (
+                    {host.selinux_status && (
                       <div>
                         <p className="text-xs text-secondary-500 dark:text-secondary-300">SELinux Status</p>
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          host.selinuxStatus === 'enabled' 
+                          host.selinux_status === 'enabled' 
                             ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : host.selinuxStatus === 'permissive'
+                            : host.selinux_status === 'permissive'
                             ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                             : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                         }`}>
-                          {host.selinuxStatus}
+                          {host.selinux_status}
                         </span>
                       </div>
                     )}
@@ -518,22 +473,15 @@ const HostDetail = () => {
                 </div>
               )}
 
-              {/* Empty state for tabs with no data */}
-              {activeTab === 'hardware' && !(host.cpuModel || host.ramInstalled || host.diskDetails) && (
-                <div className="text-center py-8">
-                  <Cpu className="h-8 w-8 text-secondary-400 mx-auto mb-2" />
-                  <p className="text-sm text-secondary-500 dark:text-secondary-300">No hardware information available</p>
-                </div>
-              )}
               
-              {activeTab === 'network' && !(host.gatewayIp || host.dnsServers || host.networkInterfaces) && (
+              {activeTab === 'network' && !(host.gateway_ip || host.dns_servers || host.network_interfaces) && (
                 <div className="text-center py-8">
                   <Wifi className="h-8 w-8 text-secondary-400 mx-auto mb-2" />
                   <p className="text-sm text-secondary-500 dark:text-secondary-300">No network information available</p>
                 </div>
               )}
               
-              {activeTab === 'system' && !(host.kernelVersion || host.selinuxStatus || host.architecture) && (
+              {activeTab === 'system' && !(host.kernel_version || host.selinux_status || host.architecture) && (
                 <div className="text-center py-8">
                   <Terminal className="h-8 w-8 text-secondary-400 mx-auto mb-2" />
                   <p className="text-sm text-secondary-500 dark:text-secondary-300">No system information available</p>
@@ -541,35 +489,143 @@ const HostDetail = () => {
               )}
 
               {/* System Monitoring */}
-              {activeTab === 'monitoring' && host.loadAverage && Array.isArray(host.loadAverage) && host.loadAverage.length > 0 && (
-                <div className="space-y-4">
+              {activeTab === 'monitoring' && (
+                <div className="space-y-6">
+                  {/* System Overview */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-xs text-secondary-500 dark:text-secondary-300">Load Average</p>
-                      <p className="font-medium text-secondary-900 dark:text-white text-sm">
-                        {host.loadAverage.map((load, index) => (
-                          <span key={index}>
-                            {load.toFixed(2)}
-                            {index < host.loadAverage.length - 1 && ', '}
-                          </span>
+                    {/* System Uptime */}
+                    {host.system_uptime && (
+                      <div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Clock className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                          <p className="text-xs text-secondary-500 dark:text-secondary-300">System Uptime</p>
+                        </div>
+                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.system_uptime}</p>
+                      </div>
+                    )}
+                    
+                    {/* CPU Model */}
+                    {host.cpu_model && (
+                      <div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Cpu className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                          <p className="text-xs text-secondary-500 dark:text-secondary-300">CPU Model</p>
+                        </div>
+                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.cpu_model}</p>
+                      </div>
+                    )}
+                    
+                    {/* CPU Cores */}
+                    {host.cpu_cores && (
+                      <div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Cpu className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                          <p className="text-xs text-secondary-500 dark:text-secondary-300">CPU Cores</p>
+                        </div>
+                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.cpu_cores}</p>
+                      </div>
+                    )}
+                    
+                    {/* RAM Installed */}
+                    {host.ram_installed && (
+                      <div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MemoryStick className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                          <p className="text-xs text-secondary-500 dark:text-secondary-300">RAM Installed</p>
+                        </div>
+                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.ram_installed} GB</p>
+                      </div>
+                    )}
+                    
+                    {/* Swap Size */}
+                    {host.swap_size !== undefined && host.swap_size !== null && (
+                      <div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MemoryStick className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                          <p className="text-xs text-secondary-500 dark:text-secondary-300">Swap Size</p>
+                        </div>
+                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.swap_size} GB</p>
+                      </div>
+                    )}
+                    
+                    {/* Load Average */}
+                    {host.load_average && Array.isArray(host.load_average) && host.load_average.length > 0 && host.load_average.some(load => load != null) && (
+                      <div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Activity className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                          <p className="text-xs text-secondary-500 dark:text-secondary-300">Load Average</p>
+                        </div>
+                        <p className="font-medium text-secondary-900 dark:text-white text-sm">
+                          {host.load_average.filter(load => load != null).map((load, index) => (
+                            <span key={index}>
+                              {typeof load === 'number' ? load.toFixed(2) : String(load)}
+                              {index < host.load_average.filter(load => load != null).length - 1 && ', '}
+                            </span>
+                          ))}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Disk Information */}
+                  {host.disk_details && Array.isArray(host.disk_details) && host.disk_details.length > 0 && (
+                    <div className="pt-4 border-t border-secondary-200 dark:border-secondary-600">
+                      <h4 className="text-sm font-medium text-secondary-900 dark:text-white mb-3 flex items-center gap-2">
+                        <HardDrive className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                        Disk Usage
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {host.disk_details.map((disk, index) => (
+                          <div key={index} className="bg-secondary-50 dark:bg-secondary-700 p-3 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <HardDrive className="h-4 w-4 text-secondary-500" />
+                              <span className="font-medium text-secondary-900 dark:text-white text-sm">{disk.name || `Disk ${index + 1}`}</span>
+                            </div>
+                            {disk.size && (
+                              <p className="text-xs text-secondary-600 dark:text-secondary-300 mb-1">Size: {disk.size}</p>
+                            )}
+                            {disk.mountpoint && (
+                              <p className="text-xs text-secondary-600 dark:text-secondary-300 mb-1">Mount: {disk.mountpoint}</p>
+                            )}
+                            {disk.usage && typeof disk.usage === 'number' && (
+                              <div className="mt-2">
+                                <div className="flex justify-between text-xs text-secondary-600 dark:text-secondary-300 mb-1">
+                                  <span>Usage</span>
+                                  <span>{disk.usage}%</span>
+                                </div>
+                                <div className="w-full bg-secondary-200 dark:bg-secondary-600 rounded-full h-2">
+                                  <div 
+                                    className="bg-primary-600 dark:bg-primary-400 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${Math.min(Math.max(disk.usage, 0), 100)}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* No Data State */}
+                  {!host.system_uptime && !host.cpu_model && !host.cpu_cores && !host.ram_installed && host.swap_size === undefined && 
+                   (!host.load_average || !Array.isArray(host.load_average) || host.load_average.length === 0 || !host.load_average.some(load => load != null)) && 
+                   (!host.disk_details || !Array.isArray(host.disk_details) || host.disk_details.length === 0) && (
+                    <div className="text-center py-8">
+                      <Monitor className="h-8 w-8 text-secondary-400 mx-auto mb-2" />
+                      <p className="text-sm text-secondary-500 dark:text-secondary-300">No monitoring data available</p>
+                      <p className="text-xs text-secondary-400 dark:text-secondary-400 mt-1">
+                        Monitoring data will appear once the agent collects system information
                       </p>
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'monitoring' && (!host.loadAverage || !Array.isArray(host.loadAverage) || host.loadAverage.length === 0) && (
-                <div className="text-center py-8">
-                  <Monitor className="h-8 w-8 text-secondary-400 mx-auto mb-2" />
-                  <p className="text-sm text-secondary-500 dark:text-secondary-300">No monitoring data available</p>
+                  )}
                 </div>
               )}
 
               {/* Update History */}
               {activeTab === 'history' && (
                 <div className="overflow-x-auto">
-                  {host.updateHistory?.length > 0 ? (
+                  {host.update_history?.length > 0 ? (
                     <>
                       <table className="min-w-full divide-y divide-secondary-200 dark:divide-secondary-600">
                         <thead className="bg-secondary-50 dark:bg-secondary-700">
@@ -589,7 +645,7 @@ const HostDetail = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-secondary-800 divide-y divide-secondary-200 dark:divide-secondary-600">
-                          {(showAllUpdates ? host.updateHistory : host.updateHistory.slice(0, 5)).map((update, index) => (
+                          {(showAllUpdates ? host.update_history : host.update_history.slice(0, 5)).map((update, index) => (
                             <tr key={update.id} className="hover:bg-secondary-50 dark:hover:bg-secondary-700">
                               <td className="px-4 py-2 whitespace-nowrap">
                                 <div className="flex items-center gap-1.5">
@@ -607,14 +663,14 @@ const HostDetail = () => {
                                 {formatDate(update.timestamp)}
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-xs text-secondary-900 dark:text-white">
-                                {update.packagesCount}
+                                {update.packages_count}
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap">
-                                {update.securityCount > 0 ? (
+                                {update.security_count > 0 ? (
                                   <div className="flex items-center gap-1">
                                     <Shield className="h-3 w-3 text-danger-600" />
                                     <span className="text-xs text-danger-600 font-medium">
-                                      {update.securityCount}
+                                      {update.security_count}
                                     </span>
                                   </div>
                                 ) : (
@@ -626,7 +682,7 @@ const HostDetail = () => {
                         </tbody>
                       </table>
                       
-                      {host.updateHistory.length > 5 && (
+                      {host.update_history.length > 5 && (
                         <div className="px-4 py-2 border-t border-secondary-200 dark:border-secondary-600 bg-secondary-50 dark:bg-secondary-700">
                           <button
                             onClick={() => setShowAllUpdates(!showAllUpdates)}
@@ -640,7 +696,7 @@ const HostDetail = () => {
                             ) : (
                               <>
                                 <ChevronDown className="h-3 w-3" />
-                                Show All ({host.updateHistory.length} total)
+                                Show All ({host.update_history.length} total)
                               </>
                             )}
                           </button>
@@ -746,7 +802,7 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
   }
 
   const getSetupCommands = () => {
-    return `# Run this on the target host: ${host?.friendlyName}
+    return `# Run this on the target host: ${host?.friendly_name}
 
 echo "🔄 Setting up PatchMon agent..."
 
@@ -788,7 +844,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-secondary-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-secondary-900 dark:text-white">Host Setup - {host.friendlyName}</h3>
+          <h3 className="text-lg font-medium text-secondary-900 dark:text-white">Host Setup - {host.friendly_name}</h3>
           <button onClick={onClose} className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300">
             <X className="h-5 w-5" />
           </button>
@@ -1069,7 +1125,7 @@ const DeleteConfirmationModal = ({ host, isOpen, onClose, onConfirm, isLoading }
         <div className="mb-6">
           <p className="text-secondary-700 dark:text-secondary-300">
             Are you sure you want to delete the host{' '}
-            <span className="font-semibold">"{host.friendlyName}"</span>?
+            <span className="font-semibold">"{host.friendly_name}"</span>?
           </p>
           <div className="mt-3 p-3 bg-danger-50 dark:bg-danger-900 border border-danger-200 dark:border-danger-700 rounded-md">
             <p className="text-sm text-danger-800 dark:text-danger-200">

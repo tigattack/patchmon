@@ -7,7 +7,8 @@ import {
   Server, 
   Users,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Settings
 } from 'lucide-react'
 import { hostGroupsAPI } from '../utils/api'
 
@@ -214,7 +215,7 @@ const Options = () => {
 
   const renderComingSoonTab = (tabName) => (
     <div className="text-center py-12">
-      <SettingsIcon className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
+      <Settings className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
       <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-2">
         {tabName} Coming Soon
       </h3>

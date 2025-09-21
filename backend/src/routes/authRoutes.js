@@ -426,6 +426,10 @@ router.post('/login', [
         email: true,
         password_hash: true,
         role: true,
+        is_active: true,
+        last_login: true,
+        created_at: true,
+        updated_at: true,
         tfa_enabled: true
       }
     });
@@ -468,7 +472,11 @@ router.post('/login', [
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        is_active: user.is_active,
+        last_login: user.last_login,
+        created_at: user.created_at,
+        updated_at: user.updated_at
       }
     });
   } catch (error) {

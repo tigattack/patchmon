@@ -16,7 +16,7 @@ router.get('/setup', authenticateToken, async (req, res) => {
     // Check if user already has TFA enabled
     const user = await prisma.users.findUnique({
       where: { id: userId },
-      select: { tfaEnabled: true, tfaSecret: true }
+      select: { tfa_enabled: true, tfa_secret: true }
     });
 
     if (user.tfa_enabled) {
@@ -86,7 +86,7 @@ router.post('/verify-setup', authenticateToken, [
 
     // Verify the token
     const verified = speakeasy.totp.verify({
-      secret: user.tfaSecret,
+      secret: user.tfa_secret,
       encoding: 'base32',
       token: token,
       window: 2 // Allow 2 time windows (60 seconds) for clock drift
@@ -201,7 +201,7 @@ router.post('/regenerate-backup-codes', authenticateToken, async (req, res) => {
     // Check if TFA is enabled
     const user = await prisma.users.findUnique({
       where: { id: userId },
-      select: { tfaEnabled: true }
+      select: { tfa_enabled: true }
     });
 
     if (!user.tfa_enabled) {
@@ -219,7 +219,7 @@ router.post('/regenerate-backup-codes', authenticateToken, async (req, res) => {
     await prisma.users.update({
       where: { id: userId },
       data: {
-        tfaBackupCodes: JSON.stringify(backupCodes)
+        tfa_backup_codes: JSON.stringify(backupCodes)
       }
     });
 
@@ -265,7 +265,7 @@ router.post('/verify', [
     }
 
     // Check if it's a backup code
-    const backupCodes = user.tfaBackupCodes ? JSON.parse(user.tfaBackupCodes) : [];
+    const backupCodes = user.tfa_backup_codes ? JSON.parse(user.tfa_backup_codes) : [];
     const isBackupCode = backupCodes.includes(token);
 
     let verified = false;
@@ -276,7 +276,7 @@ router.post('/verify', [
       await prisma.users.update({
         where: { id: user.id },
         data: {
-          tfaBackupCodes: JSON.stringify(updatedBackupCodes)
+          tfa_backup_codes: JSON.stringify(updatedBackupCodes)
         }
       });
       verified = true;

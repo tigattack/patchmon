@@ -63,8 +63,8 @@ export const adminHostsAPI = {
   regenerateCredentials: (hostId) => api.post(`/hosts/${hostId}/regenerate-credentials`),
   updateGroup: (hostId, hostGroupId) => api.put(`/hosts/${hostId}/group`, { hostGroupId }),
   bulkUpdateGroup: (hostIds, hostGroupId) => api.put('/hosts/bulk/group', { hostIds, hostGroupId }),
-  toggleAutoUpdate: (hostId, autoUpdate) => api.patch(`/hosts/${hostId}/auto-update`, { autoUpdate }),
-  updateFriendlyName: (hostId, friendlyName) => api.patch(`/hosts/${hostId}/friendly-name`, { friendlyName })
+  toggleAutoUpdate: (hostId, autoUpdate) => api.patch(`/hosts/${hostId}/auto-update`, { auto_update: autoUpdate }),
+  updateFriendlyName: (hostId, friendlyName) => api.patch(`/hosts/${hostId}/friendly-name`, { friendly_name: friendlyName })
 }
 
 // Host Groups API
@@ -156,7 +156,7 @@ export const hostsAPI = {
       'X-API-KEY': apiKey
     }
   }),
-  toggleAutoUpdate: (id, autoUpdate) => api.patch(`/hosts/${id}/auto-update`, { autoUpdate })
+  toggleAutoUpdate: (id, autoUpdate) => api.patch(`/hosts/${id}/auto-update`, { auto_update: autoUpdate })
 }
 
 // Packages API

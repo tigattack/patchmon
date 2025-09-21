@@ -25,7 +25,9 @@ const authenticateToken = async (req, res, next) => {
         email: true,
         role: true,
         is_active: true,
-        last_login: true
+        last_login: true,
+        created_at: true,
+        updated_at: true
       }
     });
 
@@ -79,7 +81,10 @@ const optionalAuth = async (req, res, next) => {
           username: true,
           email: true,
           role: true,
-          is_active: true
+          is_active: true,
+          last_login: true,
+          created_at: true,
+          updated_at: true
         }
       });
 

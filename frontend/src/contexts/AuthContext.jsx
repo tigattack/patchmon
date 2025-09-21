@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null)
   const [permissions, setPermissions] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [permissionsLoading, setPermissionsLoading] = useState(false)
 
   // Initialize auth state from localStorage
   useEffect(() => {
@@ -42,20 +43,17 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(false)
   }, [])
 
-  // Periodically refresh permissions when user is logged in
+  // Refresh permissions when user logs in (no automatic refresh)
   useEffect(() => {
     if (token && user) {
-      // Refresh permissions every 30 seconds
-      const interval = setInterval(() => {
-        refreshPermissions()
-      }, 30000)
-
-      return () => clearInterval(interval)
+      // Only refresh permissions once when user logs in
+      refreshPermissions()
     }
   }, [token, user])
 
   const fetchPermissions = async (authToken) => {
     try {
+      setPermissionsLoading(true)
       const response = await fetch('/api/v1/permissions/user-permissions', {
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -74,6 +72,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Error fetching permissions:', error)
       return null
+    } finally {
+      setPermissionsLoading(false)
     }
   }
 
@@ -199,25 +199,29 @@ export const AuthProvider = ({ children }) => {
 
   // Permission checking functions
   const hasPermission = (permission) => {
+    // If permissions are still loading, return false to show loading state
+    if (permissionsLoading) {
+      return false
+    }
     return permissions?.[permission] === true
   }
 
-  const canViewDashboard = () => hasPermission('canViewDashboard')
-  const canViewHosts = () => hasPermission('canViewHosts')
-  const canManageHosts = () => hasPermission('canManageHosts')
-  const canViewPackages = () => hasPermission('canViewPackages')
-  const canManagePackages = () => hasPermission('canManagePackages')
-  const canViewUsers = () => hasPermission('canViewUsers')
-  const canManageUsers = () => hasPermission('canManageUsers')
-  const canViewReports = () => hasPermission('canViewReports')
-  const canExportData = () => hasPermission('canExportData')
-  const canManageSettings = () => hasPermission('canManageSettings')
+  const canViewDashboard = () => hasPermission('can_view_dashboard')
+  const canViewHosts = () => hasPermission('can_view_hosts')
+  const canManageHosts = () => hasPermission('can_manage_hosts')
+  const canViewPackages = () => hasPermission('can_view_packages')
+  const canManagePackages = () => hasPermission('can_manage_packages')
+  const canViewUsers = () => hasPermission('can_view_users')
+  const canManageUsers = () => hasPermission('can_manage_users')
+  const canViewReports = () => hasPermission('can_view_reports')
+  const canExportData = () => hasPermission('can_export_data')
+  const canManageSettings = () => hasPermission('can_manage_settings')
 
   const value = {
     user,
     token,
     permissions,
-    isLoading,
+    isLoading: isLoading || permissionsLoading,
     login,
     logout,
     updateProfile,

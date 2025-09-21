@@ -153,16 +153,16 @@ router.get('/user-permissions', authenticateToken, async (req, res) => {
       // If no specific permissions found, return default admin permissions
       return res.json({
         role: userRole,
-        canViewDashboard: true,
-        canViewHosts: true,
-        canManageHosts: true,
-        canViewPackages: true,
-        canManagePackages: true,
-        canViewUsers: true,
-        canManageUsers: true,
-        canViewReports: true,
-        canExportData: true,
-        canManageSettings: true,
+        can_view_dashboard: true,
+        can_view_hosts: true,
+        can_manage_hosts: true,
+        can_view_packages: true,
+        can_manage_packages: true,
+        can_view_users: true,
+        can_manage_users: true,
+        can_view_reports: true,
+        can_export_data: true,
+        can_manage_settings: true,
       });
     }
 

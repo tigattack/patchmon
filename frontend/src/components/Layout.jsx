@@ -46,11 +46,11 @@ const Layout = ({ children }) => {
   const userMenuRef = useRef(null)
 
   // Fetch dashboard stats for the "Last updated" info
-  const { data: stats, refetch } = useQuery({
+  const { data: stats, refetch, isFetching } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: () => dashboardAPI.getStats().then(res => res.data),
-    refetchInterval: 60000, // Refresh every minute
-    staleTime: 30000, // Consider data stale after 30 seconds
+    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   })
 
   // Fetch version info
@@ -477,10 +477,11 @@ const Layout = ({ children }) => {
                       <span className="truncate">Updated: {formatRelativeTimeShort(stats.lastUpdated)}</span>
                       <button
                         onClick={() => refetch()}
-                        className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded flex-shrink-0"
+                        disabled={isFetching}
+                        className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded flex-shrink-0 disabled:opacity-50"
                         title="Refresh data"
                       >
-                        <RefreshCw className="h-3 w-3" />
+                        <RefreshCw className={`h-3 w-3 ${isFetching ? 'animate-spin' : ''}`} />
                       </button>
                       {versionInfo && (
                         <span className="text-xs text-secondary-400 dark:text-secondary-500 flex-shrink-0">
@@ -516,10 +517,11 @@ const Layout = ({ children }) => {
                   <div className="flex flex-col items-center py-1 border-t border-secondary-200 dark:border-secondary-700">
                     <button
                       onClick={() => refetch()}
-                      className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded"
+                      disabled={isFetching}
+                      className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded disabled:opacity-50"
                       title={`Refresh data - Updated: ${formatRelativeTimeShort(stats.lastUpdated)}`}
                     >
-                      <RefreshCw className="h-3 w-3" />
+                      <RefreshCw className={`h-3 w-3 ${isFetching ? 'animate-spin' : ''}`} />
                     </button>
                     {versionInfo && (
                       <span className="text-xs text-secondary-400 dark:text-secondary-500 mt-1">

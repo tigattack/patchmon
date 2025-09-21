@@ -134,7 +134,7 @@ const validateApiCredentials = async (req, res, next) => {
 
 // Admin endpoint to create a new host manually (replaces auto-registration)
 router.post('/create', authenticateToken, requireManageHosts, [
-  body('friendlyName').isLength({ min: 1 }).withMessage('Friendly name is required'),
+  body('friendly_name').isLength({ min: 1 }).withMessage('Friendly name is required'),
   body('hostGroupId').optional()
 ], async (req, res) => {
   try {
@@ -143,14 +143,14 @@ router.post('/create', authenticateToken, requireManageHosts, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { friendlyName, hostGroupId } = req.body;
+    const { friendly_name, hostGroupId } = req.body;
     
     // Generate unique API credentials for this host
     const { apiId, apiKey } = generateApiCredentials();
     
     // Check if host already exists
     const existingHost = await prisma.hosts.findUnique({
-      where: { friendly_name: friendlyName }
+      where: { friendly_name: friendly_name }
     });
 
     if (existingHost) {
@@ -172,7 +172,7 @@ router.post('/create', authenticateToken, requireManageHosts, [
     const host = await prisma.hosts.create({
       data: {
         id: uuidv4(),
-        friendly_name: friendlyName,
+        friendly_name: friendly_name,
         os_type: 'unknown', // Will be updated when agent connects
         os_version: 'unknown', // Will be updated when agent connects
         ip: null, // Will be updated when agent connects
@@ -786,7 +786,7 @@ router.delete('/:hostId', authenticateToken, requireManageHosts, async (req, res
 
 // Toggle host auto-update setting
 router.patch('/:hostId/auto-update', authenticateToken, requireManageHosts, [
-  body('autoUpdate').isBoolean().withMessage('Auto-update must be a boolean')
+  body('auto_update').isBoolean().withMessage('Auto-update must be a boolean')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -795,12 +795,12 @@ router.patch('/:hostId/auto-update', authenticateToken, requireManageHosts, [
     }
 
     const { hostId } = req.params;
-    const { autoUpdate } = req.body;
+    const { auto_update } = req.body;
 
     const host = await prisma.hosts.update({
       where: { id: hostId },
       data: { 
-        auto_update: autoUpdate,
+        auto_update: auto_update,
         updated_at: new Date()
       }
     });
@@ -1011,7 +1011,7 @@ router.delete('/agent/versions/:versionId', authenticateToken, requireManageSett
 
 // Update host friendly name (admin only)
 router.patch('/:hostId/friendly-name', authenticateToken, requireManageHosts, [
-  body('friendlyName').isLength({ min: 1, max: 100 }).withMessage('Friendly name must be between 1 and 100 characters')
+  body('friendly_name').isLength({ min: 1, max: 100 }).withMessage('Friendly name must be between 1 and 100 characters')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -1020,7 +1020,7 @@ router.patch('/:hostId/friendly-name', authenticateToken, requireManageHosts, [
     }
 
     const { hostId } = req.params;
-    const { friendlyName } = req.body;
+    const { friendly_name } = req.body;
 
     // Check if host exists
     const host = await prisma.hosts.findUnique({
@@ -1034,7 +1034,7 @@ router.patch('/:hostId/friendly-name', authenticateToken, requireManageHosts, [
     // Check if friendly name is already taken by another host
     const existingHost = await prisma.hosts.findFirst({
       where: {
-        friendly_name: friendlyName,
+        friendly_name: friendly_name,
         id: { not: hostId }
       }
     });
@@ -1046,7 +1046,7 @@ router.patch('/:hostId/friendly-name', authenticateToken, requireManageHosts, [
     // Update the friendly name
     const updatedHost = await prisma.hosts.update({
       where: { id: hostId },
-      data: { friendly_name: friendlyName },
+      data: { friendly_name: friendly_name },
       select: {
         id: true,
         friendly_name: true,

@@ -27,70 +27,70 @@ function App() {
           <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={
-          <ProtectedRoute requirePermission="canViewDashboard">
+          <ProtectedRoute requirePermission="can_view_dashboard">
             <Layout>
               <Dashboard />
             </Layout>
           </ProtectedRoute>
         } />
         <Route path="/hosts" element={
-          <ProtectedRoute requirePermission="canViewHosts">
+          <ProtectedRoute requirePermission="can_view_hosts">
             <Layout>
               <Hosts />
             </Layout>
           </ProtectedRoute>
         } />
         <Route path="/hosts/:hostId" element={
-          <ProtectedRoute requirePermission="canViewHosts">
+          <ProtectedRoute requirePermission="can_view_hosts">
             <Layout>
               <HostDetail />
             </Layout>
           </ProtectedRoute>
         } />
         <Route path="/packages" element={
-          <ProtectedRoute requirePermission="canViewPackages">
+          <ProtectedRoute requirePermission="can_view_packages">
             <Layout>
               <Packages />
             </Layout>
           </ProtectedRoute>
         } />
         <Route path="/repositories" element={
-          <ProtectedRoute requirePermission="canViewHosts">
+          <ProtectedRoute requirePermission="can_view_hosts">
             <Layout>
               <Repositories />
             </Layout>
           </ProtectedRoute>
         } />
         <Route path="/repositories/:repositoryId" element={
-          <ProtectedRoute requirePermission="canViewHosts">
+          <ProtectedRoute requirePermission="can_view_hosts">
             <Layout>
               <RepositoryDetail />
             </Layout>
           </ProtectedRoute>
         } />
         <Route path="/users" element={
-          <ProtectedRoute requirePermission="canViewUsers">
+          <ProtectedRoute requirePermission="can_view_users">
             <Layout>
               <Users />
             </Layout>
           </ProtectedRoute>
         } />
         <Route path="/permissions" element={
-          <ProtectedRoute requirePermission="canManageSettings">
+          <ProtectedRoute requirePermission="can_manage_settings">
             <Layout>
               <Permissions />
             </Layout>
           </ProtectedRoute>
         } />
         <Route path="/settings" element={
-          <ProtectedRoute requirePermission="canManageSettings">
+          <ProtectedRoute requirePermission="can_manage_settings">
             <Layout>
               <Settings />
             </Layout>
           </ProtectedRoute>
         } />
         <Route path="/options" element={
-          <ProtectedRoute requirePermission="canManageHosts">
+          <ProtectedRoute requirePermission="can_manage_hosts">
             <Layout>
               <Options />
             </Layout>
@@ -104,7 +104,7 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/packages/:packageId" element={
-          <ProtectedRoute requirePermission="canViewPackages">
+          <ProtectedRoute requirePermission="can_view_packages">
             <Layout>
               <PackageDetail />
             </Layout>

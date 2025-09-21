@@ -20,7 +20,7 @@ const requirePermission = (permission) => {
       if (!rolePermissions[permission]) {
         return res.status(403).json({ 
           error: 'Insufficient permissions',
-          message: `You don't have permission to ${permission.replace('can', '').toLowerCase()}`
+          message: `You don't have permission to ${permission.replace('can_', '').replace('_', ' ')}`
         });
       }
 
@@ -32,17 +32,17 @@ const requirePermission = (permission) => {
   };
 };
 
-// Specific permission middlewares
-const requireViewDashboard = requirePermission('canViewDashboard');
-const requireViewHosts = requirePermission('canViewHosts');
-const requireManageHosts = requirePermission('canManageHosts');
-const requireViewPackages = requirePermission('canViewPackages');
-const requireManagePackages = requirePermission('canManagePackages');
-const requireViewUsers = requirePermission('canViewUsers');
-const requireManageUsers = requirePermission('canManageUsers');
-const requireViewReports = requirePermission('canViewReports');
-const requireExportData = requirePermission('canExportData');
-const requireManageSettings = requirePermission('canManageSettings');
+// Specific permission middlewares - using snake_case field names
+const requireViewDashboard = requirePermission('can_view_dashboard');
+const requireViewHosts = requirePermission('can_view_hosts');
+const requireManageHosts = requirePermission('can_manage_hosts');
+const requireViewPackages = requirePermission('can_view_packages');
+const requireManagePackages = requirePermission('can_manage_packages');
+const requireViewUsers = requirePermission('can_view_users');
+const requireManageUsers = requirePermission('can_manage_users');
+const requireViewReports = requirePermission('can_view_reports');
+const requireExportData = requirePermission('can_export_data');
+const requireManageSettings = requirePermission('can_manage_settings');
 
 module.exports = {
   requirePermission,
