@@ -1,5 +1,7 @@
 FROM node:lts-alpine
 
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 COPY package*.json ./
@@ -15,12 +17,4 @@ RUN mkdir -p logs
 
 EXPOSE 3001
 
-RUN echo '#!/bin/sh\n\
-echo "Waiting for database..."\n\
-sleep 10\n\
-echo "Running database migrations..."\n\
-npx prisma migrate deploy\n\
-echo "Starting server..."\n\
-npm start' > /app/start.sh && chmod +x /app/start.sh
-
-CMD ["/app/start.sh"]
+CMD ["sh", "-c", "sleep 10 && npx prisma migrate deploy && npm start"]
