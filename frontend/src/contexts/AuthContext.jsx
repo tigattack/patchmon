@@ -17,6 +17,11 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [permissionsLoading, setPermissionsLoading] = useState(false)
   const [needsFirstTimeSetup, setNeedsFirstTimeSetup] = useState(false)
+  
+  // Debug: Log when needsFirstTimeSetup changes
+  useEffect(() => {
+    console.log('needsFirstTimeSetup changed to:', needsFirstTimeSetup)
+  }, [needsFirstTimeSetup])
   const [checkingSetup, setCheckingSetup] = useState(true)
 
   // Initialize auth state from localStorage
@@ -233,6 +238,7 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const data = await response.json()
         console.log('Admin check response:', data) // Debug log
+        console.log('hasAdminUsers:', data.hasAdminUsers, 'Setting needsFirstTimeSetup to:', !data.hasAdminUsers)
         setNeedsFirstTimeSetup(!data.hasAdminUsers)
       } else {
         console.log('Admin check failed:', response.status, response.statusText) // Debug log
