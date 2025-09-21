@@ -22,9 +22,10 @@ import FirstTimeAdminSetup from './components/FirstTimeAdminSetup'
 
 function AppRoutes() {
   const { needsFirstTimeSetup, checkingSetup, isAuthenticated } = useAuth()
+  const isAuth = isAuthenticated() // Call the function to get boolean value
 
   // Debug logging
-  console.log('AppRoutes state:', { needsFirstTimeSetup, checkingSetup, isAuthenticated })
+  console.log('AppRoutes state:', { needsFirstTimeSetup, checkingSetup, isAuthenticated: isAuth })
 
   // Show loading while checking if setup is needed
   if (checkingSetup) {
@@ -40,7 +41,7 @@ function AppRoutes() {
   }
 
   // Show first-time setup if no admin users exist
-  if (needsFirstTimeSetup && !isAuthenticated) {
+  if (needsFirstTimeSetup && !isAuth) {
     console.log('Showing FirstTimeAdminSetup component...')
     return <FirstTimeAdminSetup />
   }
