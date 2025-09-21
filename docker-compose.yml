@@ -1,0 +1,75 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:17-alpine3.22
+    container_name: patchmon-database
+    environment:
+      POSTGRES_DB: patchmon_db
+      POSTGRES_USER: patchmon_user
+      POSTGRES_PASSWORD: p@tchm0n_p@55
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - patchmon-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U patchmon_user -d patchmon_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: patchmon-backend
+    environment:
+      DATABASE_URL: postgresql://patchmon_user:p@tchm0n_p@55@database:5432/patchmon_db
+      PORT: 3001
+      NODE_ENV: production
+      API_VERSION: v1
+      CORS_ORIGIN: http://localhost:3000
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX: 100
+      LOG_LEVEL: info
+      ENABLE_LOGGING: true
+      ENABLE_HSTS: true
+      TRUST_PROXY: true
+    ports:
+      - "3001:3001"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - patchmon-network
+    restart: unless-stopped
+    volumes:
+      - backend_logs:/app/logs
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: patchmon-frontend
+    environment:
+      PORT: 3000
+      CORS_ORIGIN: http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - patchmon-network
+    restart: unless-stopped
+
+networks:
+  patchmon-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  backend_logs:
