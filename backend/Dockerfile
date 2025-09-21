@@ -4,12 +4,15 @@ RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY backend/package*.json ./
 
 RUN npm install --only=production
 RUN npm install -g prisma
 
-COPY . .
+COPY backend/ .
+
+# Copy agents folder from project root
+COPY agents/ ./agents
 
 RUN npx prisma generate
 
@@ -17,4 +20,4 @@ RUN mkdir -p logs
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "sleep 10 && npx prisma migrate deploy && npm start"]
+CMD ["sh", "-c", "sleep 10 && npx prisma migrate deploy && node populate-agent-version.js && npm start"]
