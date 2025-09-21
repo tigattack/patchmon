@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Lock, User, AlertCircle, Smartphone, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Lock, User, AlertCircle, Smartphone, ArrowLeft, Mail } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { authAPI } from '../utils/api'
 
 const Login = () => {
+  const [isSignupMode, setIsSignupMode] = useState(false)
   const [formData, setFormData] = useState({
     username: '',
+    email: '',
     password: ''
   })
   const [tfaData, setTfaData] = useState({
@@ -44,6 +46,36 @@ const Login = () => {
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSignupSubmit = async (e) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const response = await authAPI.signup(formData.username, formData.email, formData.password)
+      
+      if (response.data && response.data.token) {
+        // Store token and user data
+        localStorage.setItem('token', response.data.token)
+        localStorage.setItem('user', JSON.stringify(response.data.user))
+        
+        // Redirect to dashboard
+        navigate('/')
+      } else {
+        setError('Signup failed - invalid response')
+      }
+    } catch (err) {
+      console.error('Signup error:', err)
+      const errorMessage = err.response?.data?.error || 
+                           (err.response?.data?.errors && err.response.data.errors.length > 0 
+                            ? err.response.data.errors.map(e => e.msg).join(', ')
+                            : err.message || 'Signup failed')
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -102,6 +134,16 @@ const Login = () => {
     setError('')
   }
 
+  const toggleMode = () => {
+    setIsSignupMode(!isSignupMode)
+    setFormData({
+      username: '',
+      email: '',
+      password: ''
+    })
+    setError('')
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-secondary-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -110,7 +152,7 @@ const Login = () => {
             <Lock className="h-6 w-6 text-primary-600" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-secondary-900">
-            Sign in to PatchMon
+            {isSignupMode ? 'Create PatchMon Account' : 'Sign in to PatchMon'}
           </h2>
           <p className="mt-2 text-center text-sm text-secondary-600">
             Monitor and manage your Linux package updates
@@ -118,11 +160,11 @@ const Login = () => {
         </div>
 
         {!requiresTfa ? (
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <form className="mt-8 space-y-6" onSubmit={isSignupMode ? handleSignupSubmit : handleSubmit}>
           <div className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-secondary-700">
-                Username or Email
+                {isSignupMode ? 'Username' : 'Username or Email'}
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -136,10 +178,33 @@ const Login = () => {
                   value={formData.username}
                   onChange={handleInputChange}
                   className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-2 border border-secondary-300 placeholder-secondary-500 text-secondary-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                  placeholder="Enter your username or email"
+                  placeholder={isSignupMode ? "Enter your username" : "Enter your username or email"}
                 />
               </div>
             </div>
+
+            {isSignupMode && (
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-secondary-700">
+                  Email
+                </label>
+                <div className="mt-1 relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-secondary-400" />
+                  </div>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-2 border border-secondary-300 placeholder-secondary-500 text-secondary-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                    placeholder="Enter your email"
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-secondary-700">
@@ -196,17 +261,24 @@ const Login = () => {
               {isLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Signing in...
+                  {isSignupMode ? 'Creating account...' : 'Signing in...'}
                 </div>
               ) : (
-                'Sign in'
+                isSignupMode ? 'Create Account' : 'Sign in'
               )}
             </button>
           </div>
 
           <div className="text-center">
             <p className="text-sm text-secondary-600">
-              Need help? Contact your system administrator.
+              {isSignupMode ? 'Already have an account?' : "Don't have an account?"}{' '}
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="font-medium text-primary-600 hover:text-primary-500 focus:outline-none focus:underline"
+              >
+                {isSignupMode ? 'Sign in' : 'Sign up'}
+              </button>
             </p>
           </div>
         </form>
