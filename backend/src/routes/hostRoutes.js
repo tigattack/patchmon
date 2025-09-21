@@ -936,14 +936,14 @@ router.patch('/agent/versions/:versionId/current', authenticateToken, requireMan
 
     // First, unset all current versions
     await prisma.agent_versions.updateMany({
-      where: { isCurrent: true },
-      data: { isCurrent: false }
+      where: { is_current: true },
+      data: { is_current: false, updated_at: new Date() }
     });
 
     // Set the specified version as current
     const agentVersion = await prisma.agent_versions.update({
       where: { id: versionId },
-      data: { isCurrent: true }
+      data: { is_current: true, updated_at: new Date() }
     });
 
     res.json(agentVersion);
@@ -960,14 +960,14 @@ router.patch('/agent/versions/:versionId/default', authenticateToken, requireMan
 
     // First, unset all default versions
     await prisma.agent_versions.updateMany({
-      where: { isDefault: true },
-      data: { isDefault: false }
+      where: { is_default: true },
+      data: { is_default: false, updated_at: new Date() }
     });
 
     // Set the specified version as default
     const agentVersion = await prisma.agent_versions.update({
       where: { id: versionId },
-      data: { isDefault: true }
+      data: { is_default: true, updated_at: new Date() }
     });
 
     res.json(agentVersion);
@@ -1030,7 +1030,7 @@ router.patch('/:hostId/friendly-name', authenticateToken, requireManageHosts, [
     // Check if friendly name is already taken by another host
     const existingHost = await prisma.hosts.findFirst({
       where: {
-        friendlyName: friendlyName,
+        friendly_name: friendlyName,
         id: { not: hostId }
       }
     });
@@ -1042,23 +1042,23 @@ router.patch('/:hostId/friendly-name', authenticateToken, requireManageHosts, [
     // Update the friendly name
     const updatedHost = await prisma.hosts.update({
       where: { id: hostId },
-      data: { friendlyName },
+      data: { friendly_name: friendlyName },
       select: {
         id: true,
-        friendlyName: true,
+        friendly_name: true,
         hostname: true,
         ip: true,
-        osType: true,
-        osVersion: true,
+        os_type: true,
+        os_version: true,
         architecture: true,
-        lastUpdate: true,
+        last_update: true,
         status: true,
-        hostGroupId: true,
-        agentVersion: true,
-        autoUpdate: true,
-        createdAt: true,
-        updatedAt: true,
-        hostGroup: {
+        host_group_id: true,
+        agent_version: true,
+        auto_update: true,
+        created_at: true,
+        updated_at: true,
+        host_groups: {
           select: {
             id: true,
             name: true,

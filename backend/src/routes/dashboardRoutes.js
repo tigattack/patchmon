@@ -162,16 +162,16 @@ router.get('/hosts', authenticateToken, requireViewHosts, async (req, res) => {
       // Show all hosts regardless of status
       select: {
         id: true,
-        friendlyName: true,
+        friendly_name: true,
         hostname: true,
         ip: true,
-        osType: true,
-        osVersion: true,
-        lastUpdate: true,
+        os_type: true,
+        os_version: true,
+        last_update: true,
         status: true,
-        agentVersion: true,
-        autoUpdate: true,
-        hostGroup: {
+        agent_version: true,
+        auto_update: true,
+        host_groups: {
           select: {
             id: true,
             name: true,
@@ -180,15 +180,15 @@ router.get('/hosts', authenticateToken, requireViewHosts, async (req, res) => {
         },
         _count: {
           select: {
-            hostPackages: {
+            host_packages: {
               where: {
-                needsUpdate: true
+                needs_update: true
               }
             }
           }
         }
       },
-      orderBy: { lastUpdate: 'desc' }
+      orderBy: { last_update: 'desc' }
     });
 
     // Get update counts for each host separately
@@ -196,15 +196,15 @@ router.get('/hosts', authenticateToken, requireViewHosts, async (req, res) => {
       hosts.map(async (host) => {
         const updatesCount = await prisma.host_packages.count({
           where: {
-            hostId: host.id,
-            needsUpdate: true
+            host_id: host.id,
+            needs_update: true
           }
         });
 
         // Get total packages count for this host
         const totalPackagesCount = await prisma.host_packages.count({
           where: {
-            hostId: host.id
+            host_id: host.id
           }
         });
 
@@ -244,9 +244,9 @@ router.get('/packages', authenticateToken, requireViewPackages, async (req, res)
   try {
     const packages = await prisma.packages.findMany({
       where: {
-        hostPackages: {
+        host_packages: {
           some: {
-            needsUpdate: true
+            needs_update: true
           }
         }
       },
@@ -255,18 +255,18 @@ router.get('/packages', authenticateToken, requireViewPackages, async (req, res)
         name: true,
         description: true,
         category: true,
-        latestVersion: true,
-        hostPackages: {
-          where: { needsUpdate: true },
+        latest_version: true,
+        host_packages: {
+          where: { needs_update: true },
           select: {
-            currentVersion: true,
-            availableVersion: true,
-            isSecurityUpdate: true,
-            host: {
+            current_version: true,
+            available_version: true,
+            is_security_update: true,
+            hosts: {
               select: {
                 id: true,
-                friendlyName: true,
-                osType: true
+                friendly_name: true,
+                os_type: true
               }
             }
           }
@@ -284,14 +284,14 @@ router.get('/packages', authenticateToken, requireViewPackages, async (req, res)
       category: pkg.category,
       latestVersion: pkg.latest_version,
       affectedHostsCount: pkg.host_packages.length,
-      isSecurityUpdate: pkg.host_packages.some(hp => hp.isSecurityUpdate),
+      isSecurityUpdate: pkg.host_packages.some(hp => hp.is_security_update),
       affectedHosts: pkg.host_packages.map(hp => ({
-        hostId: hp.host.id,
-        friendlyName: hp.host.friendlyName,
-        osType: hp.host.osType,
-        currentVersion: hp.currentVersion,
-        availableVersion: hp.availableVersion,
-        isSecurityUpdate: hp.isSecurityUpdate
+        hostId: hp.hosts.id,
+        friendlyName: hp.hosts.friendly_name,
+        osType: hp.hosts.os_type,
+        currentVersion: hp.current_version,
+        availableVersion: hp.available_version,
+        isSecurityUpdate: hp.is_security_update
       }))
     }));
 
@@ -310,22 +310,22 @@ router.get('/hosts/:hostId', authenticateToken, requireViewHosts, async (req, re
     const host = await prisma.hosts.findUnique({
       where: { id: hostId },
       include: {
-        hostGroup: {
+        host_groups: {
           select: {
             id: true,
             name: true,
             color: true
           }
         },
-        hostPackages: {
+        host_packages: {
           include: {
-            package: true
+            packages: true
           },
           orderBy: {
-            needsUpdate: 'desc'
+            needs_update: 'desc'
           }
         },
-        updateHistory: {
+        update_history: {
           orderBy: {
             timestamp: 'desc'
           },
@@ -342,8 +342,8 @@ router.get('/hosts/:hostId', authenticateToken, requireViewHosts, async (req, re
       ...host,
       stats: {
         totalPackages: host.host_packages.length,
-        outdatedPackages: host.host_packages.filter(hp => hp.needsUpdate).length,
-        securityUpdates: host.host_packages.filter(hp => hp.needsUpdate && hp.isSecurityUpdate).length
+        outdatedPackages: host.host_packages.filter(hp => hp.needs_update).length,
+        securityUpdates: host.host_packages.filter(hp => hp.needs_update && hp.is_security_update).length
       }
     };
 

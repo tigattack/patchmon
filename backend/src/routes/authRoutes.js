@@ -28,13 +28,13 @@ router.get('/admin/users', authenticateToken, requireViewUsers, async (req, res)
         username: true,
         email: true,
         role: true,
-        isActive: true,
-        lastLogin: true,
-        createdAt: true,
-        updatedAt: true
+        is_active: true,
+        last_login: true,
+        created_at: true,
+        updated_at: true
       },
       orderBy: {
-        createdAt: 'desc'
+        created_at: 'desc'
       }
     })
 
@@ -91,7 +91,7 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
       data: {
         username,
         email,
-        passwordHash,
+        password_hash: passwordHash,
         role
       },
       select: {
@@ -99,8 +99,8 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
         username: true,
         email: true,
         role: true,
-        isActive: true,
-        createdAt: true
+        is_active: true,
+        created_at: true
       }
     });
 
@@ -144,7 +144,7 @@ router.put('/admin/users/:userId', authenticateToken, requireManageUsers, [
     if (username) updateData.username = username;
     if (email) updateData.email = email;
     if (role) updateData.role = role;
-    if (typeof isActive === 'boolean') updateData.isActive = isActive;
+    if (typeof isActive === 'boolean') updateData.is_active = isActive;
 
     // Check if user exists
     const existingUser = await prisma.users.findUnique({
@@ -181,7 +181,7 @@ router.put('/admin/users/:userId', authenticateToken, requireManageUsers, [
       const adminCount = await prisma.users.count({
         where: { 
           role: 'admin',
-          isActive: true
+          is_active: true
         }
       });
 
@@ -199,10 +199,10 @@ router.put('/admin/users/:userId', authenticateToken, requireManageUsers, [
         username: true,
         email: true,
         role: true,
-        isActive: true,
-        lastLogin: true,
-        createdAt: true,
-        updatedAt: true
+        is_active: true,
+        last_login: true,
+        created_at: true,
+        updated_at: true
       }
     });
 
@@ -240,7 +240,7 @@ router.delete('/admin/users/:userId', authenticateToken, requireManageUsers, asy
       const adminCount = await prisma.users.count({
         where: { 
           role: 'admin',
-          isActive: true
+          is_active: true
         }
       });
 
@@ -304,7 +304,7 @@ router.post('/admin/users/:userId/reset-password', authenticateToken, requireMan
     // Update user password
     await prisma.users.update({
       where: { id: userId },
-      data: { passwordHash }
+      data: { password_hash: passwordHash }
     });
 
     // Log the password reset action (you might want to add an audit log table)
@@ -519,7 +519,7 @@ router.post('/verify-tfa', [
     const speakeasy = require('speakeasy');
     
     // Check if it's a backup code
-    const backupCodes = user.tfaBackupCodes ? JSON.parse(user.tfaBackupCodes) : [];
+    const backupCodes = user.tfa_backup_codes ? JSON.parse(user.tfa_backup_codes) : [];
     const isBackupCode = backupCodes.includes(token);
 
     let verified = false;
@@ -527,17 +527,17 @@ router.post('/verify-tfa', [
     if (isBackupCode) {
       // Remove the used backup code
       const updatedBackupCodes = backupCodes.filter(code => code !== token);
-      await prisma.user.update({
+      await prisma.users.update({
         where: { id: user.id },
         data: {
-          tfaBackupCodes: JSON.stringify(updatedBackupCodes)
+          tfa_backup_codes: JSON.stringify(updatedBackupCodes)
         }
       });
       verified = true;
     } else {
       // Verify TOTP token
       verified = speakeasy.totp.verify({
-        secret: user.tfaSecret,
+        secret: user.tfa_secret,
         encoding: 'base32',
         token: token,
         window: 2
@@ -549,9 +549,9 @@ router.post('/verify-tfa', [
     }
 
     // Update last login
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: user.id },
-      data: { lastLogin: new Date() }
+      data: { last_login: new Date() }
     });
 
     // Generate token
@@ -604,7 +604,7 @@ router.put('/profile', authenticateToken, [
 
     // Check if username/email already exists (excluding current user)
     if (username || email) {
-      const existingUser = await prisma.user.findFirst({
+      const existingUser = await prisma.users.findFirst({
         where: {
           AND: [
             { id: { not: req.user.id } },
@@ -623,7 +623,7 @@ router.put('/profile', authenticateToken, [
       }
     }
 
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma.users.update({
       where: { id: req.user.id },
       data: updateData,
       select: {
@@ -631,9 +631,9 @@ router.put('/profile', authenticateToken, [
         username: true,
         email: true,
         role: true,
-        isActive: true,
-        lastLogin: true,
-        updatedAt: true
+        is_active: true,
+        last_login: true,
+        updated_at: true
       }
     });
 
@@ -661,12 +661,12 @@ router.put('/change-password', authenticateToken, [
     const { currentPassword, newPassword } = req.body;
 
     // Get user with password hash
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: req.user.id }
     });
 
     // Verify current password
-    const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
@@ -675,9 +675,9 @@ router.put('/change-password', authenticateToken, [
     const newPasswordHash = await bcrypt.hash(newPassword, 12);
 
     // Update password
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: req.user.id },
-      data: { passwordHash: newPasswordHash }
+      data: { password_hash: newPasswordHash }
     });
 
     res.json({

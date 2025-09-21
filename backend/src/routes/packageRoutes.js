@@ -145,7 +145,7 @@ router.get('/:packageId', async (req, res) => {
     const packageData = await prisma.packages.findUnique({
       where: { id: packageId },
       include: {
-        hostPackages: {
+          host_packages: {
           include: {
             host: {
               select: {
@@ -171,21 +171,21 @@ router.get('/:packageId', async (req, res) => {
 
     // Calculate statistics
     const stats = {
-      totalInstalls: packageData.hostPackages.length,
-      updatesNeeded: packageData.hostPackages.filter(hp => hp.needsUpdate).length,
-      securityUpdates: packageData.hostPackages.filter(hp => hp.needsUpdate && hp.isSecurityUpdate).length,
-      upToDate: packageData.hostPackages.filter(hp => !hp.needsUpdate).length
+      totalInstalls: packageData.host_packages.length,
+      updatesNeeded: packageData.host_packages.filter(hp => hp.needsUpdate).length,
+      securityUpdates: packageData.host_packages.filter(hp => hp.needsUpdate && hp.isSecurityUpdate).length,
+      upToDate: packageData.host_packages.filter(hp => !hp.needsUpdate).length
     };
 
     // Group by version
-    const versionDistribution = packageData.hostPackages.reduce((acc, hp) => {
+    const versionDistribution = packageData.host_packages.reduce((acc, hp) => {
       const version = hp.currentVersion;
       acc[version] = (acc[version] || 0) + 1;
       return acc;
     }, {});
 
     // Group by OS type
-    const osDistribution = packageData.hostPackages.reduce((acc, hp) => {
+    const osDistribution = packageData.host_packages.reduce((acc, hp) => {
       const osType = hp.host.osType;
       acc[osType] = (acc[osType] || 0) + 1;
       return acc;
