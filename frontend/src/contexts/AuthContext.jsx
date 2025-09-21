@@ -17,10 +17,6 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [permissionsLoading, setPermissionsLoading] = useState(false)
   const [needsFirstTimeSetup, setNeedsFirstTimeSetup] = useState(false)
-  
-  // TEMPORARY DEBUG: Force admin setup for testing
-  // Remove this line after debugging
-  setNeedsFirstTimeSetup(true)
   const [checkingSetup, setCheckingSetup] = useState(true)
 
   // Initialize auth state from localStorage
@@ -236,7 +232,9 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const data = await response.json()
         console.log('Admin check response:', data) // Debug log
-        setNeedsFirstTimeSetup(!data.hasAdminUsers)
+        // TEMPORARY DEBUG: Force admin setup for testing
+        // setNeedsFirstTimeSetup(!data.hasAdminUsers)
+        setNeedsFirstTimeSetup(true) // Force setup for testing
       } else {
         console.log('Admin check failed:', response.status, response.statusText) // Debug log
         // If endpoint doesn't exist or fails, assume setup is needed
