@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 
 const AuthContext = createContext()
 
@@ -220,8 +220,9 @@ export const AuthProvider = ({ children }) => {
   const canManageSettings = () => hasPermission('can_manage_settings')
 
   // Check if any admin users exist (for first-time setup)
-  const checkAdminUsersExist = async () => {
+  const checkAdminUsersExist = useCallback(async () => {
     try {
+      console.log('Making API call to check admin users...')
       const response = await fetch('/api/v1/auth/check-admin-users', {
         method: 'GET',
         headers: {
@@ -245,16 +246,19 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setCheckingSetup(false)
     }
-  }
+  }, [])
 
   // Check for admin users on initial load
   useEffect(() => {
+    console.log('AuthContext useEffect triggered:', { token: !!token, user: !!user })
     if (!token && !user) {
+      console.log('Calling checkAdminUsersExist...')
       checkAdminUsersExist()
     } else {
+      console.log('Skipping admin check - user already authenticated')
       setCheckingSetup(false)
     }
-  }, [token, user])
+  }, [token, user, checkAdminUsersExist])
 
   const value = {
     user,
