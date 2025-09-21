@@ -6,11 +6,11 @@ async function checkAgentVersion() {
   try {
     // Check current agent version in database
     const agentVersion = await prisma.agentVersion.findFirst({
-      where: { version: '1.2.5' }
+      where: { version: '1.2.6' }
     });
     
     if (agentVersion) {
-      console.log('✅ Agent version 1.2.5 found in database');
+      console.log('✅ Agent version 1.2.6 found in database');
       console.log('Version:', agentVersion.version);
       console.log('Is Default:', agentVersion.isDefault);
       console.log('Script Content Length:', agentVersion.scriptContent?.length || 0);
@@ -18,10 +18,10 @@ async function checkAgentVersion() {
       console.log('Updated At:', agentVersion.updatedAt);
       
       // Check if script content contains the current version
-      if (agentVersion.scriptContent && agentVersion.scriptContent.includes('AGENT_VERSION="1.2.5"')) {
-        console.log('✅ Script content contains correct version 1.2.5');
+      if (agentVersion.scriptContent && agentVersion.scriptContent.includes('AGENT_VERSION="1.2.6"')) {
+        console.log('✅ Script content contains correct version 1.2.6');
       } else {
-        console.log('❌ Script content does not contain version 1.2.5');
+        console.log('❌ Script content does not contain version 1.2.6');
       }
       
       // Check if script content contains system info functions
@@ -44,7 +44,7 @@ async function checkAgentVersion() {
       }
       
     } else {
-      console.log('❌ Agent version 1.2.5 not found in database');
+      console.log('❌ Agent version 1.2.6 not found in database');
     }
     
     // List all agent versions

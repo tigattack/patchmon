@@ -735,8 +735,8 @@ const Hosts = () => {
   const { data: hosts, isLoading, error, refetch } = useQuery({
     queryKey: ['hosts'],
     queryFn: () => dashboardAPI.getHosts().then(res => res.data),
-      refetchInterval: 60000,
-      staleTime: 30000,
+      refetchInterval: 300000, // Refresh every 5 minutes instead of 1 minute
+      staleTime: 120000, // Consider data stale after 2 minutes
   })
 
   const { data: hostGroups } = useQuery({

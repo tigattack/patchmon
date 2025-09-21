@@ -92,8 +92,8 @@ const Dashboard = () => {
   const { data: stats, isLoading, error, refetch } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: () => dashboardAPI.getStats().then(res => res.data),
-      refetchInterval: 60000, // Refresh every minute
-      staleTime: 30000, // Consider data stale after 30 seconds
+      refetchInterval: 300000, // Refresh every 5 minutes instead of 1 minute
+      staleTime: 120000, // Consider data stale after 2 minutes
   })
 
   // Fetch settings to get the agent update interval

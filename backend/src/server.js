@@ -59,11 +59,18 @@ if (process.env.TRUST_PROXY) {
 }
 app.disable('x-powered-by');
 
-// Rate limiting
+// Rate limiting with monitoring
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_MAX) || 100,
-  message: 'Too many requests from this IP, please try again later.',
+  message: {
+    error: 'Too many requests from this IP, please try again later.',
+    retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000) / 1000)
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true, // Don't count successful requests
+  skipFailedRequests: false, // Count failed requests
 });
 
 // Middleware
@@ -118,15 +125,30 @@ app.get('/health', (req, res) => {
 // API routes
 const apiVersion = process.env.API_VERSION || 'v1';
 
-// Per-route rate limits
+// Per-route rate limits with monitoring
 const authLimiter = rateLimit({
   windowMs: parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 10 * 60 * 1000,
-  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 20
+  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 20,
+  message: {
+    error: 'Too many authentication requests, please try again later.',
+    retryAfter: Math.ceil((parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 10 * 60 * 1000) / 1000)
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
 });
 const agentLimiter = rateLimit({
   windowMs: parseInt(process.env.AGENT_RATE_LIMIT_WINDOW_MS) || 60 * 1000,
-  max: parseInt(process.env.AGENT_RATE_LIMIT_MAX) || 120
+  max: parseInt(process.env.AGENT_RATE_LIMIT_MAX) || 120,
+  message: {
+    error: 'Too many agent requests, please try again later.',
+    retryAfter: Math.ceil((parseInt(process.env.AGENT_RATE_LIMIT_WINDOW_MS) || 60 * 1000) / 1000)
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
 });
+
 
 app.use(`/api/${apiVersion}/auth`, authLimiter, authRoutes);
 app.use(`/api/${apiVersion}/hosts`, agentLimiter, hostRoutes);

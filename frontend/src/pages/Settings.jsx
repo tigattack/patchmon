@@ -471,12 +471,12 @@ const Settings = () => {
           <div className="mt-4 p-4 bg-secondary-50 dark:bg-secondary-700 rounded-md">
             <h4 className="text-sm font-medium text-secondary-900 dark:text-white mb-2">Server URL</h4>
             <p className="text-sm text-secondary-600 dark:text-secondary-300 font-mono">
-              {formData.serverProtocol}://{formData.serverHost}:{formData.serverPort}
+              {formData.serverProtocol}://{formData.serverHost}{formData.serverProtocol === 'https' ? ':443' : `:${formData.serverPort}`}
             </p>
             <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
               This URL will be used in installation scripts and agent communications.
             </p>
-              </div>
+          </div>
 
               {/* Update Interval */}
               <div>
