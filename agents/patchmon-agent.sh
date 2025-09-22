@@ -6,7 +6,7 @@
 # Configuration
 PATCHMON_SERVER="${PATCHMON_SERVER:-http://localhost:3001}"
 API_VERSION="v1"
-AGENT_VERSION="1.2.7"
+AGENT_VERSION="1.2.6"
 CONFIG_FILE="/etc/patchmon/agent.conf"
 CREDENTIALS_FILE="/etc/patchmon/credentials"
 LOG_FILE="/var/log/patchmon-agent.log"

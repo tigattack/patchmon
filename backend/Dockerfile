@@ -19,4 +19,4 @@ RUN mkdir -p logs
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "sleep 10 && npx prisma migrate deploy && node populate-agent-version.js && npm start"]
+CMD ["sh", "-c", "sleep 10 && npx prisma migrate deploy && npm start"]
