@@ -375,11 +375,11 @@ async function startServer() {
       logger.info('✅ Database connection successful');
     }
 
-    // Initialise settings from environment variables on startup
+    // Initialise settings on startup
     try {
       await initSettings();
       if (process.env.ENABLE_LOGGING === 'true') {
-        logger.info('✅ Settings initialised from environment variables');
+        logger.info('✅ Settings initialised');
       }
     } catch (initError) {
       if (process.env.ENABLE_LOGGING === 'true') {
