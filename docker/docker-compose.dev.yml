@@ -1,0 +1,56 @@
+services:
+  database:
+    image: postgres:17-alpine3.22
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: patchmon_db
+      POSTGRES_USER: patchmon_user
+      POSTGRES_PASSWORD: INSECURE_REPLACE_ME_PLEASE_INSECURE
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U patchmon_user -d patchmon_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: info
+      DATABASE_URL: postgresql://patchmon_user:INSECURE_REPLACE_ME_PLEASE_INSECURE@database:5432/patchmon_db
+      PM_DB_CONN_MAX_ATTEMPTS: 30
+      PM_DB_CONN_WAIT_INTERVAL: 2
+      SERVER_PROTOCOL: http
+      SERVER_HOST: localhost
+      SERVER_PORT: 3000
+      PORT: 3001
+      API_VERSION: v1
+      CORS_ORIGIN: http://localhost:3000
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX: 100
+      ENABLE_HSTS: true
+      TRUST_PROXY: true
+    depends_on:
+      database:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    restart: unless-stopped
+    environment:
+      BACKEND_HOST: backend
+      BACKEND_PORT: 3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
