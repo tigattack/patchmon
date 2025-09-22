@@ -23,6 +23,135 @@ const updateScheduler = require('./services/updateScheduler');
 // Initialize Prisma client with optimized connection pooling for multiple instances
 const prisma = createPrismaClient();
 
+// Simple version comparison function for semantic versioning
+function compareVersions(version1, version2) {
+  const v1Parts = version1.split('.').map(Number);
+  const v2Parts = version2.split('.').map(Number);
+  
+  // Ensure both arrays have the same length
+  const maxLength = Math.max(v1Parts.length, v2Parts.length);
+  while (v1Parts.length < maxLength) v1Parts.push(0);
+  while (v2Parts.length < maxLength) v2Parts.push(0);
+  
+  for (let i = 0; i < maxLength; i++) {
+    if (v1Parts[i] > v2Parts[i]) return true;
+    if (v1Parts[i] < v2Parts[i]) return false;
+  }
+  
+  return false; // versions are equal
+}
+
+// Function to check and import agent version on startup
+async function checkAndImportAgentVersion() {
+  console.log('🔍 Starting agent version auto-import check...');
+  
+  // Skip if auto-import is disabled
+  if (process.env.AUTO_IMPORT_AGENT_VERSION === 'false') {
+    console.log('❌ Auto-import of agent version is disabled');
+    if (process.env.ENABLE_LOGGING === 'true') {
+      logger.info('Auto-import of agent version is disabled');
+    }
+    return;
+  }
+  
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const crypto = require('crypto');
+    
+    // Path to the agent script file
+    const agentScriptPath = path.join(__dirname, '../../agents/patchmon-agent.sh');
+    console.log('📁 Agent script path:', agentScriptPath);
+    
+    // Check if file exists
+    if (!fs.existsSync(agentScriptPath)) {
+      console.log('❌ Agent script file not found, skipping version check');
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.warn('Agent script file not found, skipping version check');
+      }
+      return;
+    }
+    console.log('✅ Agent script file found');
+    
+    // Read the file content
+    const scriptContent = fs.readFileSync(agentScriptPath, 'utf8');
+    
+    // Extract version from script content
+    const versionMatch = scriptContent.match(/AGENT_VERSION="([^"]+)"/);
+    if (!versionMatch) {
+      console.log('❌ Could not extract version from agent script, skipping version check');
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.warn('Could not extract version from agent script, skipping version check');
+      }
+      return;
+    }
+    
+    const localVersion = versionMatch[1];
+    console.log('📋 Local version:', localVersion);
+    
+    // Check if this version already exists in database
+    const existingVersion = await prisma.agent_versions.findUnique({
+      where: { version: localVersion }
+    });
+    
+    if (existingVersion) {
+      console.log(`✅ Agent version ${localVersion} already exists in database`);
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.info(`Agent version ${localVersion} already exists in database`);
+      }
+      return;
+    }
+    console.log(`🆕 Agent version ${localVersion} not found in database`);
+    
+    // Check if there are any existing versions to compare with
+    const allVersions = await prisma.agent_versions.findMany({
+      select: { version: true },
+      orderBy: { created_at: 'desc' }
+    });
+    
+    if (allVersions.length > 0) {
+      console.log(`📊 Found ${allVersions.length} existing versions in database`);
+      console.log(`📊 Latest version: ${allVersions[0].version}`);
+      
+      // Simple version comparison (assuming semantic versioning)
+      const isNewer = compareVersions(localVersion, allVersions[0].version);
+      console.log(`🔄 Version comparison: ${localVersion} > ${allVersions[0].version} = ${isNewer}`);
+      
+      if (!isNewer) {
+        console.log(`❌ Agent version ${localVersion} is not newer than existing versions, skipping import`);
+        if (process.env.ENABLE_LOGGING === 'true') {
+          logger.info(`Agent version ${localVersion} is not newer than existing versions, skipping import`);
+        }
+        return;
+      }
+    }
+    
+    // Version doesn't exist, create it
+    const agentVersion = await prisma.agent_versions.create({
+      data: {
+        id: crypto.randomUUID(),
+        version: localVersion,
+        release_notes: `Auto-imported on startup (${new Date().toISOString()})`,
+        script_content: scriptContent,
+        is_default: false,
+        is_current: false,
+        updated_at: new Date()
+      }
+    });
+    
+    console.log(`🎉 Successfully auto-imported new agent version ${localVersion} on startup`);
+    if (process.env.ENABLE_LOGGING === 'true') {
+      logger.info(`✅ Auto-imported new agent version ${localVersion} on startup`);
+    }
+    
+  } catch (error) {
+    console.error('❌ Failed to check/import agent version on startup:', error.message);
+    if (process.env.ENABLE_LOGGING === 'true') {
+      logger.error('Failed to check/import agent version on startup:', error.message);
+    }
+  }
+}
+
 // Initialize logger - only if logging is enabled
 const logger = process.env.ENABLE_LOGGING === 'true' ? winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -210,6 +339,9 @@ async function startServer() {
     if (process.env.ENABLE_LOGGING === 'true') {
       logger.info('✅ Database connection successful');
     }
+    
+    // Check and import agent version on startup
+    await checkAndImportAgentVersion();
     
     app.listen(PORT, () => {
       if (process.env.ENABLE_LOGGING === 'true') {
