@@ -937,7 +937,7 @@ router.get('/install', async (req, res) => {
     const fs = require('fs');
     const path = require('path');
 
-    const scriptPath = path.join(__dirname, '../../agents/patchmon_install.sh');
+    const scriptPath = path.join(__dirname, '../../../agents/patchmon_install.sh');
     
     if (!fs.existsSync(scriptPath)) {
       return res.status(404).json({ error: 'Installation script not found' });
