@@ -19,6 +19,7 @@ const repositoryRoutes = require('./routes/repositoryRoutes');
 const versionRoutes = require('./routes/versionRoutes');
 const tfaRoutes = require('./routes/tfaRoutes');
 const updateScheduler = require('./services/updateScheduler');
+const { initSettings } = require('./services/settingsService');
 
 // Initialize Prisma client with optimized connection pooling for multiple instances
 const prisma = createPrismaClient();
@@ -372,6 +373,19 @@ async function startServer() {
 
     if (process.env.ENABLE_LOGGING === 'true') {
       logger.info('✅ Database connection successful');
+    }
+
+    // Initialise settings from environment variables on startup
+    try {
+      await initSettings();
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.info('✅ Settings initialised from environment variables');
+      }
+    } catch (initError) {
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.error('❌ Failed to initialise settings:', initError.message);
+      }
+      throw initError; // Fail startup if settings can't be initialised
     }
 
     // Check and import agent version on startup
