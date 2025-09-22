@@ -460,24 +460,81 @@ const Settings = () => {
                 <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
                   Agent Update Interval (minutes)
                 </label>
-                <input
-                  type="number"
-                  min="5"
-                  max="1440"
-                  value={formData.updateInterval}
-                  onChange={(e) => {
-                    handleInputChange('updateInterval', parseInt(e.target.value) || 60);
-                  }}
-                  className={`w-full border rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white ${
-                    errors.updateInterval ? 'border-red-300 dark:border-red-500' : 'border-secondary-300 dark:border-secondary-600'
-                  }`}
-                  placeholder="60"
-                />
+
+                {/* Numeric input (concise width) */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="5"
+                    max="1440"
+                    step="5"
+                    value={formData.updateInterval}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (!isNaN(val)) {
+                        handleInputChange('updateInterval', Math.min(1440, Math.max(5, val)));
+                      } else {
+                        handleInputChange('updateInterval', 60);
+                      }
+                    }}
+                    className={`w-28 border rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white ${
+                      errors.updateInterval ? 'border-red-300 dark:border-red-500' : 'border-secondary-300 dark:border-secondary-600'
+                    }`}
+                    placeholder="60"
+                  />
+                </div>
+
+                {/* Quick presets */}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {[15, 30, 60, 120, 360, 720, 1440].map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => handleInputChange('updateInterval', m)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
+                        formData.updateInterval === m
+                          ? 'bg-primary-600 text-white border-primary-600'
+                          : 'bg-white dark:bg-secondary-700 text-secondary-700 dark:text-secondary-200 border-secondary-300 dark:border-secondary-600 hover:bg-secondary-50 dark:hover:bg-secondary-600'
+                      }`}
+                      aria-label={`Set ${m} minutes`}
+                    >
+                      {m % 60 === 0 ? `${m / 60}h` : `${m}m`}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Range slider */}
+                <div className="mt-4">
+                  <input
+                    type="range"
+                    min="5"
+                    max="1440"
+                    step="5"
+                    value={formData.updateInterval}
+                    onChange={(e) => handleInputChange('updateInterval', parseInt(e.target.value))}
+                    className="w-full accent-primary-600"
+                    aria-label="Update interval slider"
+                  />
+                </div>
+
                 {errors.updateInterval && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.updateInterval}</p>
                 )}
-                <p className="mt-1 text-sm text-secondary-500 dark:text-secondary-400">
-                  How often agents should check for updates (5-1440 minutes). This affects new installations.
+
+                {/* Helper text */}
+                <div className="mt-2 text-sm text-secondary-600 dark:text-secondary-300">
+                  <span className="font-medium">Effective cadence:</span>{' '}
+                  {(() => {
+                    const mins = parseInt(formData.updateInterval) || 60;
+                    if (mins < 60) return `${mins} minute${mins === 1 ? '' : 's'}`;
+                    const hrs = Math.floor(mins / 60);
+                    const rem = mins % 60;
+                    return `${hrs} hour${hrs === 1 ? '' : 's'}${rem ? ` ${rem} min` : ''}`;
+                  })()}
+                </div>
+
+                <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
+                  This affects new installations and will update existing ones when they next reach out.
                 </p>
               </div>
 

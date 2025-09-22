@@ -1013,8 +1013,9 @@ update_crontab() {
             # Generate the expected crontab entry
             local expected_crontab=""
             if [[ $update_interval -eq 60 ]]; then
-                # Hourly updates
-                expected_crontab="0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1"
+                # Hourly updates starting at current minute
+                local current_minute=$(date +%M)
+                expected_crontab="$current_minute * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1"
             else
                 # Custom interval updates
                 expected_crontab="*/$update_interval * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1"

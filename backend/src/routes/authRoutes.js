@@ -151,8 +151,13 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
   body('username').isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('first_name').optional().isLength({ min: 1 }).withMessage('First name must be at least 1 character'),
+  body('last_name').optional().isLength({ min: 1 }).withMessage('Last name must be at least 1 character'),
   body('role').optional().custom(async (value) => {
     if (!value) return true; // Optional field
+    // Allow built-in roles even if not in role_permissions table yet
+    const builtInRoles = ['admin', 'user'];
+    if (builtInRoles.includes(value)) return true;
     const rolePermissions = await prisma.role_permissions.findUnique({
       where: { role: value }
     });
@@ -168,7 +173,7 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { username, email, password, role = 'user' } = req.body;
+    const { username, email, password, first_name, last_name, role = 'user' } = req.body;
 
     // Check if user already exists
     const existingUser = await prisma.users.findFirst({
@@ -190,15 +195,21 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
     // Create user
     const user = await prisma.users.create({
       data: {
+        id: uuidv4(),
         username,
         email,
         password_hash: passwordHash,
-        role
+        first_name: first_name || null,
+        last_name: last_name || null,
+        role,
+        updated_at: new Date()
       },
       select: {
         id: true,
         username: true,
         email: true,
+        first_name: true,
+        last_name: true,
         role: true,
         is_active: true,
         created_at: true
@@ -542,6 +553,8 @@ router.post('/login', [
         id: true,
         username: true,
         email: true,
+        first_name: true,
+        last_name: true,
         password_hash: true,
         role: true,
         is_active: true,
@@ -690,6 +703,8 @@ router.post('/verify-tfa', [
         id: user.id,
         username: user.username,
         email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
         role: user.role
       }
     });
@@ -714,7 +729,9 @@ router.get('/profile', authenticateToken, async (req, res) => {
 // Update user profile
 router.put('/profile', authenticateToken, [
   body('username').optional().isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
-  body('email').optional().isEmail().withMessage('Valid email is required')
+  body('email').optional().isEmail().withMessage('Valid email is required'),
+  body('first_name').optional().isLength({ min: 1 }).withMessage('First name must be at least 1 character'),
+  body('last_name').optional().isLength({ min: 1 }).withMessage('Last name must be at least 1 character')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -722,11 +739,13 @@ router.put('/profile', authenticateToken, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { username, email } = req.body;
+    const { username, email, first_name, last_name } = req.body;
     const updateData = {};
 
     if (username) updateData.username = username;
     if (email) updateData.email = email;
+    if (first_name !== undefined) updateData.first_name = first_name || null;
+    if (last_name !== undefined) updateData.last_name = last_name || null;
 
     // Check if username/email already exists (excluding current user)
     if (username || email) {
@@ -756,6 +775,8 @@ router.put('/profile', authenticateToken, [
         id: true,
         username: true,
         email: true,
+        first_name: true,
+        last_name: true,
         role: true,
         is_active: true,
         last_login: true,

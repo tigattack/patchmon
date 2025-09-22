@@ -1,13 +1,13 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
-const { requireManageSettings } = require('../middleware/permissions');
+const { requireManageSettings, requireManageUsers } = require('../middleware/permissions');
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Get all role permissions
-router.get('/roles', authenticateToken, requireManageSettings, async (req, res) => {
+// Get all role permissions (allow users who can manage users to view roles)
+router.get('/roles', authenticateToken, requireManageUsers, async (req, res) => {
   try {
     const permissions = await prisma.role_permissions.findMany({
       orderBy: {

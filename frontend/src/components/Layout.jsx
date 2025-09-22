@@ -79,13 +79,13 @@ const Layout = ({ children }) => {
         { name: 'Reporting', href: '/reporting', icon: BarChart3, comingSoon: true },
       ]
     },
-    {
+    ...(canViewUsers() || canManageUsers() ? [{
       section: 'PatchMon Users',
       items: [
         ...(canViewUsers() ? [{ name: 'Users', href: '/users', icon: Users }] : []),
         ...(canManageSettings() ? [{ name: 'Permissions', href: '/permissions', icon: Shield }] : []),
       ]
-    },
+    }] : []),
     {
       section: 'Settings',
       items: [
@@ -139,31 +139,6 @@ const Layout = ({ children }) => {
     window.location.href = '/hosts?action=add'
   }
 
-  const copyEmailToClipboard = async () => {
-    const email = 'support@patchmon.net'
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(email)
-      } else {
-        // Fallback for non-secure contexts
-        const textArea = document.createElement('textarea')
-        textArea.value = email
-        textArea.style.position = 'fixed'
-        textArea.style.left = '-999999px'
-        textArea.style.top = '-999999px'
-        document.body.appendChild(textArea)
-        textArea.focus()
-        textArea.select()
-        document.execCommand('copy')
-        textArea.remove()
-      }
-      // You could add a toast notification here if you have one
-    } catch (err) {
-      console.error('Failed to copy email:', err)
-      // Fallback: show email in prompt
-      prompt('Copy this email address:', email)
-    }
-  }
 
   // Fetch GitHub stars count
   const fetchGitHubStars = async () => {
@@ -509,7 +484,7 @@ const Layout = ({ children }) => {
                             ? 'text-primary-700 dark:text-white'
                             : 'text-secondary-700 dark:text-secondary-200'
                         }`}>
-                          {user?.username}
+                          {user?.first_name || user?.username}
                         </span>
                         {user?.role === 'admin' && (
                           <span className="inline-flex items-center rounded-full bg-primary-100 px-1.5 py-0.5 text-xs font-medium text-primary-800">
@@ -625,7 +600,6 @@ const Layout = ({ children }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 text-secondary-600 dark:text-secondary-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors shadow-sm group relative"
-                  title="⭐ Star us on GitHub! Click to open repository"
                 >
                   <Github className="h-5 w-5 flex-shrink-0" />
                   {githubStars !== null && (
@@ -634,11 +608,6 @@ const Layout = ({ children }) => {
                       <span className="text-sm font-medium">{githubStars}</span>
                     </div>
                   )}
-                  {/* Tooltip */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                    ⭐ Star us on GitHub!
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-100"></div>
-                  </div>
                 </a>
                 <a
                   href="https://discord.gg/DDKQeW6mnq"
@@ -649,13 +618,13 @@ const Layout = ({ children }) => {
                 >
                   <MessageCircle className="h-5 w-5" />
                 </a>
-                <button
-                  onClick={copyEmailToClipboard}
+                <a
+                  href="mailto:support@patchmon.net"
                   className="flex items-center justify-center w-10 h-10 bg-gray-50 dark:bg-gray-800 text-secondary-600 dark:text-secondary-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors shadow-sm"
-                  title="Copy support@patchmon.net"
+                  title="Email support@patchmon.net"
                 >
                   <Mail className="h-5 w-5" />
-                </button>
+                </a>
                 <a
                   href="https://patchmon.net"
                   target="_blank"

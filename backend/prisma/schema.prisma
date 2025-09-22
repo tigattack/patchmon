@@ -187,6 +187,8 @@ model users {
   username              String                  @unique
   email                 String                  @unique
   password_hash         String
+  first_name            String?
+  last_name             String?
   role                  String                  @default("admin")
   is_active             Boolean                 @default(true)
   last_login            DateTime?

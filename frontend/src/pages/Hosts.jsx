@@ -263,6 +263,11 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
   const serverUrl = settings?.server_url || window.location.origin.replace(':3000', ':3001')
 
   const getSetupCommands = () => {
+    // Get current time for crontab scheduling
+    const now = new Date()
+    const currentMinute = now.getMinutes()
+    const currentHour = now.getHours()
+    
     return {
       oneLine: `curl -sSL ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host?.api_id}" "${host?.api_key}"`,
 
@@ -281,8 +286,8 @@ sudo /usr/local/bin/patchmon-agent.sh test`,
       initialUpdate: `# Send initial package data
 sudo /usr/local/bin/patchmon-agent.sh update`,
 
-      crontab: `# Add to crontab for hourly updates (run as root)
-echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -`,
+      crontab: `# Add to crontab for hourly updates starting at current time (run as root)
+echo "${currentMinute} * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -`,
 
       fullSetup: `#!/bin/bash
 # Complete PatchMon Agent Setup Script
@@ -309,14 +314,14 @@ sudo /usr/local/bin/patchmon-agent.sh test
 echo "📊 Sending initial package data..."
 sudo /usr/local/bin/patchmon-agent.sh update
 
-# Setup crontab
-echo "⏰ Setting up hourly crontab..."
-echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -
+# Setup crontab starting at current time
+echo "⏰ Setting up hourly crontab starting at ${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}..."
+echo "${currentMinute} * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -
 
 echo "✅ PatchMon agent setup complete!"
 echo "   - Agent installed: /usr/local/bin/patchmon-agent.sh"
 echo "   - Config directory: /etc/patchmon/"
-echo "   - Updates: Every hour via crontab"
+echo "   - Updates: Every hour via crontab (starting at ${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')})"
 echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
     }
   }
@@ -1167,9 +1172,13 @@ const Hosts = () => {
         )
       case 'updates':
         return (
-          <div className="text-sm text-secondary-900 dark:text-white">
+          <button
+            onClick={() => navigate(`/packages?host=${host.id}`)}
+            className="text-sm text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 font-medium hover:underline"
+            title="View packages for this host"
+          >
             {host.updatesCount || 0}
-          </div>
+          </button>
         )
       case 'last_update':
         return (

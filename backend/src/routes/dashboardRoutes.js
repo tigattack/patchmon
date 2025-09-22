@@ -5,7 +5,8 @@ const { authenticateToken } = require('../middleware/auth');
 const { 
   requireViewDashboard, 
   requireViewHosts, 
-  requireViewPackages 
+  requireViewPackages,
+  requireViewUsers
 } = require('../middleware/permissions');
 
 const router = express.Router();
@@ -33,6 +34,9 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
       erroredHosts,
       securityUpdates,
       offlineHosts,
+      totalHostGroups,
+      totalUsers,
+      totalRepos,
       osDistribution,
       updateTrends
     ] = await Promise.all([
@@ -82,6 +86,15 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
           }
         }
       }),
+
+      // Total host groups count
+      prisma.host_groups.count(),
+
+      // Total users count
+      prisma.users.count(),
+
+      // Total repositories count
+      prisma.repositories.count(),
 
       // OS distribution for pie chart
       prisma.hosts.groupBy({
@@ -133,10 +146,14 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
       cards: {
         totalHosts,
         hostsNeedingUpdates,
+        upToDateHosts: Math.max(totalHosts - hostsNeedingUpdates, 0),
         totalOutdatedPackages,
         erroredHosts,
         securityUpdates,
-        offlineHosts
+        offlineHosts,
+        totalHostGroups,
+        totalUsers,
+        totalRepos
       },
       charts: {
         osDistribution: osDistributionFormatted,
@@ -338,9 +355,9 @@ router.get('/hosts/:hostId', authenticateToken, requireViewHosts, async (req, re
     const hostWithStats = {
       ...host,
       stats: {
-        totalPackages: host.host_packages.length,
-        outdatedPackages: host.host_packages.filter(hp => hp.needs_update).length,
-        securityUpdates: host.host_packages.filter(hp => hp.needs_update && hp.is_security_update).length
+        total_packages: host.host_packages.length,
+        outdated_packages: host.host_packages.filter(hp => hp.needs_update).length,
+        security_updates: host.host_packages.filter(hp => hp.needs_update && hp.is_security_update).length
       }
     };
 
@@ -348,6 +365,61 @@ router.get('/hosts/:hostId', authenticateToken, requireViewHosts, async (req, re
   } catch (error) {
     console.error('Error fetching host details:', error);
     res.status(500).json({ error: 'Failed to fetch host details' });
+  }
+});
+
+// Get recent users ordered by last_login desc
+router.get('/recent-users', authenticateToken, requireViewUsers, async (req, res) => {
+  try {
+    const users = await prisma.users.findMany({
+      where: {
+        last_login: {
+          not: null
+        }
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        last_login: true,
+        created_at: true
+      },
+      orderBy: [
+        { last_login: 'desc' },
+        { created_at: 'desc' }
+      ],
+      take: 5
+    });
+
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching recent users:', error);
+    res.status(500).json({ error: 'Failed to fetch recent users' });
+  }
+});
+
+// Get recent hosts that have sent data (ordered by last_update desc)
+router.get('/recent-collection', authenticateToken, requireViewHosts, async (req, res) => {
+  try {
+    const hosts = await prisma.hosts.findMany({
+      select: {
+        id: true,
+        friendly_name: true,
+        hostname: true,
+        last_update: true,
+        status: true
+      },
+      orderBy: {
+        last_update: 'desc'
+      },
+      take: 5
+    });
+
+    res.json(hosts);
+  } catch (error) {
+    console.error('Error fetching recent collection:', error);
+    res.status(500).json({ error: 'Failed to fetch recent collection' });
   }
 });
 

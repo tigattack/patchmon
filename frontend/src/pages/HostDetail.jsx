@@ -712,13 +712,17 @@ const HostDetail = () => {
             </div>
             <div className="p-4">
             <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
-                <div className="flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-800 rounded-lg mx-auto mb-2">
+              <button 
+                onClick={() => navigate(`/packages?host=${hostId}`)}
+                className="text-center p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors group"
+                title="View all packages for this host"
+              >
+                <div className="flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-800 rounded-lg mx-auto mb-2 group-hover:bg-primary-200 dark:group-hover:bg-primary-700 transition-colors">
                   <Package className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                 </div>
                 <p className="text-2xl font-bold text-secondary-900 dark:text-white">{host.stats.total_packages}</p>
                 <p className="text-sm text-secondary-500 dark:text-secondary-300">Total Packages</p>
-              </div>
+              </button>
               
               <button 
                 onClick={() => navigate(`/packages?host=${hostId}`)}
@@ -822,6 +826,11 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
   }
 
   const getSetupCommands = () => {
+    // Get current time for crontab scheduling
+    const now = new Date()
+    const currentMinute = now.getMinutes()
+    const currentHour = now.getHours()
+    
     return `# Run this on the target host: ${host?.friendly_name}
 
 echo "🔄 Setting up PatchMon agent..."
@@ -845,14 +854,14 @@ sudo /usr/local/bin/patchmon-agent.sh test
 echo "📊 Sending initial package data..."
 sudo /usr/local/bin/patchmon-agent.sh update
 
-# Setup crontab
-echo "⏰ Setting up hourly crontab..."
-echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -
+# Setup crontab starting at current time
+echo "⏰ Setting up hourly crontab starting at ${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}..."
+echo "${currentMinute} * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -
 
 echo "✅ PatchMon agent setup complete!"
 echo "   - Agent installed: /usr/local/bin/patchmon-agent.sh"
 echo "   - Config directory: /etc/patchmon/"
-echo "   - Updates: Every hour via crontab"
+echo "   - Updates: Every hour via crontab (starting at ${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')})"
 echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
   }
 
@@ -1027,12 +1036,12 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
-                      value='echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -'
+                      value={`echo "${new Date().getMinutes()} * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -`}
                       readOnly
                       className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
                     />
                     <button
-                      onClick={() => copyToClipboard('echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -')}
+                      onClick={() => copyToClipboard(`echo "${new Date().getMinutes()} * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -`)}
                       className="btn-secondary flex items-center gap-1"
                     >
                       <Copy className="h-4 w-4" />

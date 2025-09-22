@@ -133,6 +133,18 @@ async function checkAndImportAgentVersion() {
         version: localVersion,
         release_notes: `Auto-imported on startup (${new Date().toISOString()})`,
         script_content: scriptContent,
+        is_default: true,
+        is_current: true,
+        updated_at: new Date()
+      }
+    });
+    
+    // Update all other versions to not be default or current
+    await prisma.agent_versions.updateMany({
+      where: { 
+        version: { not: localVersion }
+      },
+      data: { 
         is_default: false,
         is_current: false,
         updated_at: new Date()

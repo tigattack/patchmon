@@ -256,6 +256,8 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
     username: '',
     email: '',
     password: '',
+    first_name: '',
+    last_name: '',
     role: 'user'
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -267,7 +269,12 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
     setError('')
 
     try {
-      const response = await adminUsersAPI.create(formData)
+      // Only send role if roles are available from API
+      const payload = { username: formData.username, email: formData.email, password: formData.password }
+      if (roles && Array.isArray(roles) && roles.length > 0) {
+        payload.role = formData.role
+      }
+      const response = await adminUsersAPI.create(payload)
       onUserCreated()
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create user')
@@ -319,6 +326,33 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+                First Name
+              </label>
+              <input
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleInputChange}
+                className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+                Last Name
+              </label>
+              <input
+                type="text"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleInputChange}
+                className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
               Password
@@ -345,7 +379,7 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
               onChange={handleInputChange}
               className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
             >
-              {roles && Array.isArray(roles) ? (
+              {roles && Array.isArray(roles) && roles.length > 0 ? (
                 roles.map((role) => (
                   <option key={role.role} value={role.role}>
                     {role.role.charAt(0).toUpperCase() + role.role.slice(1).replace('_', ' ')}
@@ -393,6 +427,8 @@ const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || '',
+    first_name: user?.first_name || '',
+    last_name: user?.last_name || '',
     role: user?.role || 'user',
     is_active: user?.is_active ?? true
   })
@@ -456,6 +492,33 @@ const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
               onChange={handleInputChange}
               className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+                First Name
+              </label>
+              <input
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleInputChange}
+                className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+                Last Name
+              </label>
+              <input
+                type="text"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleInputChange}
+                className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
+              />
+            </div>
           </div>
 
           <div>

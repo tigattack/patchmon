@@ -53,6 +53,8 @@ export const dashboardAPI = {
   getHosts: () => api.get('/dashboard/hosts'),
   getPackages: () => api.get('/dashboard/packages'),
   getHostDetail: (hostId) => api.get(`/dashboard/hosts/${hostId}`),
+  getRecentUsers: () => api.get('/dashboard/recent-users'),
+  getRecentCollection: () => api.get('/dashboard/recent-collection')
 }
 
 // Admin Hosts API (for management interface)

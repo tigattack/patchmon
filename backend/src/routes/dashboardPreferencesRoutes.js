@@ -74,13 +74,17 @@ router.get('/defaults', authenticateToken, async (req, res) => {
       { cardId: 'hostsNeedingUpdates', title: 'Needs Updating', icon: 'AlertTriangle', enabled: true, order: 1 },
       { cardId: 'totalOutdatedPackages', title: 'Outdated Packages', icon: 'Package', enabled: true, order: 2 },
       { cardId: 'securityUpdates', title: 'Security Updates', icon: 'Shield', enabled: true, order: 3 },
-      { cardId: 'erroredHosts', title: 'Errored Hosts', icon: 'AlertTriangle', enabled: true, order: 4 },
-      { cardId: 'offlineHosts', title: 'Offline/Stale Hosts', icon: 'WifiOff', enabled: false, order: 5 },
-      { cardId: 'osDistribution', title: 'OS Distribution', icon: 'BarChart3', enabled: true, order: 6 },
-      { cardId: 'osDistributionBar', title: 'OS Distribution (Bar)', icon: 'BarChart3', enabled: false, order: 7 },
-      { cardId: 'updateStatus', title: 'Update Status', icon: 'BarChart3', enabled: true, order: 8 },
-      { cardId: 'packagePriority', title: 'Package Priority', icon: 'BarChart3', enabled: true, order: 9 },
-      { cardId: 'quickStats', title: 'Quick Stats', icon: 'TrendingUp', enabled: true, order: 10 }
+      { cardId: 'upToDateHosts', title: 'Up to date', icon: 'CheckCircle', enabled: true, order: 4 },
+      { cardId: 'totalHostGroups', title: 'Host Groups', icon: 'Folder', enabled: false, order: 5 },
+      { cardId: 'totalUsers', title: 'Users', icon: 'Users', enabled: false, order: 6 },
+      { cardId: 'totalRepos', title: 'Repositories', icon: 'GitBranch', enabled: false, order: 7 },
+      { cardId: 'osDistribution', title: 'OS Distribution', icon: 'BarChart3', enabled: true, order: 8 },
+      { cardId: 'osDistributionBar', title: 'OS Distribution (Bar)', icon: 'BarChart3', enabled: false, order: 9 },
+      { cardId: 'updateStatus', title: 'Update Status', icon: 'BarChart3', enabled: true, order: 10 },
+      { cardId: 'packagePriority', title: 'Package Priority', icon: 'BarChart3', enabled: true, order: 11 },
+      { cardId: 'quickStats', title: 'Quick Stats', icon: 'TrendingUp', enabled: true, order: 12 },
+      { cardId: 'recentUsers', title: 'Recent Users Logged in', icon: 'Users', enabled: true, order: 13 },
+      { cardId: 'recentCollection', title: 'Recent Collection', icon: 'Server', enabled: true, order: 14 }
     ];
 
     res.json(defaultCards);

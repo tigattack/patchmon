@@ -33,7 +33,9 @@ const Profile = () => {
 
   const [profileData, setProfileData] = useState({
     username: user?.username || '',
-    email: user?.email || ''
+    email: user?.email || '',
+    first_name: user?.first_name || '',
+    last_name: user?.last_name || ''
   })
 
   const [passwordData, setPasswordData] = useState({
@@ -141,7 +143,11 @@ const Profile = () => {
             </div>
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-medium text-secondary-900 dark:text-white">{user?.username}</h3>
+            <h3 className="text-lg font-medium text-secondary-900 dark:text-white">
+              {user?.first_name && user?.last_name 
+                ? `${user.first_name} ${user.last_name}` 
+                : user?.first_name || user?.username}
+            </h3>
             <p className="text-sm text-secondary-600 dark:text-secondary-300">{user?.email}</p>
             <div className="mt-2">
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -249,6 +255,38 @@ const Profile = () => {
                         required
                       />
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400 dark:text-secondary-500" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="first_name" className="block text-sm font-medium text-secondary-700 dark:text-secondary-200">
+                      First Name
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        type="text"
+                        name="first_name"
+                        id="first_name"
+                        value={profileData.first_name}
+                        onChange={handleInputChange}
+                        className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="last_name" className="block text-sm font-medium text-secondary-700 dark:text-secondary-200">
+                      Last Name
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        type="text"
+                        name="last_name"
+                        id="last_name"
+                        value={profileData.last_name}
+                        onChange={handleInputChange}
+                        className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
+                      />
                     </div>
                   </div>
                 </div>

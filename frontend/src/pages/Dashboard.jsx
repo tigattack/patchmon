@@ -10,7 +10,10 @@ import {
   RefreshCw,
   Clock,
   WifiOff,
-  Settings
+  Settings,
+  Users,
+  Folder,
+  GitBranch
 } from 'lucide-react'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js'
 import { Pie, Bar } from 'react-chartjs-2'
@@ -52,6 +55,19 @@ const Dashboard = () => {
 
   const handleOfflineHostsClick = () => {
     navigate('/hosts?filter=offline')
+  }
+
+  // New navigation handlers for top cards
+  const handleUsersClick = () => {
+    navigate('/users')
+  }
+
+  const handleHostGroupsClick = () => {
+    navigate('/options')
+  }
+
+  const handleRepositoriesClick = () => {
+    navigate('/repositories')
   }
 
   const handleOSDistributionClick = () => {
@@ -143,6 +159,20 @@ const Dashboard = () => {
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
   })
 
+  // Fetch recent users (permission protected server-side)
+  const { data: recentUsers } = useQuery({
+    queryKey: ['dashboardRecentUsers'],
+    queryFn: () => dashboardAPI.getRecentUsers().then(res => res.data),
+    staleTime: 60 * 1000,
+  })
+
+  // Fetch recent collection (permission protected server-side)
+  const { data: recentCollection } = useQuery({
+    queryKey: ['dashboardRecentCollection'],
+    queryFn: () => dashboardAPI.getRecentCollection().then(res => res.data),
+    staleTime: 60 * 1000,
+  })
+
   // Fetch settings to get the agent update interval
   const { data: settings } = useQuery({
     queryKey: ['settings'],
@@ -162,22 +192,32 @@ const Dashboard = () => {
     queryFn: () => dashboardPreferencesAPI.getDefaults().then(res => res.data),
   })
 
-  // Merge preferences with default cards
+  // Merge preferences with default cards (normalize snake_case from API)
   useEffect(() => {
     if (preferences && defaultCards) {
-      const mergedCards = defaultCards.map(defaultCard => {
-        const userPreference = preferences.find(p => p.cardId === defaultCard.cardId);
-        return {
-          ...defaultCard,
-          enabled: userPreference ? userPreference.enabled : defaultCard.enabled,
-          order: userPreference ? userPreference.order : defaultCard.order
-        };
-      }).sort((a, b) => a.order - b.order);
-      
-      setCardPreferences(mergedCards);
+      const normalizedPreferences = preferences.map((p) => ({
+        cardId: p.cardId ?? p.card_id,
+        enabled: p.enabled,
+        order: p.order,
+      }))
+
+      const mergedCards = defaultCards
+        .map((defaultCard) => {
+          const userPreference = normalizedPreferences.find(
+            (p) => p.cardId === defaultCard.cardId
+          )
+          return {
+            ...defaultCard,
+            enabled: userPreference ? userPreference.enabled : defaultCard.enabled,
+            order: userPreference ? userPreference.order : defaultCard.order,
+          }
+        })
+        .sort((a, b) => a.order - b.order)
+
+      setCardPreferences(mergedCards)
     } else if (defaultCards) {
       // If no preferences exist, use defaults
-      setCardPreferences(defaultCards.sort((a, b) => a.order - b.order));
+      setCardPreferences(defaultCards.sort((a, b) => a.order - b.order))
     }
   }, [preferences, defaultCards])
 
@@ -201,9 +241,9 @@ const Dashboard = () => {
 
   // Helper function to get card type for layout grouping
   const getCardType = (cardId) => {
-    if (['totalHosts', 'hostsNeedingUpdates', 'totalOutdatedPackages', 'securityUpdates'].includes(cardId)) {
+    if (['totalHosts', 'hostsNeedingUpdates', 'totalOutdatedPackages', 'securityUpdates', 'upToDateHosts', 'totalHostGroups', 'totalUsers', 'totalRepos'].includes(cardId)) {
       return 'stats';
-    } else if (['osDistribution', 'osDistributionBar', 'updateStatus', 'packagePriority'].includes(cardId)) {
+    } else if (['osDistribution', 'osDistributionBar', 'updateStatus', 'packagePriority', 'recentUsers', 'recentCollection'].includes(cardId)) {
       return 'charts';
     } else if (['erroredHosts', 'quickStats'].includes(cardId)) {
       return 'fullwidth';
@@ -228,6 +268,24 @@ const Dashboard = () => {
   // Helper function to render a card by ID
   const renderCard = (cardId) => {
     switch (cardId) {
+      case 'upToDateHosts':
+        return (
+          <div 
+            className="card p-4"
+          >
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <TrendingUp className="h-5 w-5 text-success-600 mr-2" />
+              </div>
+              <div className="w-0 flex-1">
+                <p className="text-sm text-secondary-500 dark:text-white">Up to date</p>
+                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
+                  {stats.cards.upToDateHosts}/{stats.cards.totalHosts}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
       case 'totalHosts':
         return (
           <div 
@@ -302,6 +360,57 @@ const Dashboard = () => {
                 <p className="text-sm text-secondary-500 dark:text-white">Security Updates</p>
                 <p className="text-xl font-semibold text-secondary-900 dark:text-white">
                   {stats.cards.securityUpdates}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'totalHostGroups':
+        return (
+          <div className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200" onClick={handleHostGroupsClick}>
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Folder className="h-5 w-5 text-primary-600 mr-2" />
+              </div>
+              <div className="w-0 flex-1">
+                <p className="text-sm text-secondary-500 dark:text-white">Host Groups</p>
+                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
+                  {stats.cards.totalHostGroups}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'totalUsers':
+        return (
+          <div className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200" onClick={handleUsersClick}>
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Users className="h-5 w-5 text-success-600 mr-2" />
+              </div>
+              <div className="w-0 flex-1">
+                <p className="text-sm text-secondary-500 dark:text-white">Users</p>
+                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
+                  {stats.cards.totalUsers}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'totalRepos':
+        return (
+          <div className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200" onClick={handleRepositoriesClick}>
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <GitBranch className="h-5 w-5 text-warning-600 mr-2" />
+              </div>
+              <div className="w-0 flex-1">
+                <p className="text-sm text-secondary-500 dark:text-white">Repositories</p>
+                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
+                  {stats.cards.totalRepos}
                 </p>
               </div>
             </div>
@@ -439,30 +548,106 @@ const Dashboard = () => {
         );
       
       case 'quickStats':
+        // Calculate dynamic stats
+        const updatePercentage = stats.cards.totalHosts > 0 ? ((stats.cards.hostsNeedingUpdates / stats.cards.totalHosts) * 100).toFixed(1) : 0;
+        const onlineHosts = stats.cards.totalHosts - stats.cards.erroredHosts;
+        const onlinePercentage = stats.cards.totalHosts > 0 ? ((onlineHosts / stats.cards.totalHosts) * 100).toFixed(0) : 0;
+        const securityPercentage = stats.cards.totalOutdatedPackages > 0 ? ((stats.cards.securityUpdates / stats.cards.totalOutdatedPackages) * 100).toFixed(0) : 0;
+        const avgPackagesPerHost = stats.cards.totalHosts > 0 ? Math.round(stats.cards.totalOutdatedPackages / stats.cards.totalHosts) : 0;
+        
         return (
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-secondary-900 dark:text-white">Quick Stats</h3>
-              <TrendingUp className="h-5 w-5 text-success-500" />
+              <h3 className="text-lg font-medium text-secondary-900 dark:text-white">System Overview</h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary-600">
-                  {((stats.cards.hostsNeedingUpdates / stats.cards.totalHosts) * 100).toFixed(1)}%
+                  {updatePercentage}%
                 </div>
-                <div className="text-sm text-secondary-500 dark:text-secondary-300">Hosts need updates</div>
+                <div className="text-sm text-secondary-500 dark:text-secondary-300">Need Updates</div>
+                <div className="text-xs text-secondary-400 dark:text-secondary-500">
+                  {stats.cards.hostsNeedingUpdates}/{stats.cards.totalHosts} hosts
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-danger-600">
                   {stats.cards.securityUpdates}
                 </div>
-                <div className="text-sm text-secondary-500 dark:text-secondary-300">Security updates pending</div>
+                <div className="text-sm text-secondary-500 dark:text-secondary-300">Security Issues</div>
+                <div className="text-xs text-secondary-400 dark:text-secondary-500">
+                  {securityPercentage}% of updates
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-success-600">
-                  {stats.cards.totalHosts - stats.cards.erroredHosts}
+                  {onlinePercentage}%
                 </div>
-                <div className="text-sm text-secondary-500 dark:text-secondary-300">Hosts online</div>
+                <div className="text-sm text-secondary-500 dark:text-secondary-300">Online</div>
+                <div className="text-xs text-secondary-400 dark:text-secondary-500">
+                  {onlineHosts}/{stats.cards.totalHosts} hosts
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-secondary-600">
+                  {avgPackagesPerHost}
+                </div>
+                <div className="text-sm text-secondary-500 dark:text-secondary-300">Avg per Host</div>
+                <div className="text-xs text-secondary-400 dark:text-secondary-500">
+                  outdated packages
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 'recentUsers':
+        return (
+          <div className="card p-6">
+            <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Recent Users Logged in</h3>
+            <div className="h-64 overflow-y-auto">
+              <div className="space-y-3">
+                {(recentUsers || []).slice(0, 5).map(u => (
+                  <div key={u.id} className="flex items-center justify-between py-2 border-b border-secondary-100 dark:border-secondary-700 last:border-b-0">
+                    <div className="text-sm font-medium text-secondary-900 dark:text-white">
+                      {u.username}
+                    </div>
+                    <div className="text-sm text-secondary-500 dark:text-secondary-400">
+                      {u.last_login ? formatRelativeTime(u.last_login) : 'Never'}
+                    </div>
+                  </div>
+                ))}
+                {(!recentUsers || recentUsers.length === 0) && (
+                  <div className="text-center text-secondary-500 dark:text-secondary-400 py-4">
+                    No users found
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 'recentCollection':
+        return (
+          <div className="card p-6">
+            <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Recent Collection</h3>
+            <div className="h-64 overflow-y-auto">
+              <div className="space-y-3">
+                {(recentCollection || []).slice(0, 5).map(host => (
+                  <div key={host.id} className="flex items-center justify-between py-2 border-b border-secondary-100 dark:border-secondary-700 last:border-b-0">
+                    <div className="text-sm font-medium text-secondary-900 dark:text-white">
+                      {host.friendly_name || host.hostname}
+                    </div>
+                    <div className="text-sm text-secondary-500 dark:text-secondary-400">
+                      {host.last_update ? formatRelativeTime(host.last_update) : 'Never'}
+                    </div>
+                  </div>
+                ))}
+                {(!recentCollection || recentCollection.length === 0) && (
+                  <div className="text-center text-secondary-500 dark:text-secondary-400 py-4">
+                    No hosts found
+                  </div>
+                )}
               </div>
             </div>
           </div>

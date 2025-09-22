@@ -67,6 +67,9 @@ const SortableCardItem = ({ card, onToggle }) => {
         <div className="flex items-center gap-2">
           <div className="text-sm font-medium text-secondary-900 dark:text-white">
             {card.title}
+            {card.typeLabel ? (
+              <span className="ml-2 text-xs font-normal text-secondary-500 dark:text-secondary-400">({card.typeLabel})</span>
+            ) : null}
           </div>
         </div>
       </div>
@@ -141,15 +144,39 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
   // Initialize cards when preferences or defaults are loaded
   useEffect(() => {
     if (preferences && defaultCards) {
+      // Normalize server preferences (snake_case -> camelCase)
+      const normalizedPreferences = preferences.map((p) => ({
+        cardId: p.cardId ?? p.card_id,
+        enabled: p.enabled,
+        order: p.order,
+      }));
+
+      const typeLabelFor = (cardId) => {
+        if (['totalHosts','hostsNeedingUpdates','totalOutdatedPackages','securityUpdates','upToDateHosts','totalHostGroups','totalUsers','totalRepos'].includes(cardId)) return 'Top card';
+        if (cardId === 'osDistribution') return 'Pie chart';
+        if (cardId === 'osDistributionBar') return 'Bar chart';
+        if (cardId === 'updateStatus') return 'Pie chart';
+        if (cardId === 'packagePriority') return 'Pie chart';
+        if (cardId === 'recentUsers') return 'Table';
+        if (cardId === 'recentCollection') return 'Table';
+        if (cardId === 'quickStats') return 'Wide card';
+        return undefined;
+      };
+
       // Merge user preferences with default cards
-      const mergedCards = defaultCards.map(defaultCard => {
-        const userPreference = preferences.find(p => p.cardId === defaultCard.cardId);
-        return {
-          ...defaultCard,
-          enabled: userPreference ? userPreference.enabled : defaultCard.enabled,
-          order: userPreference ? userPreference.order : defaultCard.order
-        };
-      }).sort((a, b) => a.order - b.order);
+      const mergedCards = defaultCards
+        .map((defaultCard) => {
+          const userPreference = normalizedPreferences.find(
+            (p) => p.cardId === defaultCard.cardId
+          );
+          return {
+            ...defaultCard,
+            enabled: userPreference ? userPreference.enabled : defaultCard.enabled,
+            order: userPreference ? userPreference.order : defaultCard.order,
+            typeLabel: typeLabelFor(defaultCard.cardId),
+          };
+        })
+        .sort((a, b) => a.order - b.order);
       
       setCards(mergedCards);
     }

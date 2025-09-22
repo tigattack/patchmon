@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { PrismaClient } = require('@prisma/client');
+const { randomUUID } = require('crypto');
 const { authenticateToken } = require('../middleware/auth');
 const { requireManageHosts } = require('../middleware/permissions');
 
@@ -41,13 +42,13 @@ router.get('/:id', authenticateToken, async (req, res) => {
         hosts: {
           select: {
             id: true,
-            friendlyName: true,
+            friendly_name: true,
             hostname: true,
             ip: true,
-            osType: true,
-            osVersion: true,
+            os_type: true,
+            os_version: true,
             status: true,
-            lastUpdate: true
+            last_update: true
           }
         }
       }
@@ -89,9 +90,11 @@ router.post('/', authenticateToken, requireManageHosts, [
 
     const hostGroup = await prisma.host_groups.create({
       data: {
+        id: randomUUID(),
         name,
         description: description || null,
-        color: color || '#3B82F6'
+        color: color || '#3B82F6',
+        updated_at: new Date()
       }
     });
 
@@ -143,7 +146,8 @@ router.put('/:id', authenticateToken, requireManageHosts, [
       data: {
         name,
         description: description || null,
-        color: color || '#3B82F6'
+        color: color || '#3B82F6',
+        updated_at: new Date()
       }
     });
 
@@ -199,20 +203,20 @@ router.get('/:id/hosts', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     const hosts = await prisma.hosts.findMany({
-      where: { hostGroupId: id },
+      where: { host_group_id: id },
       select: {
         id: true,
-        friendlyName: true,
+        friendly_name: true,
         ip: true,
-        osType: true,
-        osVersion: true,
+        os_type: true,
+        os_version: true,
         architecture: true,
         status: true,
-        lastUpdate: true,
-        createdAt: true
+        last_update: true,
+        created_at: true
       },
       orderBy: {
-        friendlyName: 'asc'
+        friendly_name: 'asc'
       }
     });
 
