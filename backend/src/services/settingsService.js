@@ -13,12 +13,25 @@ const ENV_TO_SETTINGS_MAP = {
     'SERVER_PORT': 'server_port',
 };
 
+// Helper function to construct server URL without default ports
+function constructServerUrl(protocol, host, port) {
+    const isHttps = protocol.toLowerCase() === 'https';
+    const isHttp = protocol.toLowerCase() === 'http';
+
+    // Don't append port if it's the default port for the protocol
+    if ((isHttps && port === 443) || (isHttp && port === 80)) {
+        return `${protocol}://${host}`.toLowerCase();
+    }
+
+    return `${protocol}://${host}:${port}`.toLowerCase();
+}
+
 // Create settings from environment variables and/or defaults
 async function createSettingsFromEnvironment() {
     const protocol = process.env.SERVER_PROTOCOL || 'http';
     const host = process.env.SERVER_HOST || 'localhost';
     const port = parseInt(process.env.SERVER_PORT, 10) || 3001;
-    const serverUrl = `${protocol}://${host}:${port}`.toLowerCase();
+    const serverUrl = constructServerUrl(protocol, host, port);
 
     const settings = await prisma.settings.create({
         data: {
@@ -68,7 +81,7 @@ async function syncEnvironmentToSettings(currentSettings) {
     const protocol = updates.server_protocol || currentSettings.server_protocol;
     const host = updates.server_host || currentSettings.server_host;
     const port = updates.server_port || currentSettings.server_port;
-    const constructedServerUrl = `${protocol}://${host}:${port}`.toLowerCase();
+    const constructedServerUrl = constructServerUrl(protocol, host, port);
 
     // Update server_url if it differs from the constructed value
     if (currentSettings.server_url !== constructedServerUrl) {
@@ -138,7 +151,7 @@ async function updateSettings(id, updateData) {
         });
 
         // Reconstruct server_url from components
-        const serverUrl = `${updatedSettings.server_protocol}://${updatedSettings.server_host}:${updatedSettings.server_port}`.toLowerCase();
+        const serverUrl = constructServerUrl(updatedSettings.server_protocol, updatedSettings.server_host, updatedSettings.server_port);
         if (updatedSettings.server_url !== serverUrl) {
             updatedSettings.server_url = serverUrl;
             await prisma.settings.update({
