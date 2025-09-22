@@ -239,7 +239,24 @@ const PORT = process.env.PORT || 3001;
 
 // Trust proxy (needed when behind reverse proxy) and remove X-Powered-By
 if (process.env.TRUST_PROXY) {
-  app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? 1 : parseInt(process.env.TRUST_PROXY, 10) || true);
+  const trustProxyValue = process.env.TRUST_PROXY;
+  
+  // Parse the trust proxy setting according to Express documentation
+  if (trustProxyValue === 'true') {
+    app.set('trust proxy', true);
+  } else if (trustProxyValue === 'false') {
+    app.set('trust proxy', false);
+  } else if (/^\d+$/.test(trustProxyValue)) {
+    // If it's a number (hop count)
+    app.set('trust proxy', parseInt(trustProxyValue, 10));
+  } else {
+    // If it contains commas, split into array; otherwise use as single value
+    // This handles: IP addresses, subnets, named subnets (loopback, linklocal, uniquelocal)
+    app.set('trust proxy', trustProxyValue.includes(',') 
+      ? trustProxyValue.split(',').map(s => s.trim())
+      : trustProxyValue
+    );
+  }
 } else {
   app.set('trust proxy', 1);
 }
