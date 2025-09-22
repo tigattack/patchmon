@@ -169,6 +169,20 @@ const Settings = () => {
     mutationFn: (id) => agentVersionAPI.delete(id).then(res => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries(['agentVersions']);
+    },
+    onError: (error) => {
+      console.error('Delete agent version error:', error);
+      
+      // Show user-friendly error message
+      if (error.response?.data?.error === 'Agent version not found') {
+        alert('Agent version not found. Please refresh the page to get the latest data.');
+        // Force refresh the agent versions list
+        queryClient.invalidateQueries(['agentVersions']);
+      } else if (error.response?.data?.error === 'Cannot delete current agent version') {
+        alert('Cannot delete the current agent version. Please set another version as current first.');
+      } else {
+        alert(`Failed to delete agent version: ${error.response?.data?.error || error.message}`);
+      }
     }
   });
 
@@ -654,14 +668,14 @@ const Settings = () => {
                       <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                       <span className="text-sm font-medium text-secondary-700 dark:text-secondary-300">Current Version:</span>
                       <span className="text-sm text-secondary-900 dark:text-white font-mono">
-                        {agentVersions.find(v => v.isCurrent)?.version || 'None'}
+                        {agentVersions.find(v => v.is_current)?.version || 'None'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Star className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                       <span className="text-sm font-medium text-secondary-700 dark:text-secondary-300">Default Version:</span>
                       <span className="text-sm text-secondary-900 dark:text-white font-mono">
-                        {agentVersions.find(v => v.isDefault)?.version || 'None'}
+                        {agentVersions.find(v => v.is_default)?.version || 'None'}
                       </span>
                     </div>
                   </div>
@@ -692,22 +706,22 @@ const Settings = () => {
                         <h3 className="text-lg font-medium text-secondary-900 dark:text-white">
                           Version {version.version}
                         </h3>
-                        {version.isDefault && (
+                        {version.is_default && (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
                             <Star className="h-3 w-3 mr-1" />
                             Default
                           </span>
                         )}
-                        {version.isCurrent && (
+                        {version.is_current && (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                             Current
                           </span>
                         )}
                       </div>
-                      {version.releaseNotes && (
+                      {version.release_notes && (
                         <div className="text-sm text-secondary-500 dark:text-secondary-300 mt-1">
                           <p className="line-clamp-3 whitespace-pre-line">
-                            {version.releaseNotes}
+                            {version.release_notes}
                           </p>
                         </div>
                       )}
@@ -729,7 +743,7 @@ const Settings = () => {
                     </button>
                     <button
                       onClick={() => setCurrentAgentVersionMutation.mutate(version.id)}
-                      disabled={version.isCurrent || setCurrentAgentVersionMutation.isPending}
+                      disabled={version.is_current || setCurrentAgentVersionMutation.isPending}
                       className="btn-outline text-xs flex items-center gap-1"
                     >
                       <CheckCircle className="h-3 w-3" />
@@ -737,7 +751,7 @@ const Settings = () => {
                     </button>
                     <button
                       onClick={() => setDefaultAgentVersionMutation.mutate(version.id)}
-                      disabled={version.isDefault || setDefaultAgentVersionMutation.isPending}
+                      disabled={version.is_default || setDefaultAgentVersionMutation.isPending}
                       className="btn-outline text-xs flex items-center gap-1"
                     >
                       <Star className="h-3 w-3" />
@@ -745,7 +759,7 @@ const Settings = () => {
                     </button>
                     <button
                       onClick={() => deleteAgentVersionMutation.mutate(version.id)}
-                      disabled={version.isDefault || version.isCurrent || deleteAgentVersionMutation.isPending}
+                      disabled={version.is_default || version.is_current || deleteAgentVersionMutation.isPending}
                       className="btn-danger text-xs flex items-center gap-1"
                     >
                       <Trash2 className="h-3 w-3" />

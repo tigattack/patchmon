@@ -1098,26 +1098,48 @@ router.delete('/agent/versions/:versionId', authenticateToken, requireManageSett
   try {
     const { versionId } = req.params;
 
+    // Validate versionId format
+    if (!versionId || versionId.length < 10) {
+      return res.status(400).json({ 
+        error: 'Invalid agent version ID format',
+        details: 'The provided ID does not match expected format'
+      });
+    }
+
     const agentVersion = await prisma.agent_versions.findUnique({
       where: { id: versionId }
     });
 
     if (!agentVersion) {
-      return res.status(404).json({ error: 'Agent version not found' });
+      return res.status(404).json({ 
+        error: 'Agent version not found',
+        details: `No agent version found with ID: ${versionId}`,
+        suggestion: 'Please refresh the page to get the latest agent versions'
+      });
     }
 
     if (agentVersion.is_current) {
-      return res.status(400).json({ error: 'Cannot delete current agent version' });
+      return res.status(400).json({ 
+        error: 'Cannot delete current agent version',
+        details: `Version ${agentVersion.version} is currently active`,
+        suggestion: 'Set another version as current before deleting this one'
+      });
     }
 
     await prisma.agent_versions.delete({
       where: { id: versionId }
     });
 
-    res.json({ message: 'Agent version deleted successfully' });
+    res.json({ 
+      message: 'Agent version deleted successfully',
+      deletedVersion: agentVersion.version
+    });
   } catch (error) {
     console.error('Delete agent version error:', error);
-    res.status(500).json({ error: 'Failed to delete agent version' });
+    res.status(500).json({ 
+      error: 'Failed to delete agent version',
+      details: error.message
+    });
   }
 });
 
