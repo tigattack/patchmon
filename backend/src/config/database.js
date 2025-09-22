@@ -56,8 +56,8 @@ async function checkDatabaseConnection(prisma) {
 
 // Wait for database to be available with retry logic
 async function waitForDatabase(prisma, options = {}) {
-  const maxAttempts = options.maxAttempts || parseInt(process.env.DB_MAX_ATTEMPTS) || 30;
-  const waitInterval = options.waitInterval || parseInt(process.env.DB_WAIT_INTERVAL) || 2;
+  const maxAttempts = options.maxAttempts || parseInt(process.env.PM_DB_CONN_MAX_ATTEMPTS) || 30;
+  const waitInterval = options.waitInterval || parseInt(process.env.PM_DB_CONN_WAIT_INTERVAL) || 2;
 
   console.log(`Waiting for database connection (max ${maxAttempts} attempts, ${waitInterval}s interval)...`);
 
