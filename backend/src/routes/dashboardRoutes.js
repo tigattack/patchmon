@@ -36,15 +36,12 @@ router.get('/stats', authenticateToken, requireViewDashboard, async (req, res) =
       osDistribution,
       updateTrends
     ] = await Promise.all([
-      // Total hosts count
-      prisma.hosts.count({
-        where: { status: 'active' }
-      }),
+      // Total hosts count (all hosts regardless of status)
+      prisma.hosts.count(),
 
       // Hosts needing updates (distinct hosts with packages needing updates)
       prisma.hosts.count({
         where: {
-          status: 'active',
           host_packages: {
             some: {
               needs_update: true

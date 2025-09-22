@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Edit2, Check, X, ChevronDown } from 'lucide-react';
 
 const InlineGroupEdit = ({ 
@@ -88,11 +88,8 @@ const InlineGroupEdit = ({
   const handleSave = async () => {
     if (disabled || isLoading) return;
 
-    console.log('handleSave called:', { selectedValue, originalValue: value, changed: selectedValue !== value });
-
     // Check if value actually changed
     if (selectedValue === value) {
-      console.log('No change detected, closing edit mode');
       setIsEditing(false);
       setIsOpen(false);
       return;
@@ -102,15 +99,12 @@ const InlineGroupEdit = ({
     setError('');
 
     try {
-      console.log('Calling onSave with:', selectedValue);
       await onSave(selectedValue);
-      console.log('Save successful');
       // Update the local value to match the saved value
       setSelectedValue(selectedValue);
       setIsEditing(false);
       setIsOpen(false);
     } catch (err) {
-      console.error('Save failed:', err);
       setError(err.message || 'Failed to save');
     } finally {
       setIsLoading(false);
@@ -127,22 +121,23 @@ const InlineGroupEdit = ({
     }
   };
 
-  const getDisplayValue = () => {
-    console.log('getDisplayValue called with:', { value, options });
+  const displayValue = useMemo(() => {
     if (!value) {
-      console.log('No value, returning Ungrouped');
       return 'Ungrouped';
     }
     const option = options.find(opt => opt.id === value);
-    console.log('Found option:', option);
     return option ? option.name : 'Unknown Group';
-  };
+  }, [value, options]);
 
-  const getDisplayColor = () => {
+  const displayColor = useMemo(() => {
     if (!value) return 'bg-secondary-100 text-secondary-800';
     const option = options.find(opt => opt.id === value);
     return option ? `text-white` : 'bg-secondary-100 text-secondary-800';
-  };
+  }, [value, options]);
+
+  const selectedOption = useMemo(() => {
+    return options.find(opt => opt.id === value);
+  }, [value, options]);
 
   if (isEditing) {
     return (
@@ -241,10 +236,10 @@ const InlineGroupEdit = ({
   return (
     <div className={`flex items-center gap-2 group ${className}`}>
       <span 
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getDisplayColor()}`}
-        style={value ? { backgroundColor: options.find(opt => opt.id === value)?.color } : {}}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${displayColor}`}
+        style={value ? { backgroundColor: selectedOption?.color } : {}}
       >
-        {getDisplayValue()}
+        {displayValue}
       </span>
       {!disabled && (
         <button

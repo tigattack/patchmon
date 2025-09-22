@@ -310,10 +310,10 @@ const RepositoryDetail = () => {
         <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-700">
           <h2 className="text-lg font-semibold text-secondary-900 dark:text-white flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Hosts Using This Repository ({repository.hostRepositories?.length || 0})
+            Hosts Using This Repository ({repository.host_repositories?.length || 0})
           </h2>
         </div>
-        {!repository.hostRepositories || repository.hostRepositories.length === 0 ? (
+        {!repository.host_repositories || repository.host_repositories.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <Server className="mx-auto h-12 w-12 text-secondary-400" />
             <h3 className="mt-2 text-sm font-medium text-secondary-900 dark:text-white">No hosts using this repository</h3>
@@ -323,28 +323,28 @@ const RepositoryDetail = () => {
           </div>
         ) : (
           <div className="divide-y divide-secondary-200 dark:divide-secondary-700">
-            {repository.hostRepositories.map((hostRepo) => (
+            {repository.host_repositories.map((hostRepo) => (
               <div key={hostRepo.id} className="px-6 py-4 hover:bg-secondary-50 dark:hover:bg-secondary-700/50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${
-                      hostRepo.host.status === 'active' 
+                      hostRepo.hosts.status === 'active' 
                         ? 'bg-green-500' 
-                        : hostRepo.host.status === 'pending'
+                        : hostRepo.hosts.status === 'pending'
                         ? 'bg-yellow-500'
                         : 'bg-red-500'
                     }`} />
                     <div>
                       <Link
-                        to={`/hosts/${hostRepo.host.id}`}
+                        to={`/hosts/${hostRepo.hosts.id}`}
                         className="text-primary-600 hover:text-primary-700 font-medium"
                       >
-                        {hostRepo.host.friendly_name}
+                        {hostRepo.hosts.friendly_name}
                       </Link>
                       <div className="flex items-center gap-4 text-sm text-secondary-500 dark:text-secondary-400 mt-1">
-                        <span>IP: {hostRepo.host.ip}</span>
-                        <span>OS: {hostRepo.host.osType} {hostRepo.host.osVersion}</span>
-                        <span>Last Update: {new Date(hostRepo.host.lastUpdate).toLocaleDateString()}</span>
+                        <span>IP: {hostRepo.hosts.ip}</span>
+                        <span>OS: {hostRepo.hosts.os_type} {hostRepo.hosts.os_version}</span>
+                        <span>Last Update: {new Date(hostRepo.hosts.last_update).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
@@ -352,7 +352,7 @@ const RepositoryDetail = () => {
                     <div className="text-center">
                       <div className="text-xs text-secondary-500 dark:text-secondary-400">Last Checked</div>
                       <div className="text-sm text-secondary-900 dark:text-white">
-                        {new Date(hostRepo.lastChecked).toLocaleDateString()}
+                        {new Date(hostRepo.last_checked).toLocaleDateString()}
                       </div>
                     </div>
                   </div>

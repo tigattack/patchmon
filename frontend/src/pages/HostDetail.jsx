@@ -211,9 +211,9 @@ const HostDetail = () => {
             <span className="text-xs font-medium">Last updated:</span>
             <span>{formatRelativeTime(host.last_update)}</span>
           </div>
-          <div className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(isStale, host.stats.outdatedPackages > 0)}`}>
-            {getStatusIcon(isStale, host.stats.outdatedPackages > 0)}
-            {getStatusText(isStale, host.stats.outdatedPackages > 0)}
+          <div className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(isStale, host.stats.outdated_packages > 0)}`}>
+            {getStatusIcon(isStale, host.stats.outdated_packages > 0)}
+            {getStatusText(isStale, host.stats.outdated_packages > 0)}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -333,12 +333,12 @@ const HostDetail = () => {
                     
                     <div>
                       <p className="text-xs text-secondary-500 dark:text-secondary-300">Host Group</p>
-                      {host.hostGroup ? (
+                      {host.host_groups ? (
                         <span 
                           className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white"
-                          style={{ backgroundColor: host.hostGroup.color }}
+                          style={{ backgroundColor: host.host_groups.color }}
                         >
-                          {host.hostGroup.name}
+                          {host.host_groups.name}
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary-100 dark:bg-secondary-700 text-secondary-800 dark:text-secondary-200">
@@ -355,18 +355,6 @@ const HostDetail = () => {
                       </div>
                     </div>
                     
-                    {host.ip && (
-                      <div>
-                        <p className="text-xs text-secondary-500 dark:text-secondary-300">IP Address</p>
-                        <p className="font-medium text-secondary-900 dark:text-white text-sm">{host.ip}</p>
-                      </div>
-                    )}
-                    
-                    
-                    <div>
-                      <p className="text-xs text-secondary-500 dark:text-secondary-300">Last Update</p>
-                      <p className="font-medium text-secondary-900 dark:text-white text-sm">{formatRelativeTime(host.last_update)}</p>
-                    </div>
                     
                     {host.agent_version && (
                       <div className="flex items-center justify-between">
@@ -720,7 +708,7 @@ const HostDetail = () => {
           {/* Package Statistics */}
           <div className="card">
             <div className="px-4 py-2.5 border-b border-secondary-200 dark:border-secondary-600">
-              <h3 className="text-sm font-medium text-secondary-900 dark:text-white">Package Statistics</h3>
+              <h3 className="text-sm font-medium text-secondary-500 dark:text-secondary-400">Package Statistics</h3>
             </div>
             <div className="p-4">
             <div className="grid grid-cols-3 gap-4">
@@ -728,7 +716,7 @@ const HostDetail = () => {
                 <div className="flex items-center justify-center w-12 h-12 bg-primary-100 dark:bg-primary-800 rounded-lg mx-auto mb-2">
                   <Package className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                 </div>
-                <p className="text-2xl font-bold text-secondary-900 dark:text-white">{host.stats.totalPackages}</p>
+                <p className="text-2xl font-bold text-secondary-900 dark:text-white">{host.stats.total_packages}</p>
                 <p className="text-sm text-secondary-500 dark:text-secondary-300">Total Packages</p>
               </div>
               
@@ -740,7 +728,7 @@ const HostDetail = () => {
                 <div className="flex items-center justify-center w-12 h-12 bg-warning-100 dark:bg-warning-800 rounded-lg mx-auto mb-2 group-hover:bg-warning-200 dark:group-hover:bg-warning-700 transition-colors">
                   <Clock className="h-6 w-6 text-warning-600 dark:text-warning-400" />
                 </div>
-                <p className="text-2xl font-bold text-secondary-900 dark:text-white">{host.stats.outdatedPackages}</p>
+                <p className="text-2xl font-bold text-secondary-900 dark:text-white">{host.stats.outdated_packages}</p>
                 <p className="text-sm text-secondary-500 dark:text-secondary-300">Outdated Packages</p>
               </button>
               
@@ -752,7 +740,7 @@ const HostDetail = () => {
                 <div className="flex items-center justify-center w-12 h-12 bg-danger-100 dark:bg-danger-800 rounded-lg mx-auto mb-2 group-hover:bg-danger-200 dark:group-hover:bg-danger-700 transition-colors">
                   <Shield className="h-6 w-6 text-danger-600 dark:text-danger-400" />
                 </div>
-                <p className="text-2xl font-bold text-secondary-900 dark:text-white">{host.stats.securityUpdates}</p>
+                <p className="text-2xl font-bold text-secondary-900 dark:text-white">{host.stats.security_updates}</p>
                 <p className="text-sm text-secondary-500 dark:text-secondary-300">Security Updates</p>
               </button>
             </div>
@@ -797,8 +785,40 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
 
   const serverUrl = serverUrlData?.server_url || 'http://localhost:3001'
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text)
+  const copyToClipboard = async (text) => {
+    try {
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text)
+        return
+      }
+      
+      // Fallback for older browsers or non-secure contexts
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      
+      try {
+        const successful = document.execCommand('copy')
+        if (!successful) {
+          throw new Error('Copy command failed')
+        }
+      } catch (err) {
+        // If all else fails, show the text in a prompt
+        prompt('Copy this command:', text)
+      } finally {
+        document.body.removeChild(textArea)
+      }
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err)
+      // Show the text in a prompt as last resort
+      prompt('Copy this command:', text)
+    }
   }
 
   const getSetupCommands = () => {
@@ -1035,12 +1055,12 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
-                      value={host.apiId}
+                      value={host.api_id}
                       readOnly
                       className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-secondary-50 dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
                     />
                     <button
-                      onClick={() => copyToClipboard(host.apiId)}
+                      onClick={() => copyToClipboard(host.api_id)}
                       className="btn-outline flex items-center gap-1"
                     >
                       <Copy className="h-4 w-4" />
@@ -1054,7 +1074,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
                   <div className="flex items-center gap-2">
                     <input
                       type={showApiKey ? 'text' : 'password'}
-                      value={host.apiKey}
+                      value={host.api_key}
                       readOnly
                       className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-secondary-50 dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
                     />
@@ -1065,7 +1085,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`
                       {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                     <button
-                      onClick={() => copyToClipboard(host.apiKey)}
+                      onClick={() => copyToClipboard(host.api_key)}
                       className="btn-outline flex items-center gap-1"
                     >
                       <Copy className="h-4 w-4" />

@@ -35,6 +35,40 @@ if [[ $EUID -ne 0 ]]; then
    error "This script must be run as root (use sudo)"
 fi
 
+# Install required dependencies
+info "📦 Installing required dependencies..."
+
+# Detect package manager and install jq
+if command -v apt-get >/dev/null 2>&1; then
+    # Debian/Ubuntu
+    apt-get update >/dev/null 2>&1
+    apt-get install -y jq curl >/dev/null 2>&1
+elif command -v yum >/dev/null 2>&1; then
+    # CentOS/RHEL 7
+    yum install -y jq curl >/dev/null 2>&1
+elif command -v dnf >/dev/null 2>&1; then
+    # CentOS/RHEL 8+/Fedora
+    dnf install -y jq curl >/dev/null 2>&1
+elif command -v zypper >/dev/null 2>&1; then
+    # openSUSE
+    zypper install -y jq curl >/dev/null 2>&1
+elif command -v pacman >/dev/null 2>&1; then
+    # Arch Linux
+    pacman -S --noconfirm jq curl >/dev/null 2>&1
+elif command -v apk >/dev/null 2>&1; then
+    # Alpine Linux
+    apk add --no-cache jq curl >/dev/null 2>&1
+else
+    warning "Could not detect package manager. Please ensure 'jq' and 'curl' are installed manually."
+fi
+
+# Verify jq installation
+if ! command -v jq >/dev/null 2>&1; then
+    error "Failed to install 'jq'. Please install it manually: https://stedolan.github.io/jq/download/"
+fi
+
+success "Dependencies installed successfully!"
+
 # Default server URL (will be replaced by backend with configured URL)
 PATCHMON_URL="http://localhost:3001"
 
@@ -137,6 +171,7 @@ fi
 success "🎉 PatchMon Agent installation complete!"
 echo ""
 echo "📋 Installation Summary:"
+echo "   • Dependencies installed: jq, curl"
 echo "   • Agent installed: /usr/local/bin/patchmon-agent.sh"
 echo "   • Agent version: $AGENT_VERSION"
 if [[ "$EXPECTED_VERSION" != "Unknown" ]]; then

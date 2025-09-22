@@ -18,10 +18,6 @@ export const AuthProvider = ({ children }) => {
   const [permissionsLoading, setPermissionsLoading] = useState(false)
   const [needsFirstTimeSetup, setNeedsFirstTimeSetup] = useState(false)
   
-  // Debug: Log when needsFirstTimeSetup changes
-  useEffect(() => {
-    console.log('needsFirstTimeSetup changed to:', needsFirstTimeSetup)
-  }, [needsFirstTimeSetup])
   const [checkingSetup, setCheckingSetup] = useState(true)
 
   // Initialize auth state from localStorage
@@ -227,21 +223,17 @@ export const AuthProvider = ({ children }) => {
   // Check if any admin users exist (for first-time setup)
   const checkAdminUsersExist = useCallback(async () => {
     try {
-      console.log('Making API call to check admin users...')
       const response = await fetch('/api/v1/auth/check-admin-users', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         }
       })
-      
+
       if (response.ok) {
         const data = await response.json()
-        console.log('Admin check response:', data) // Debug log
-        console.log('hasAdminUsers:', data.hasAdminUsers, 'Setting needsFirstTimeSetup to:', !data.hasAdminUsers)
         setNeedsFirstTimeSetup(!data.hasAdminUsers)
       } else {
-        console.log('Admin check failed:', response.status, response.statusText) // Debug log
         // If endpoint doesn't exist or fails, assume setup is needed
         setNeedsFirstTimeSetup(true)
       }
@@ -256,12 +248,9 @@ export const AuthProvider = ({ children }) => {
 
   // Check for admin users on initial load
   useEffect(() => {
-    console.log('AuthContext useEffect triggered:', { token: !!token, user: !!user })
     if (!token && !user) {
-      console.log('Calling checkAdminUsersExist...')
       checkAdminUsersExist()
     } else {
-      console.log('Skipping admin check - user already authenticated')
       setCheckingSetup(false)
     }
   }, [token, user, checkAdminUsersExist])

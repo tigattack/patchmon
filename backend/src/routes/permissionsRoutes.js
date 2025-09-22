@@ -47,16 +47,16 @@ router.put('/roles/:role', authenticateToken, requireManageSettings, async (req,
   try {
     const { role } = req.params;
     const {
-      canViewDashboard,
-      canViewHosts,
-      canManageHosts,
-      canViewPackages,
-      canManagePackages,
-      canViewUsers,
-      canManageUsers,
-      canViewReports,
-      canExportData,
-      canManageSettings
+      can_view_dashboard,
+      can_view_hosts,
+      can_manage_hosts,
+      can_view_packages,
+      can_manage_packages,
+      can_view_users,
+      can_manage_users,
+      can_view_reports,
+      can_export_data,
+      can_manage_settings
     } = req.body;
 
     // Prevent modifying admin role permissions (admin should always have full access)
@@ -67,31 +67,31 @@ router.put('/roles/:role', authenticateToken, requireManageSettings, async (req,
     const permissions = await prisma.role_permissions.upsert({
       where: { role },
       update: {
-        can_view_dashboard: canViewDashboard,
-        can_view_hosts: canViewHosts,
-        can_manage_hosts: canManageHosts,
-        can_view_packages: canViewPackages,
-        can_manage_packages: canManagePackages,
-        can_view_users: canViewUsers,
-        can_manage_users: canManageUsers,
-        can_view_reports: canViewReports,
-        can_export_data: canExportData,
-        can_manage_settings: canManageSettings,
+        can_view_dashboard: can_view_dashboard,
+        can_view_hosts: can_view_hosts,
+        can_manage_hosts: can_manage_hosts,
+        can_view_packages: can_view_packages,
+        can_manage_packages: can_manage_packages,
+        can_view_users: can_view_users,
+        can_manage_users: can_manage_users,
+        can_view_reports: can_view_reports,
+        can_export_data: can_export_data,
+        can_manage_settings: can_manage_settings,
         updated_at: new Date()
       },
       create: {
         id: require('uuid').v4(),
         role,
-        can_view_dashboard: canViewDashboard,
-        can_view_hosts: canViewHosts,
-        can_manage_hosts: canManageHosts,
-        can_view_packages: canViewPackages,
-        can_manage_packages: canManagePackages,
-        can_view_users: canViewUsers,
-        can_manage_users: canManageUsers,
-        can_view_reports: canViewReports,
-        can_export_data: canExportData,
-        can_manage_settings: canManageSettings,
+        can_view_dashboard: can_view_dashboard,
+        can_view_hosts: can_view_hosts,
+        can_manage_hosts: can_manage_hosts,
+        can_view_packages: can_view_packages,
+        can_manage_packages: can_manage_packages,
+        can_view_users: can_view_users,
+        can_manage_users: can_manage_users,
+        can_view_reports: can_view_reports,
+        can_export_data: can_export_data,
+        can_manage_settings: can_manage_settings,
         updated_at: new Date()
       }
     });

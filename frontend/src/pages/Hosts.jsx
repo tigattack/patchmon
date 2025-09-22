@@ -121,16 +121,16 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
               {/* No Group Option */}
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, hostGroupId: '' })}
+                onClick={() => setFormData({ ...formData, host_group_id: '' })}
                 className={`flex flex-col items-center justify-center px-2 py-3 text-center border-2 rounded-lg transition-all duration-200 relative min-h-[80px] ${
-                  formData.hostGroupId === ''
+                  formData.host_group_id === ''
                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                     : 'border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 text-secondary-700 dark:text-secondary-200 hover:border-secondary-400 dark:hover:border-secondary-500'
                 }`}
               >
                 <div className="text-xs font-medium">No Group</div>
                 <div className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">Ungrouped</div>
-                {formData.hostGroupId === '' && (
+                {formData.host_group_id === '' && (
                   <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary-500 flex items-center justify-center">
                     <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                   </div>
@@ -142,9 +142,9 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
                 <button
                   key={group.id}
                   type="button"
-                  onClick={() => setFormData({ ...formData, hostGroupId: group.id })}
+                  onClick={() => setFormData({ ...formData, host_group_id: group.id })}
                   className={`flex flex-col items-center justify-center px-2 py-3 text-center border-2 rounded-lg transition-all duration-200 relative min-h-[80px] ${
-                    formData.hostGroupId === group.id
+                    formData.host_group_id === group.id
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                       : 'border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 text-secondary-700 dark:text-secondary-200 hover:border-secondary-400 dark:hover:border-secondary-500'
                   }`}
@@ -159,7 +159,7 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
                     <div className="text-xs font-medium truncate max-w-full">{group.name}</div>
                   </div>
                   <div className="text-xs text-secondary-500 dark:text-secondary-400">Group</div>
-                  {formData.hostGroupId === group.id && (
+                  {formData.host_group_id === group.id && (
                     <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary-500 flex items-center justify-center">
                       <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                     </div>
@@ -214,9 +214,43 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
     }
   }, [host?.isNewHost])
 
-  const copyToClipboard = (text, label) => {
-    navigator.clipboard.writeText(text)
-    alert(`${label} copied to clipboard!`)
+  const copyToClipboard = async (text, label) => {
+    try {
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text)
+        alert(`${label} copied to clipboard!`)
+        return
+      }
+      
+      // Fallback for older browsers or non-secure contexts
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      
+      try {
+        const successful = document.execCommand('copy')
+        if (successful) {
+          alert(`${label} copied to clipboard!`)
+        } else {
+          throw new Error('Copy command failed')
+        }
+      } catch (err) {
+        // If all else fails, show the text in a prompt
+        prompt(`Copy this ${label.toLowerCase()}:`, text)
+      } finally {
+        document.body.removeChild(textArea)
+      }
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err)
+      // Show the text in a prompt as last resort
+      prompt(`Copy this ${label.toLowerCase()}:`, text)
+    }
   }
 
   // Fetch server URL from settings
@@ -604,6 +638,7 @@ const Hosts = () => {
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedHosts, setSelectedHosts] = useState([])
   const [showBulkAssignModal, setShowBulkAssignModal] = useState(false)
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   
@@ -622,6 +657,9 @@ const Hosts = () => {
   // Handle URL filter parameters
   useEffect(() => {
     const filter = searchParams.get('filter')
+    const showFiltersParam = searchParams.get('showFilters')
+    const osFilterParam = searchParams.get('osFilter')
+    
     if (filter === 'needsUpdates') {
       setShowFilters(true)
       setStatusFilter('all')
@@ -634,6 +672,18 @@ const Hosts = () => {
       setShowFilters(true)
       setStatusFilter('active')
       // We'll filter hosts that are up to date in the filtering logic
+    } else if (filter === 'stale') {
+      setShowFilters(true)
+      setStatusFilter('all')
+      // We'll filter hosts that are stale in the filtering logic
+    } else if (showFiltersParam === 'true') {
+      setShowFilters(true)
+    }
+    
+    // Handle OS filter parameter
+    if (osFilterParam) {
+      setShowFilters(true)
+      setOsFilter(osFilterParam)
     }
     
     // Handle add host action from navigation
@@ -732,7 +782,7 @@ const Hosts = () => {
               // Ensure hostGroupId is set correctly
               return {
                 ...updatedHost,
-                hostGroupId: updatedHost.hostGroup?.id || null
+                hostGroupId: updatedHost.host_groups?.id || null
               };
             }
             return host;
@@ -771,9 +821,6 @@ const Hosts = () => {
       });
     },
     onSuccess: (data) => {
-      console.log('updateHostGroupMutation success:', data);
-      console.log('Updated host data:', data.host);
-      console.log('Host group in response:', data.host.hostGroup);
       
       // Update the cache with the new host data
       queryClient.setQueryData(['hosts'], (oldData) => {
@@ -785,7 +832,7 @@ const Hosts = () => {
             // Ensure hostGroupId is set correctly
             const updatedHost = {
               ...data.host,
-              hostGroupId: data.host.hostGroup?.id || null
+              hostGroupId: data.host.host_groups?.id || null
             };
             console.log('Updated host with hostGroupId:', updatedHost);
             return updatedHost;
@@ -803,6 +850,19 @@ const Hosts = () => {
       console.error('updateHostGroupMutation error:', error);
     }
   })
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (hostIds) => adminHostsAPI.deleteBulk(hostIds),
+    onSuccess: (data) => {
+      console.log('Bulk delete success:', data);
+      queryClient.invalidateQueries(['hosts']);
+      setSelectedHosts([]);
+      setShowBulkDeleteModal(false);
+    },
+    onError: (error) => {
+      console.error('Bulk delete error:', error);
+    }
+  });
 
   // Helper functions for bulk selection
   const handleSelectHost = (hostId) => {
@@ -825,6 +885,10 @@ const Hosts = () => {
     bulkUpdateGroupMutation.mutate({ hostIds: selectedHosts, hostGroupId })
   }
 
+  const handleBulkDelete = () => {
+    bulkDeleteMutation.mutate(selectedHosts)
+  }
+
   // Table filtering and sorting logic
   const filteredAndSortedHosts = React.useMemo(() => {
     if (!hosts) return []
@@ -838,8 +902,8 @@ const Hosts = () => {
 
       // Group filter
       const matchesGroup = groupFilter === 'all' || 
-        (groupFilter === 'ungrouped' && !host.hostGroup) ||
-        (groupFilter !== 'ungrouped' && host.hostGroup?.id === groupFilter)
+        (groupFilter === 'ungrouped' && !host.host_groups) ||
+        (groupFilter !== 'ungrouped' && host.host_groups?.id === groupFilter)
 
       // Status filter
       const matchesStatus = statusFilter === 'all' || (host.effectiveStatus || host.status) === statusFilter
@@ -847,12 +911,13 @@ const Hosts = () => {
       // OS filter
       const matchesOs = osFilter === 'all' || host.os_type?.toLowerCase() === osFilter.toLowerCase()
 
-      // URL filter for hosts needing updates, inactive hosts, or up-to-date hosts
+      // URL filter for hosts needing updates, inactive hosts, up-to-date hosts, or stale hosts
       const filter = searchParams.get('filter')
       const matchesUrlFilter = 
         (filter !== 'needsUpdates' || (host.updatesCount && host.updatesCount > 0)) &&
         (filter !== 'inactive' || (host.effectiveStatus || host.status) === 'inactive') &&
-        (filter !== 'upToDate' || (!host.isStale && host.updatesCount === 0))
+        (filter !== 'upToDate' || (!host.isStale && host.updatesCount === 0)) &&
+        (filter !== 'stale' || host.isStale)
 
       // Hide stale filter
       const matchesHideStale = !hideStale || !host.isStale
@@ -878,8 +943,8 @@ const Hosts = () => {
           bValue = b.ip?.toLowerCase() || 'zzz_no_ip'
           break
         case 'group':
-          aValue = a.hostGroup?.name || 'zzz_ungrouped'
-          bValue = b.hostGroup?.name || 'zzz_ungrouped'
+          aValue = a.host_groups?.name || 'zzz_ungrouped'
+          bValue = b.host_groups?.name || 'zzz_ungrouped'
           break
         case 'os':
           aValue = a.os_type?.toLowerCase() || 'zzz_unknown'
@@ -929,7 +994,7 @@ const Hosts = () => {
       let groupKey
       switch (groupBy) {
         case 'group':
-          groupKey = host.hostGroup?.name || 'Ungrouped'
+          groupKey = host.host_groups?.name || 'Ungrouped'
           break
         case 'status':
           groupKey = (host.effectiveStatus || host.status).charAt(0).toUpperCase() + (host.effectiveStatus || host.status).slice(1)
@@ -1055,16 +1120,10 @@ const Hosts = () => {
           </div>
         )
       case 'group':
-        console.log('Rendering group for host:', {
-          hostId: host.id,
-          hostGroupId: host.hostGroupId,
-          hostGroup: host.hostGroup,
-          availableGroups: hostGroups
-        });
         return (
           <InlineGroupEdit
-            key={`${host.id}-${host.hostGroup?.id || 'ungrouped'}-${host.hostGroup?.name || 'ungrouped'}`}
-            value={host.hostGroup?.id}
+            key={`${host.id}-${host.host_groups?.id || 'ungrouped'}-${host.host_groups?.name || 'ungrouped'}`}
+            value={host.host_groups?.id}
             onSave={(newGroupId) => updateHostGroupMutation.mutate({ hostId: host.id, hostGroupId: newGroupId })}
             options={hostGroups || []}
             placeholder="Select group..."
@@ -1232,9 +1291,9 @@ const Hosts = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="h-[calc(100vh-7rem)] flex flex-col overflow-hidden">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-secondary-900 dark:text-white">Hosts</h1>
           <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
@@ -1262,7 +1321,7 @@ const Hosts = () => {
       </div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
         <div 
           className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
           onClick={handleTotalHostsClick}
@@ -1320,8 +1379,8 @@ const Hosts = () => {
       </div>
 
       {/* Hosts List */}
-      <div className="card">
-        <div className="px-4 py-4 sm:p-4">
+      <div className="card flex-1 flex flex-col overflow-hidden min-h-0">
+        <div className="px-4 py-4 sm:p-4 flex-1 flex flex-col overflow-hidden min-h-0">
           <div className="flex items-center justify-end mb-4">
             {selectedHosts.length > 0 && (
               <div className="flex items-center gap-3">
@@ -1334,6 +1393,13 @@ const Hosts = () => {
                 >
                   <Users className="h-4 w-4" />
                   Assign to Group
+                </button>
+                <button
+                  onClick={() => setShowBulkDeleteModal(true)}
+                  className="btn-danger flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
                 </button>
                 <button
                   onClick={() => setSelectedHosts([])}
@@ -1471,17 +1537,27 @@ const Hosts = () => {
             )}
           </div>
 
-          {(!hosts || hosts.length === 0) ? (
-            <div className="text-center py-8">
-              <Server className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
-              <p className="text-secondary-500">No hosts registered yet</p>
-              <p className="text-sm text-secondary-400 mt-2">
-                Click "Add Host" to manually register a new host and get API credentials
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(groupedHosts).map(([groupName, groupHosts]) => (
+          <div className="flex-1 overflow-hidden">
+            {(!hosts || hosts.length === 0) ? (
+              <div className="text-center py-8">
+                <Server className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
+                <p className="text-secondary-500">No hosts registered yet</p>
+                <p className="text-sm text-secondary-400 mt-2">
+                  Click "Add Host" to manually register a new host and get API credentials
+                </p>
+              </div>
+            ) : filteredAndSortedHosts.length === 0 ? (
+              <div className="text-center py-8">
+                <Search className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
+                <p className="text-secondary-500">No hosts match your current filters</p>
+                <p className="text-sm text-secondary-400 mt-2">
+                  Try adjusting your search terms or filters to see more results
+                </p>
+              </div>
+            ) : (
+              <div className="h-full overflow-auto">
+                <div className="space-y-6">
+                  {Object.entries(groupedHosts).map(([groupName, groupHosts]) => (
                 <div key={groupName} className="space-y-3">
                   {/* Group Header */}
                   {groupBy !== 'none' && (
@@ -1628,11 +1704,13 @@ const Hosts = () => {
                     </table>
                             </div>
                 </div>
-              ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Modals */}
       <AddHostModal 
@@ -1650,6 +1728,17 @@ const Hosts = () => {
           onClose={() => setShowBulkAssignModal(false)}
           onAssign={handleBulkAssign}
           isLoading={bulkUpdateGroupMutation.isPending}
+        />
+      )}
+
+      {/* Bulk Delete Modal */}
+      {showBulkDeleteModal && (
+        <BulkDeleteModal
+          selectedHosts={selectedHosts}
+          hosts={hosts}
+          onClose={() => setShowBulkDeleteModal(false)}
+          onDelete={handleBulkDelete}
+          isLoading={bulkDeleteMutation.isPending}
         />
       )}
 
@@ -1751,6 +1840,85 @@ const BulkAssignModal = ({ selectedHosts, hosts, onClose, onAssign, isLoading })
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+// Bulk Delete Modal Component
+const BulkDeleteModal = ({ selectedHosts, hosts, onClose, onDelete, isLoading }) => {
+  const selectedHostNames = hosts
+    .filter(host => selectedHosts.includes(host.id))
+    .map(host => host.friendly_name || host.hostname || host.id)
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onDelete()
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="px-6 py-4 border-b border-secondary-200 dark:border-secondary-600">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium text-secondary-900 dark:text-white">Delete Hosts</h3>
+            <button
+              onClick={onClose}
+              className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300"
+              disabled={isLoading}
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="px-6 py-4">
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="h-5 w-5 text-danger-600" />
+              <h4 className="text-sm font-medium text-danger-800 dark:text-danger-200">
+                Warning: This action cannot be undone
+              </h4>
+            </div>
+            <p className="text-sm text-secondary-600 dark:text-secondary-400 mb-4">
+              You are about to permanently delete {selectedHosts.length} host{selectedHosts.length !== 1 ? 's' : ''}. 
+              This will remove all host data, including package information, update history, and API credentials.
+            </p>
+          </div>
+
+          <div className="mb-4">
+            <p className="text-sm text-secondary-600 dark:text-secondary-400 mb-2">
+              Hosts to be deleted:
+            </p>
+            <div className="max-h-32 overflow-y-auto bg-secondary-50 dark:bg-secondary-700 rounded-md p-3">
+              {selectedHostNames.map((friendlyName, index) => (
+                <div key={index} className="text-sm text-secondary-700 dark:text-secondary-300">
+                  • {friendlyName}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn-outline"
+                disabled={isLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn-danger"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Deleting...' : `Delete ${selectedHosts.length} Host${selectedHosts.length !== 1 ? 's' : ''}`}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )

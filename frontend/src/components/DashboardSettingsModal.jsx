@@ -28,9 +28,11 @@ import {
   Settings as SettingsIcon
 } from 'lucide-react';
 import { dashboardPreferencesAPI } from '../utils/api';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Sortable Card Item Component
 const SortableCardItem = ({ card, onToggle }) => {
+  const { isDark } = useTheme();
   const {
     attributes,
     listeners,
@@ -50,7 +52,7 @@ const SortableCardItem = ({ card, onToggle }) => {
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center justify-between p-3 bg-white border border-secondary-200 rounded-lg ${
+      className={`flex items-center justify-between p-3 bg-white dark:bg-secondary-800 border border-secondary-200 dark:border-secondary-600 rounded-lg ${
         isDragging ? 'shadow-lg' : 'shadow-sm'
       }`}
     >
@@ -58,12 +60,12 @@ const SortableCardItem = ({ card, onToggle }) => {
         <button
           {...attributes}
           {...listeners}
-          className="text-secondary-400 hover:text-secondary-600 cursor-grab active:cursor-grabbing"
+          className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300 cursor-grab active:cursor-grabbing"
         >
           <GripVertical className="h-4 w-4" />
         </button>
         <div className="flex items-center gap-2">
-          <div className="text-sm font-medium text-secondary-900">
+          <div className="text-sm font-medium text-secondary-900 dark:text-white">
             {card.title}
           </div>
         </div>
@@ -73,8 +75,8 @@ const SortableCardItem = ({ card, onToggle }) => {
         onClick={() => onToggle(card.cardId)}
         className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
           card.enabled
-            ? 'bg-green-100 text-green-800 hover:bg-green-200'
-            : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+            ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800'
+            : 'bg-secondary-100 dark:bg-secondary-700 text-secondary-600 dark:text-secondary-300 hover:bg-secondary-200 dark:hover:bg-secondary-600'
         }`}
       >
         {card.enabled ? (
@@ -97,6 +99,7 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
   const [cards, setCards] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
   const queryClient = useQueryClient();
+  const { isDark } = useTheme();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -212,24 +215,24 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 bg-secondary-500 bg-opacity-75 transition-opacity" onClick={onClose} />
         
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div className="inline-block align-bottom bg-white dark:bg-secondary-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div className="bg-white dark:bg-secondary-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <SettingsIcon className="h-5 w-5 text-primary-600" />
-                <h3 className="text-lg font-medium text-secondary-900">
+                <h3 className="text-lg font-medium text-secondary-900 dark:text-white">
                   Dashboard Settings
                 </h3>
               </div>
               <button
                 onClick={onClose}
-                className="text-secondary-400 hover:text-secondary-600"
+                className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             
-            <p className="text-sm text-secondary-600 mb-6">
+            <p className="text-sm text-secondary-600 dark:text-secondary-400 mb-6">
               Customize your dashboard by reordering cards and toggling their visibility. 
               Drag cards to reorder them, and click the visibility toggle to show/hide cards.
             </p>
@@ -259,7 +262,7 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
             )}
           </div>
           
-          <div className="bg-secondary-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <div className="bg-secondary-50 dark:bg-secondary-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
               onClick={handleSave}
               disabled={!hasChanges || updatePreferencesMutation.isPending}
@@ -284,7 +287,7 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
             
             <button
               onClick={handleReset}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-secondary-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-secondary-700 hover:bg-secondary-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-secondary-300 dark:border-secondary-600 shadow-sm px-4 py-2 bg-white dark:bg-secondary-800 text-base font-medium text-secondary-700 dark:text-secondary-200 hover:bg-secondary-50 dark:hover:bg-secondary-700 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               Reset to Defaults
@@ -292,7 +295,7 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
             
             <button
               onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-secondary-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-secondary-700 hover:bg-secondary-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-secondary-300 dark:border-secondary-600 shadow-sm px-4 py-2 bg-white dark:bg-secondary-800 text-base font-medium text-secondary-700 dark:text-secondary-200 hover:bg-secondary-50 dark:hover:bg-secondary-700 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
             >
               Cancel
             </button>

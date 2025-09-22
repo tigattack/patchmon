@@ -168,6 +168,7 @@ model settings {
   last_update_check DateTime?
   latest_version    String?
   update_available  Boolean   @default(false)
+  signup_enabled    Boolean   @default(false)
 }
 
 model update_history {

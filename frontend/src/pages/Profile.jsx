@@ -517,9 +517,45 @@ const TfaTab = () => {
     regenerateBackupCodesMutation.mutate()
   }
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text)
-    setMessage({ type: 'success', text: 'Copied to clipboard!' })
+  const copyToClipboard = async (text) => {
+    try {
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text)
+        setMessage({ type: 'success', text: 'Copied to clipboard!' })
+        return
+      }
+      
+      // Fallback for older browsers or non-secure contexts
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      
+      try {
+        const successful = document.execCommand('copy')
+        if (successful) {
+          setMessage({ type: 'success', text: 'Copied to clipboard!' })
+        } else {
+          throw new Error('Copy command failed')
+        }
+      } catch (err) {
+        // If all else fails, show the text in a prompt
+        prompt('Copy this text:', text)
+        setMessage({ type: 'info', text: 'Text shown in prompt for manual copying' })
+      } finally {
+        document.body.removeChild(textArea)
+      }
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err)
+      // Show the text in a prompt as last resort
+      prompt('Copy this text:', text)
+      setMessage({ type: 'info', text: 'Text shown in prompt for manual copying' })
+    }
   }
 
   const downloadBackupCodes = () => {

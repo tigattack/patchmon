@@ -30,15 +30,19 @@ const FirstTimeAdminSetup = () => {
       return false
     }
     if (!formData.email.trim()) {
-      setError('Email is required')
+      setError('Email address is required')
       return false
     }
-    if (!formData.email.includes('@')) {
-      setError('Please enter a valid email address')
+    
+    // Enhanced email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email.trim())) {
+      setError('Please enter a valid email address (e.g., user@example.com)')
       return false
     }
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters')
+    
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters for security')
       return false
     }
     if (formData.password !== formData.confirmPassword) {
@@ -186,7 +190,7 @@ const FirstTimeAdminSetup = () => {
                 value={formData.password}
                 onChange={handleInputChange}
                 className="input w-full"
-                placeholder="Enter your password (min 6 characters)"
+                placeholder="Enter your password (min 8 characters)"
                 required
                 disabled={isLoading}
               />

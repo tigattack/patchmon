@@ -112,11 +112,19 @@ router.get('/', async (req, res) => {
 
         return {
           ...pkg,
+          affectedHostsCount: pkg._count.hostPackages,
+          affectedHosts: affectedHosts.map(hp => ({
+            hostId: hp.host.id,
+            friendlyName: hp.host.friendly_name,
+            osType: hp.host.os_type,
+            currentVersion: hp.current_version,
+            availableVersion: hp.available_version,
+            isSecurityUpdate: hp.is_security_update
+          })),
           stats: {
             totalInstalls: pkg._count.hostPackages,
             updatesNeeded: updatesCount,
-            securityUpdates: securityCount,
-            affectedHosts: affectedHosts.map(hp => hp.host)
+            securityUpdates: securityCount
           }
         };
       })

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
   Shield, 
@@ -145,17 +145,22 @@ const Permissions = () => {
 const RolePermissionsCard = ({ role, isEditing, onEdit, onCancel, onSave, onDelete }) => {
   const [permissions, setPermissions] = useState(role)
 
+  // Sync permissions state with role prop when it changes
+  useEffect(() => {
+    setPermissions(role)
+  }, [role])
+
   const permissionFields = [
-    { key: 'canViewDashboard', label: 'View Dashboard', icon: BarChart3, description: 'Access to the main dashboard' },
-    { key: 'canViewHosts', label: 'View Hosts', icon: Server, description: 'See host information and status' },
-    { key: 'canManageHosts', label: 'Manage Hosts', icon: Edit, description: 'Add, edit, and delete hosts' },
-    { key: 'canViewPackages', label: 'View Packages', icon: Package, description: 'See package information' },
-    { key: 'canManagePackages', label: 'Manage Packages', icon: Settings, description: 'Edit package details' },
-    { key: 'canViewUsers', label: 'View Users', icon: Users, description: 'See user list and details' },
-    { key: 'canManageUsers', label: 'Manage Users', icon: Shield, description: 'Add, edit, and delete users' },
-    { key: 'canViewReports', label: 'View Reports', icon: BarChart3, description: 'Access to reports and analytics' },
-    { key: 'canExportData', label: 'Export Data', icon: Download, description: 'Download data and reports' },
-    { key: 'canManageSettings', label: 'Manage Settings', icon: Settings, description: 'System configuration access' }
+    { key: 'can_view_dashboard', label: 'View Dashboard', icon: BarChart3, description: 'Access to the main dashboard' },
+    { key: 'can_view_hosts', label: 'View Hosts', icon: Server, description: 'See host information and status' },
+    { key: 'can_manage_hosts', label: 'Manage Hosts', icon: Edit, description: 'Add, edit, and delete hosts' },
+    { key: 'can_view_packages', label: 'View Packages', icon: Package, description: 'See package information' },
+    { key: 'can_manage_packages', label: 'Manage Packages', icon: Settings, description: 'Edit package details' },
+    { key: 'can_view_users', label: 'View Users', icon: Users, description: 'See user list and details' },
+    { key: 'can_manage_users', label: 'Manage Users', icon: Shield, description: 'Add, edit, and delete users' },
+    { key: 'can_view_reports', label: 'View Reports', icon: BarChart3, description: 'Access to reports and analytics' },
+    { key: 'can_export_data', label: 'Export Data', icon: Download, description: 'Download data and reports' },
+    { key: 'can_manage_settings', label: 'Manage Settings', icon: Settings, description: 'System configuration access' }
   ]
 
   const handlePermissionChange = (key, value) => {
@@ -196,7 +201,7 @@ const RolePermissionsCard = ({ role, isEditing, onEdit, onCancel, onSave, onDele
                 </button>
                 <button
                   onClick={onCancel}
-                  className="inline-flex items-center px-3 py-1 border border-secondary-300 text-sm font-medium rounded-md text-secondary-700 bg-white hover:bg-secondary-50"
+                  className="inline-flex items-center px-3 py-1 border border-secondary-300 dark:border-secondary-600 text-sm font-medium rounded-md text-secondary-700 dark:text-secondary-200 bg-white dark:bg-secondary-700 hover:bg-secondary-50 dark:hover:bg-secondary-600"
                 >
                   <X className="h-4 w-4 mr-1" />
                   Cancel
@@ -240,7 +245,7 @@ const RolePermissionsCard = ({ role, isEditing, onEdit, onCancel, onSave, onDele
                     type="checkbox"
                     checked={isChecked}
                     onChange={(e) => handlePermissionChange(field.key, e.target.checked)}
-                    disabled={!isEditing || (isAdminRole && field.key === 'canManageUsers')}
+                    disabled={!isEditing || (isAdminRole && field.key === 'can_manage_users')}
                     className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded disabled:opacity-50"
                   />
                 </div>
@@ -268,16 +273,16 @@ const RolePermissionsCard = ({ role, isEditing, onEdit, onCancel, onSave, onDele
 const AddRoleModal = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     role: '',
-    canViewDashboard: true,
-    canViewHosts: true,
-    canManageHosts: false,
-    canViewPackages: true,
-    canManagePackages: false,
-    canViewUsers: false,
-    canManageUsers: false,
-    canViewReports: true,
-    canExportData: false,
-    canManageSettings: false
+    can_view_dashboard: true,
+    can_view_hosts: true,
+    can_manage_hosts: false,
+    can_view_packages: true,
+    can_manage_packages: false,
+    can_view_users: false,
+    can_manage_users: false,
+    can_view_reports: true,
+    can_export_data: false,
+    can_manage_settings: false
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -309,12 +314,12 @@ const AddRoleModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-medium text-secondary-900 mb-4">Add New Role</h3>
+      <div className="bg-white dark:bg-secondary-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Add New Role</h3>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-secondary-700 mb-1">
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
               Role Name
             </label>
             <input
@@ -323,25 +328,25 @@ const AddRoleModal = ({ isOpen, onClose, onSuccess }) => {
               required
               value={formData.role}
               onChange={handleInputChange}
-              className="block w-full border-secondary-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+              className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
               placeholder="e.g., host_manager, readonly"
             />
-            <p className="mt-1 text-xs text-secondary-500">Use lowercase with underscores (e.g., host_manager)</p>
+            <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">Use lowercase with underscores (e.g., host_manager)</p>
           </div>
 
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-secondary-900 dark:text-white">Permissions</h4>
             {[
-              { key: 'canViewDashboard', label: 'View Dashboard' },
-              { key: 'canViewHosts', label: 'View Hosts' },
-              { key: 'canManageHosts', label: 'Manage Hosts' },
-              { key: 'canViewPackages', label: 'View Packages' },
-              { key: 'canManagePackages', label: 'Manage Packages' },
-              { key: 'canViewUsers', label: 'View Users' },
-              { key: 'canManageUsers', label: 'Manage Users' },
-              { key: 'canViewReports', label: 'View Reports' },
-              { key: 'canExportData', label: 'Export Data' },
-              { key: 'canManageSettings', label: 'Manage Settings' }
+              { key: 'can_view_dashboard', label: 'View Dashboard' },
+              { key: 'can_view_hosts', label: 'View Hosts' },
+              { key: 'can_manage_hosts', label: 'Manage Hosts' },
+              { key: 'can_view_packages', label: 'View Packages' },
+              { key: 'can_manage_packages', label: 'Manage Packages' },
+              { key: 'can_view_users', label: 'View Users' },
+              { key: 'can_manage_users', label: 'Manage Users' },
+              { key: 'can_view_reports', label: 'View Reports' },
+              { key: 'can_export_data', label: 'Export Data' },
+              { key: 'can_manage_settings', label: 'Manage Settings' }
             ].map((permission) => (
               <div key={permission.key} className="flex items-center">
                 <input
@@ -351,7 +356,7 @@ const AddRoleModal = ({ isOpen, onClose, onSuccess }) => {
                   onChange={handleInputChange}
                   className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
                 />
-                <label className="ml-2 block text-sm text-secondary-700">
+                <label className="ml-2 block text-sm text-secondary-700 dark:text-secondary-200">
                   {permission.label}
                 </label>
               </div>
@@ -359,8 +364,8 @@ const AddRoleModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           {error && (
-            <div className="bg-danger-50 border border-danger-200 rounded-md p-3">
-              <p className="text-sm text-danger-700">{error}</p>
+            <div className="bg-danger-50 dark:bg-danger-900 border border-danger-200 dark:border-danger-700 rounded-md p-3">
+              <p className="text-sm text-danger-700 dark:text-danger-300">{error}</p>
             </div>
           )}
 
@@ -368,7 +373,7 @@ const AddRoleModal = ({ isOpen, onClose, onSuccess }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-secondary-700 bg-white border border-secondary-300 rounded-md hover:bg-secondary-50"
+              className="px-4 py-2 text-sm font-medium text-secondary-700 dark:text-secondary-200 bg-white dark:bg-secondary-700 border border-secondary-300 dark:border-secondary-600 rounded-md hover:bg-secondary-50 dark:hover:bg-secondary-600"
             >
               Cancel
             </button>

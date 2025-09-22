@@ -71,8 +71,9 @@ const Packages = () => {
 
   // Handle affected hosts click
   const handleAffectedHostsClick = (pkg) => {
-    const hostIds = pkg.affectedHosts.map(host => host.hostId)
-    const hostNames = pkg.affectedHosts.map(host => host.friendlyName)
+    const affectedHosts = pkg.affectedHosts || []
+    const hostIds = affectedHosts.map(host => host.hostId)
+    const hostNames = affectedHosts.map(host => host.friendlyName)
     
     // Create URL with selected hosts and filter
     const params = new URLSearchParams()
@@ -128,8 +129,9 @@ const Packages = () => {
                              (securityFilter === 'security' && pkg.isSecurityUpdate) ||
                              (securityFilter === 'regular' && !pkg.isSecurityUpdate)
       
+      const affectedHosts = pkg.affectedHosts || []
       const matchesHost = hostFilter === 'all' || 
-                         pkg.affectedHosts.some(host => host.hostId === hostFilter)
+                         affectedHosts.some(host => host.hostId === hostFilter)
       
       return matchesSearch && matchesCategory && matchesSecurity && matchesHost
     })
@@ -148,8 +150,8 @@ const Packages = () => {
           bValue = b.latestVersion?.toLowerCase() || ''
           break
         case 'affectedHosts':
-          aValue = a.affectedHostsCount || 0
-          bValue = b.affectedHostsCount || 0
+          aValue = a.affectedHostsCount || a.affectedHosts?.length || 0
+          bValue = b.affectedHostsCount || b.affectedHosts?.length || 0
           break
         case 'priority':
           aValue = a.isSecurityUpdate ? 0 : 1 // Security updates first
@@ -241,14 +243,15 @@ const Packages = () => {
           </div>
         )
       case 'affectedHosts':
+        const affectedHostsCount = pkg.affectedHostsCount || pkg.affectedHosts?.length || 0
         return (
           <button
             onClick={() => handleAffectedHostsClick(pkg)}
             className="text-left hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded p-1 -m-1 transition-colors group"
-            title={`Click to view all ${pkg.affectedHostsCount} affected hosts`}
+            title={`Click to view all ${affectedHostsCount} affected hosts`}
           >
             <div className="text-sm text-secondary-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">
-              {pkg.affectedHostsCount} host{pkg.affectedHostsCount !== 1 ? 's' : ''}
+              {affectedHostsCount} host{affectedHostsCount !== 1 ? 's' : ''}
             </div>
           </button>
         )
@@ -278,7 +281,8 @@ const Packages = () => {
   // Calculate unique affected hosts
   const uniqueAffectedHosts = new Set()
   packages?.forEach(pkg => {
-    pkg.affectedHosts.forEach(host => {
+    const affectedHosts = pkg.affectedHosts || []
+    affectedHosts.forEach(host => {
       uniqueAffectedHosts.add(host.hostId)
     })
   })
@@ -458,7 +462,7 @@ const Packages = () => {
                 >
                   <option value="all">All Hosts</option>
                   {hosts?.map(host => (
-                    <option key={host.id} value={host.id}>{host.friendlyName}</option>
+                    <option key={host.id} value={host.id}>{host.friendly_name}</option>
                   ))}
                 </select>
               </div>

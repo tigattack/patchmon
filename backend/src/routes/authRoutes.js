@@ -34,7 +34,7 @@ router.get('/check-admin-users', async (req, res) => {
 router.post('/setup-admin', [
   body('username').isLength({ min: 1 }).withMessage('Username is required'),
   body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters for security')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -425,6 +425,17 @@ router.post('/admin/users/:userId/reset-password', authenticateToken, requireMan
   }
 });
 
+// Check if signup is enabled (public endpoint)
+router.get('/signup-enabled', async (req, res) => {
+  try {
+    const settings = await prisma.settings.findFirst();
+    res.json({ signupEnabled: settings?.signup_enabled || false });
+  } catch (error) {
+    console.error('Error checking signup status:', error);
+    res.status(500).json({ error: 'Failed to check signup status' });
+  }
+});
+
 // Public signup endpoint
 router.post('/signup', [
   body('username').isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
@@ -432,6 +443,12 @@ router.post('/signup', [
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
 ], async (req, res) => {
   try {
+    // Check if signup is enabled
+    const settings = await prisma.settings.findFirst();
+    if (!settings?.signup_enabled) {
+      return res.status(403).json({ error: 'User signup is currently disabled' });
+    }
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });

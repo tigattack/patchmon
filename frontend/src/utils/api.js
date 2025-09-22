@@ -60,6 +60,7 @@ export const adminHostsAPI = {
   create: (data) => api.post('/hosts/create', data),
   list: () => api.get('/hosts/admin/list'),
   delete: (hostId) => api.delete(`/hosts/${hostId}`),
+  deleteBulk: (hostIds) => api.delete('/hosts/bulk', { data: { hostIds } }),
   regenerateCredentials: (hostId) => api.post(`/hosts/${hostId}/regenerate-credentials`),
   updateGroup: (hostId, hostGroupId) => api.put(`/hosts/${hostId}/group`, { hostGroupId }),
   bulkUpdateGroup: (hostIds, hostGroupId) => api.put('/hosts/bulk/group', { hostIds, hostGroupId }),

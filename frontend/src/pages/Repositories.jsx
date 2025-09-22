@@ -19,7 +19,8 @@ import {
   ArrowDown,
   X,
   GripVertical,
-  Check
+  Check,
+  RefreshCw
 } from 'lucide-react';
 import { repositoryAPI } from '../utils/api';
 
@@ -60,7 +61,7 @@ const Repositories = () => {
   };
 
   // Fetch repositories
-  const { data: repositories = [], isLoading, error } = useQuery({
+  const { data: repositories = [], isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['repositories'],
     queryFn: () => repositoryAPI.list().then(res => res.data)
   });
@@ -132,14 +133,6 @@ const Repositories = () => {
                            repo.url.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            repo.distribution.toLowerCase().includes(searchTerm.toLowerCase());
       
-      // Debug logging
-      console.log('Filtering repo:', {
-        name: repo.name,
-        isSecure: repo.isSecure,
-        filterType,
-        url: repo.url
-      });
-      
       // Check security based on URL if isSecure property doesn't exist
       const isSecure = repo.isSecure !== undefined ? repo.isSecure : repo.url.startsWith('https://');
       
@@ -150,13 +143,6 @@ const Repositories = () => {
       const matchesStatus = filterStatus === 'all' ||
                            (filterStatus === 'active' && repo.is_active === true) ||
                            (filterStatus === 'inactive' && repo.is_active === false);
-      
-      console.log('Filter results:', {
-        matchesSearch,
-        matchesType,
-        matchesStatus,
-        final: matchesSearch && matchesType && matchesStatus
-      });
       
       return matchesSearch && matchesType && matchesStatus;
     });
@@ -211,6 +197,26 @@ const Repositories = () => {
 
   return (
     <div className="h-[calc(100vh-7rem)] flex flex-col overflow-hidden">
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-secondary-900 dark:text-white">Repositories</h1>
+          <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
+            Manage and monitor your package repositories
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="btn-outline flex items-center gap-2"
+            title="Refresh repositories data"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
+      </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6 flex-shrink-0">
@@ -437,7 +443,7 @@ const Repositories = () => {
         return (
           <div className="flex items-center justify-center gap-1 text-sm text-secondary-900 dark:text-white">
             <Users className="h-4 w-4" />
-            <span>{repo.hostCount}</span>
+            <span>{repo.host_count}</span>
           </div>
         )
       case 'actions':

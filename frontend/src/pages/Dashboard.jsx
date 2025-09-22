@@ -9,13 +9,15 @@ import {
   TrendingUp,
   RefreshCw,
   Clock,
-  WifiOff
+  WifiOff,
+  Settings
 } from 'lucide-react'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js'
 import { Pie, Bar } from 'react-chartjs-2'
 import { dashboardAPI, dashboardPreferencesAPI, settingsAPI, formatRelativeTime } from '../utils/api'
 import DashboardSettingsModal from '../components/DashboardSettingsModal'
 import { useTheme } from '../contexts/ThemeContext'
+import { useAuth } from '../contexts/AuthContext'
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title)
@@ -25,6 +27,7 @@ const Dashboard = () => {
   const [cardPreferences, setCardPreferences] = useState([])
   const navigate = useNavigate()
   const { isDark } = useTheme()
+  const { user } = useAuth()
 
   // Navigation handlers
   const handleTotalHostsClick = () => {
@@ -52,15 +55,59 @@ const Dashboard = () => {
   }
 
   const handleOSDistributionClick = () => {
-    navigate('/hosts', { replace: true })
+    navigate('/hosts?showFilters=true', { replace: true })
   }
 
   const handleUpdateStatusClick = () => {
-    navigate('/hosts', { replace: true })
+    navigate('/hosts?filter=needsUpdates', { replace: true })
   }
 
   const handlePackagePriorityClick = () => {
     navigate('/packages?filter=security')
+  }
+
+  // Chart click handlers
+  const handleOSChartClick = (event, elements) => {
+    if (elements.length > 0) {
+      const elementIndex = elements[0].index
+      const osName = stats.charts.osDistribution[elementIndex].name.toLowerCase()
+      navigate(`/hosts?osFilter=${osName}&showFilters=true`, { replace: true })
+    }
+  }
+
+  const handleUpdateStatusChartClick = (event, elements) => {
+    if (elements.length > 0) {
+      const elementIndex = elements[0].index
+      const statusName = stats.charts.updateStatusDistribution[elementIndex].name
+      
+      // Map status names to filter parameters
+      let filter = ''
+      if (statusName.toLowerCase().includes('needs updates')) {
+        filter = 'needsUpdates'
+      } else if (statusName.toLowerCase().includes('up to date')) {
+        filter = 'upToDate'
+      } else if (statusName.toLowerCase().includes('stale')) {
+        filter = 'stale'
+      }
+      
+      if (filter) {
+        navigate(`/hosts?filter=${filter}`, { replace: true })
+      }
+    }
+  }
+
+  const handlePackagePriorityChartClick = (event, elements) => {
+    if (elements.length > 0) {
+      const elementIndex = elements[0].index
+      const priorityName = stats.charts.packageUpdateDistribution[elementIndex].name
+      
+      // Map priority names to filter parameters
+      if (priorityName.toLowerCase().includes('security')) {
+        navigate('/packages?filter=security', { replace: true })
+      } else if (priorityName.toLowerCase().includes('outdated')) {
+        navigate('/packages?filter=outdated', { replace: true })
+      }
+    }
   }
 
   // Helper function to format the update interval threshold
@@ -373,7 +420,7 @@ const Dashboard = () => {
           >
             <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Update Status</h3>
             <div className="h-64">
-              <Pie data={updateStatusChartData} options={chartOptions} />
+              <Pie data={updateStatusChartData} options={updateStatusChartOptions} />
             </div>
           </div>
         );
@@ -386,7 +433,7 @@ const Dashboard = () => {
           >
             <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Package Priority</h3>
             <div className="h-64">
-              <Pie data={packagePriorityChartData} options={chartOptions} />
+              <Pie data={packagePriorityChartData} options={packagePriorityChartOptions} />
             </div>
           </div>
         );
@@ -469,6 +516,39 @@ const Dashboard = () => {
         }
       },
     },
+    onClick: handleOSChartClick,
+  }
+
+  const updateStatusChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: isDark ? '#ffffff' : '#374151',
+          font: {
+            size: 12
+          }
+        }
+      },
+    },
+    onClick: handleUpdateStatusChartClick,
+  }
+
+  const packagePriorityChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: isDark ? '#ffffff' : '#374151',
+          font: {
+            size: 12
+          }
+        }
+      },
+    },
+    onClick: handlePackagePriorityChartClick,
   }
 
   const barChartOptions = {
@@ -582,12 +662,22 @@ const Dashboard = () => {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-secondary-900 dark:text-white">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-secondary-900 dark:text-white">
+            Welcome back, {user?.first_name || user?.username || 'User'} 👋
+          </h1>
           <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
             Overview of your PatchMon infrastructure
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="btn-outline flex items-center gap-2"
+            title="Customize dashboard layout"
+          >
+            <Settings className="h-4 w-4" />
+            Customize Dashboard
+          </button>
           <button
             onClick={() => refetch()}
             disabled={isFetching}

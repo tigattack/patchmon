@@ -23,7 +23,12 @@ import {
   Plus,
   Activity,
   Cog,
-  FileText
+  FileText,
+  Github,
+  MessageCircle,
+  Mail,
+  Star,
+  Globe
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -40,6 +45,7 @@ const Layout = ({ children }) => {
     return saved ? JSON.parse(saved) : false
   })
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [githubStars, setGithubStars] = useState(null)
   const location = useLocation()
   const { user, logout, canViewHosts, canManageHosts, canViewPackages, canViewUsers, canManageUsers, canManageSettings } = useAuth()
   const { updateAvailable } = useUpdateNotification()
@@ -133,10 +139,56 @@ const Layout = ({ children }) => {
     window.location.href = '/hosts?action=add'
   }
 
+  const copyEmailToClipboard = async () => {
+    const email = 'support@patchmon.net'
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(email)
+      } else {
+        // Fallback for non-secure contexts
+        const textArea = document.createElement('textarea')
+        textArea.value = email
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        textArea.style.top = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        document.execCommand('copy')
+        textArea.remove()
+      }
+      // You could add a toast notification here if you have one
+    } catch (err) {
+      console.error('Failed to copy email:', err)
+      // Fallback: show email in prompt
+      prompt('Copy this email address:', email)
+    }
+  }
+
+  // Fetch GitHub stars count
+  const fetchGitHubStars = async () => {
+    try {
+      const response = await fetch('https://api.github.com/repos/9technologygroup/patchmon.net')
+      if (response.ok) {
+        const data = await response.json()
+        setGithubStars(data.stargazers_count)
+      }
+    } catch (error) {
+      console.error('Failed to fetch GitHub stars:', error)
+    }
+  }
+
   // Short format for navigation area
   const formatRelativeTimeShort = (date) => {
+    if (!date) return 'Never'
+    
     const now = new Date()
-    const diff = now - new Date(date)
+    const dateObj = new Date(date)
+    
+    // Check if date is valid
+    if (isNaN(dateObj.getTime())) return 'Invalid date'
+    
+    const diff = now - dateObj
     const seconds = Math.floor(diff / 1000)
     const minutes = Math.floor(seconds / 60)
     const hours = Math.floor(minutes / 60)
@@ -165,6 +217,11 @@ const Layout = ({ children }) => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
+  }, [])
+
+  // Fetch GitHub stars on component mount
+  useEffect(() => {
+    fetchGitHubStars()
   }, [])
 
   return (
@@ -425,6 +482,7 @@ const Layout = ({ children }) => {
             </ul>
           </nav>
           
+
           {/* Profile Section - Bottom of Sidebar */}
           <div className="border-t border-secondary-200 dark:border-secondary-600">
             {!sidebarCollapsed ? (
@@ -560,20 +618,54 @@ const Layout = ({ children }) => {
               </h2>
             </div>
             <div className="flex items-center gap-x-4 lg:gap-x-6">
-              {/* Customize Dashboard Button - Only show on Dashboard page */}
-              {location.pathname === '/' && (
-                <button
-                  onClick={() => {
-                    // This will be handled by the Dashboard component
-                    const event = new CustomEvent('openDashboardSettings');
-                    window.dispatchEvent(event);
-                  }}
-                  className="btn-outline flex items-center gap-2"
+              {/* External Links */}
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://github.com/9technologygroup/patchmon.net"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 text-secondary-600 dark:text-secondary-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors shadow-sm group relative"
+                  title="⭐ Star us on GitHub! Click to open repository"
                 >
-                  <Settings className="h-4 w-4" />
-                  Customize Dashboard
+                  <Github className="h-5 w-5 flex-shrink-0" />
+                  {githubStars !== null && (
+                    <div className="flex items-center gap-0.5">
+                      <Star className="h-3 w-3 fill-current text-yellow-500" />
+                      <span className="text-sm font-medium">{githubStars}</span>
+                    </div>
+                  )}
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    ⭐ Star us on GitHub!
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-100"></div>
+                  </div>
+                </a>
+                <a
+                  href="https://discord.gg/DDKQeW6mnq"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-10 h-10 bg-gray-50 dark:bg-gray-800 text-secondary-600 dark:text-secondary-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors shadow-sm"
+                  title="Discord"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                </a>
+                <button
+                  onClick={copyEmailToClipboard}
+                  className="flex items-center justify-center w-10 h-10 bg-gray-50 dark:bg-gray-800 text-secondary-600 dark:text-secondary-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors shadow-sm"
+                  title="Copy support@patchmon.net"
+                >
+                  <Mail className="h-5 w-5" />
                 </button>
-              )}
+                <a
+                  href="https://patchmon.net"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-10 h-10 bg-gray-50 dark:bg-gray-800 text-secondary-600 dark:text-secondary-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors shadow-sm"
+                  title="Visit patchmon.net"
+                >
+                  <Globe className="h-5 w-5" />
+                </a>
+              </div>
             </div>
           </div>
         </div>

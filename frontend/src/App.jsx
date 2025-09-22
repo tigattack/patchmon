@@ -24,12 +24,8 @@ function AppRoutes() {
   const { needsFirstTimeSetup, checkingSetup, isAuthenticated } = useAuth()
   const isAuth = isAuthenticated() // Call the function to get boolean value
 
-  // Debug logging
-  console.log('AppRoutes state:', { needsFirstTimeSetup, checkingSetup, isAuthenticated: isAuth })
-
   // Show loading while checking if setup is needed
   if (checkingSetup) {
-    console.log('Showing loading screen...')
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-secondary-900 dark:to-secondary-800 flex items-center justify-center">
         <div className="text-center">
@@ -42,11 +38,8 @@ function AppRoutes() {
 
   // Show first-time setup if no admin users exist
   if (needsFirstTimeSetup && !isAuth) {
-    console.log('Showing FirstTimeAdminSetup component...')
     return <FirstTimeAdminSetup />
   }
-
-  console.log('Showing normal routes (Login/Dashboard)...')
 
   return (
     <Routes>

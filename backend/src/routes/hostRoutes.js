@@ -755,7 +755,15 @@ router.get('/admin/list', authenticateToken, requireManageHosts, async (req, res
         api_id: true,
         agent_version: true,
         auto_update: true,
-        created_at: true
+        created_at: true,
+        host_group_id: true,
+        host_groups: {
+          select: {
+            id: true,
+            name: true,
+            color: true
+          }
+        }
       },
       orderBy: { created_at: 'desc' }
     });
@@ -767,20 +775,124 @@ router.get('/admin/list', authenticateToken, requireManageHosts, async (req, res
   }
 });
 
+// Admin endpoint to delete multiple hosts
+router.delete('/bulk', authenticateToken, requireManageHosts, [
+  body('hostIds').isArray({ min: 1 }).withMessage('At least one host ID is required'),
+  body('hostIds.*').isLength({ min: 1 }).withMessage('Each host ID must be provided')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { hostIds } = req.body;
+    
+    // Verify all hosts exist before deletion
+    const existingHosts = await prisma.hosts.findMany({
+      where: { id: { in: hostIds } },
+      select: { id: true, friendly_name: true }
+    });
+
+    if (existingHosts.length !== hostIds.length) {
+      const foundIds = existingHosts.map(h => h.id);
+      const missingIds = hostIds.filter(id => !foundIds.includes(id));
+      return res.status(404).json({ 
+        error: 'Some hosts not found', 
+        missingIds 
+      });
+    }
+
+    // Delete all hosts (cascade will handle related data)
+    const deleteResult = await prisma.hosts.deleteMany({
+      where: { id: { in: hostIds } }
+    });
+
+    // Check if all hosts were actually deleted
+    if (deleteResult.count !== hostIds.length) {
+      console.warn(`Expected to delete ${hostIds.length} hosts, but only deleted ${deleteResult.count}`);
+    }
+
+    res.json({ 
+      message: `${deleteResult.count} host${deleteResult.count !== 1 ? 's' : ''} deleted successfully`,
+      deletedCount: deleteResult.count,
+      requestedCount: hostIds.length,
+      deletedHosts: existingHosts.map(h => ({ id: h.id, friendly_name: h.friendly_name }))
+    });
+  } catch (error) {
+    console.error('Bulk host deletion error:', error);
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P2025') {
+      return res.status(404).json({ 
+        error: 'Some hosts were not found or already deleted',
+        details: 'The hosts may have been deleted by another process or do not exist'
+      });
+    }
+    
+    if (error.code === 'P2003') {
+      return res.status(400).json({ 
+        error: 'Cannot delete hosts due to foreign key constraints',
+        details: 'Some hosts have related data that prevents deletion'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to delete hosts',
+      details: error.message || 'An unexpected error occurred'
+    });
+  }
+});
+
 // Admin endpoint to delete host
 router.delete('/:hostId', authenticateToken, requireManageHosts, async (req, res) => {
   try {
     const { hostId } = req.params;
+    
+    // Check if host exists first
+    const existingHost = await prisma.hosts.findUnique({
+      where: { id: hostId },
+      select: { id: true, friendly_name: true }
+    });
+
+    if (!existingHost) {
+      return res.status(404).json({ 
+        error: 'Host not found',
+        details: 'The host may have been deleted or does not exist'
+      });
+    }
     
     // Delete host and all related data (cascade)
     await prisma.hosts.delete({
       where: { id: hostId }
     });
 
-    res.json({ message: 'Host deleted successfully' });
+    res.json({ 
+      message: 'Host deleted successfully',
+      deletedHost: { id: existingHost.id, friendly_name: existingHost.friendly_name }
+    });
   } catch (error) {
     console.error('Host deletion error:', error);
-    res.status(500).json({ error: 'Failed to delete host' });
+    
+    // Handle specific Prisma errors
+    if (error.code === 'P2025') {
+      return res.status(404).json({ 
+        error: 'Host not found',
+        details: 'The host may have been deleted or does not exist'
+      });
+    }
+    
+    if (error.code === 'P2003') {
+      return res.status(400).json({ 
+        error: 'Cannot delete host due to foreign key constraints',
+        details: 'The host has related data that prevents deletion'
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to delete host',
+      details: error.message || 'An unexpected error occurred'
+    });
   }
 });
 

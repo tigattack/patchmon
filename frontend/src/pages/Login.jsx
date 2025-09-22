@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Lock, User, AlertCircle, Smartphone, ArrowLeft, Mail } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
@@ -19,9 +19,28 @@ const Login = () => {
   const [error, setError] = useState('')
   const [requiresTfa, setRequiresTfa] = useState(false)
   const [tfaUsername, setTfaUsername] = useState('')
+  const [signupEnabled, setSignupEnabled] = useState(false)
 
   const navigate = useNavigate()
   const { login } = useAuth()
+
+  // Check if signup is enabled
+  useEffect(() => {
+    const checkSignupEnabled = async () => {
+      try {
+        const response = await fetch('/api/v1/auth/signup-enabled')
+        if (response.ok) {
+          const data = await response.json()
+          setSignupEnabled(data.signupEnabled)
+        }
+      } catch (error) {
+        console.error('Failed to check signup status:', error)
+        // Default to disabled on error for security
+        setSignupEnabled(false)
+      }
+    }
+    checkSignupEnabled()
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -135,6 +154,10 @@ const Login = () => {
   }
 
   const toggleMode = () => {
+    // Only allow signup mode if signup is enabled
+    if (!signupEnabled && !isSignupMode) {
+      return // Don't allow switching to signup if disabled
+    }
     setIsSignupMode(!isSignupMode)
     setFormData({
       username: '',
@@ -269,18 +292,20 @@ const Login = () => {
             </button>
           </div>
 
-          <div className="text-center">
-            <p className="text-sm text-secondary-600">
-              {isSignupMode ? 'Already have an account?' : "Don't have an account?"}{' '}
-              <button
-                type="button"
-                onClick={toggleMode}
-                className="font-medium text-primary-600 hover:text-primary-500 focus:outline-none focus:underline"
-              >
-                {isSignupMode ? 'Sign in' : 'Sign up'}
-              </button>
-            </p>
-          </div>
+          {signupEnabled && (
+            <div className="text-center">
+              <p className="text-sm text-secondary-600">
+                {isSignupMode ? 'Already have an account?' : "Don't have an account?"}{' '}
+                <button
+                  type="button"
+                  onClick={toggleMode}
+                  className="font-medium text-primary-600 hover:text-primary-500 focus:outline-none focus:underline"
+                >
+                  {isSignupMode ? 'Sign in' : 'Sign up'}
+                </button>
+              </p>
+            </div>
+          )}
         </form>
         ) : (
           <form className="mt-8 space-y-6" onSubmit={handleTfaSubmit}>

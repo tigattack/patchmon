@@ -13,6 +13,7 @@ const Settings = () => {
     frontendUrl: 'http://localhost:3000',
     updateInterval: 60,
     autoUpdate: false,
+    signupEnabled: false,
     githubRepoUrl: 'git@github.com:9technologygroup/patchmon.net.git',
     repositoryType: 'public',
     sshKeyPath: '',
@@ -72,8 +73,6 @@ const Settings = () => {
   // Update form data when settings are loaded
   useEffect(() => {
     if (settings) {
-      console.log('Settings loaded:', settings);
-      console.log('updateInterval from settings:', settings.update_interval);
       const newFormData = {
         serverProtocol: settings.server_protocol || 'http',
         serverHost: settings.server_host || 'localhost',
@@ -81,12 +80,12 @@ const Settings = () => {
         frontendUrl: settings.frontend_url || 'http://localhost:3000',
         updateInterval: settings.update_interval || 60,
         autoUpdate: settings.auto_update || false,
+        signupEnabled: settings.signup_enabled === true ? true : false, // Explicit boolean conversion
         githubRepoUrl: settings.github_repo_url || 'git@github.com:9technologygroup/patchmon.net.git',
         repositoryType: settings.repository_type || 'public',
         sshKeyPath: settings.ssh_key_path || '',
         useCustomSshKey: !!settings.ssh_key_path
       };
-      console.log('Setting form data to:', newFormData);
       setFormData(newFormData);
       setIsDirty(false);
     }
@@ -95,34 +94,14 @@ const Settings = () => {
   // Update settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: (data) => {
-      console.log('Mutation called with data:', data);
-      return settingsAPI.update(data).then(res => {
-        console.log('API response:', res);
-        return res.data;
-      });
+      return settingsAPI.update(data).then(res => res.data);
     },
     onSuccess: (data) => {
-      console.log('Mutation success:', data);
-      console.log('Invalidating queries and updating form data');
       queryClient.invalidateQueries(['settings']);
-      // Update form data with the returned data
-      setFormData({
-        serverProtocol: data.settings?.server_protocol || data.server_protocol || 'http',
-        serverHost: data.settings?.server_host || data.server_host || 'localhost',
-        serverPort: data.settings?.server_port || data.server_port || 3001,
-        frontendUrl: data.settings?.frontend_url || data.frontend_url || 'http://localhost:3000',
-        updateInterval: data.settings?.update_interval || data.update_interval || 60,
-        autoUpdate: data.settings?.auto_update || data.auto_update || false,
-        githubRepoUrl: data.settings?.github_repo_url || data.github_repo_url || 'git@github.com:9technologygroup/patchmon.net.git',
-        repositoryType: data.settings?.repository_type || data.repository_type || 'public',
-        sshKeyPath: data.settings?.ssh_key_path || data.ssh_key_path || '',
-        useCustomSshKey: !!(data.settings?.ssh_key_path || data.ssh_key_path)
-      });
       setIsDirty(false);
       setErrors({});
     },
     onError: (error) => {
-      console.log('Mutation error:', error);
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors.reduce((acc, err) => {
           acc[err.path] = err.msg;
@@ -138,20 +117,12 @@ const Settings = () => {
   const { data: agentVersions, isLoading: agentVersionsLoading, error: agentVersionsError } = useQuery({
     queryKey: ['agentVersions'],
     queryFn: () => {
-      console.log('Fetching agent versions...');
       return agentVersionAPI.list().then(res => {
-        console.log('Agent versions API response:', res);
         return res.data;
       });
     }
   });
 
-  // Debug agent versions
-  useEffect(() => {
-    console.log('Agent versions data:', agentVersions);
-    console.log('Agent versions loading:', agentVersionsLoading);
-    console.log('Agent versions error:', agentVersionsError);
-  }, [agentVersions, agentVersionsLoading, agentVersionsError]);
 
   // Load current version on component mount
   useEffect(() => {
@@ -213,7 +184,7 @@ const Settings = () => {
         currentVersion: data.currentVersion,
         latestVersion: data.latestVersion,
         isUpdateAvailable: data.isUpdateAvailable,
-        lastUpdateCheck: data.lastUpdateCheck,
+        last_update_check: data.last_update_check,
         checking: false,
         error: null
       });
@@ -264,10 +235,8 @@ const Settings = () => {
   };
 
   const handleInputChange = (field, value) => {
-    console.log(`handleInputChange: ${field} = ${value}`);
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
-      console.log('New form data:', newData);
       return newData;
     });
     setIsDirty(true);
@@ -316,10 +285,7 @@ const Settings = () => {
   };
 
   const handleSave = () => {
-    console.log('Saving settings:', formData);
     if (validateForm()) {
-      console.log('Validation passed, calling mutation');
-      
       // Prepare data for submission
       const dataToSubmit = { ...formData };
       if (!dataToSubmit.useCustomSshKey) {
@@ -328,10 +294,7 @@ const Settings = () => {
       // Remove the frontend-only field
       delete dataToSubmit.useCustomSshKey;
       
-      console.log('Submitting data with githubRepoUrl:', dataToSubmit.githubRepoUrl);
       updateSettingsMutation.mutate(dataToSubmit);
-    } else {
-      console.log('Validation failed:', errors);
     }
   };
 
@@ -489,7 +452,6 @@ const Settings = () => {
                   max="1440"
                   value={formData.updateInterval}
                   onChange={(e) => {
-                    console.log('Update interval input changed:', e.target.value);
                     handleInputChange('updateInterval', parseInt(e.target.value) || 60);
                   }}
                   className={`w-full border rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white ${
@@ -520,6 +482,24 @@ const Settings = () => {
                 </label>
                 <p className="mt-1 text-sm text-secondary-500 dark:text-secondary-400">
                   When enabled, agents will automatically update themselves when a newer version is available during their regular update cycle.
+                </p>
+              </div>
+
+              {/* User Signup Setting */}
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.signupEnabled}
+                      onChange={(e) => handleInputChange('signupEnabled', e.target.checked)}
+                      className="rounded border-secondary-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
+                    />
+                    Enable User Self-Registration
+                  </div>
+                </label>
+                <p className="mt-1 text-sm text-secondary-500 dark:text-secondary-400">
+                  When enabled, users can create their own accounts through the signup page. When disabled, only administrators can create user accounts.
                 </p>
               </div>
 
@@ -970,14 +950,14 @@ const Settings = () => {
                   </div>
                   
                   {/* Last Checked Time */}
-                  {versionInfo.lastUpdateCheck && (
+                  {versionInfo.last_update_check && (
                     <div className="bg-white dark:bg-secondary-800 rounded-lg p-4 border border-secondary-200 dark:border-secondary-600">
                       <div className="flex items-center gap-2 mb-2">
                         <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         <span className="text-sm font-medium text-secondary-700 dark:text-secondary-300">Last Checked</span>
                       </div>
                       <span className="text-sm text-secondary-600 dark:text-secondary-400">
-                        {new Date(versionInfo.lastUpdateCheck).toLocaleString()}
+                        {new Date(versionInfo.last_update_check).toLocaleString()}
                       </span>
                       <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
                         Updates are checked automatically every 24 hours

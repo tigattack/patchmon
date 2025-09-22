@@ -40,7 +40,9 @@ async function triggerCrontabUpdates() {
         const http = require('http');
         const https = require('https');
 
-        const settings = await prisma.settings.findFirst();
+        const settings = await prisma.settings.findFirst({
+          orderBy: { updated_at: 'desc' }
+        });
         const serverUrl = settings?.server_url || process.env.SERVER_URL || 'http://localhost:3001';
         const url = new URL(`${serverUrl}/api/v1/hosts/ping`);
         const isHttps = url.protocol === 'https:';
@@ -92,7 +94,9 @@ async function triggerCrontabUpdates() {
 // Get current settings
 router.get('/', authenticateToken, requireManageSettings, async (req, res) => {
   try {
-    let settings = await prisma.settings.findFirst();
+    let settings = await prisma.settings.findFirst({
+      orderBy: { updated_at: 'desc' }
+    });
     
     // If no settings exist, create default settings
     if (!settings) {
@@ -106,12 +110,12 @@ router.get('/', authenticateToken, requireManageSettings, async (req, res) => {
           frontend_url: 'http://localhost:3000',
           update_interval: 60,
           auto_update: false,
+          signup_enabled: false,
           updated_at: new Date()
         }
       });
     }
 
-    console.log('Returning settings:', settings);
     res.json(settings);
   } catch (error) {
     console.error('Settings fetch error:', error);
@@ -127,6 +131,7 @@ router.put('/', authenticateToken, requireManageSettings, [
   body('frontendUrl').isLength({ min: 1 }).withMessage('Frontend URL is required'),
   body('updateInterval').isInt({ min: 5, max: 1440 }).withMessage('Update interval must be between 5 and 1440 minutes'),
   body('autoUpdate').isBoolean().withMessage('Auto update must be a boolean'),
+  body('signupEnabled').isBoolean().withMessage('Signup enabled must be a boolean'),
   body('githubRepoUrl').optional().isLength({ min: 1 }).withMessage('GitHub repo URL must be a non-empty string'),
   body('repositoryType').optional().isIn(['public', 'private']).withMessage('Repository type must be public or private'),
   body('sshKeyPath').optional().custom((value) => {
@@ -140,36 +145,23 @@ router.put('/', authenticateToken, requireManageSettings, [
   })
 ], async (req, res) => {
   try {
-    console.log('Settings update request body:', req.body);
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log('Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { serverProtocol, serverHost, serverPort, frontendUrl, updateInterval, autoUpdate, githubRepoUrl, repositoryType, sshKeyPath } = req.body;
-    console.log('Extracted values:', { serverProtocol, serverHost, serverPort, frontendUrl, updateInterval, autoUpdate, githubRepoUrl, repositoryType, sshKeyPath });
-    console.log('GitHub repo URL received:', githubRepoUrl, 'Type:', typeof githubRepoUrl);
+    const { serverProtocol, serverHost, serverPort, frontendUrl, updateInterval, autoUpdate, signupEnabled, githubRepoUrl, repositoryType, sshKeyPath } = req.body;
     
     // Construct server URL from components
     const serverUrl = `${serverProtocol}://${serverHost}:${serverPort}`;
     
-    let settings = await prisma.settings.findFirst();
+    let settings = await prisma.settings.findFirst({
+      orderBy: { updated_at: 'desc' }
+    });
     
     if (settings) {
       // Update existing settings
-      console.log('Updating existing settings with data:', {
-        serverUrl,
-        serverProtocol,
-        serverHost,
-        serverPort,
-        frontendUrl,
-        updateInterval: updateInterval || 60,
-        autoUpdate: autoUpdate || false,
-        githubRepoUrl: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
-        repositoryType: repositoryType || 'public'
-      });
-      console.log('Final githubRepoUrl value being saved:', githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git');
       const oldUpdateInterval = settings.update_interval;
       
       settings = await prisma.settings.update({
@@ -182,13 +174,13 @@ router.put('/', authenticateToken, requireManageSettings, [
           frontend_url: frontendUrl,
           update_interval: updateInterval || 60,
           auto_update: autoUpdate || false,
+          signup_enabled: signupEnabled || false,
           github_repo_url: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
           repository_type: repositoryType || 'public',
           ssh_key_path: sshKeyPath || null,
           updated_at: new Date()
         }
       });
-      console.log('Settings updated successfully:', settings);
       
       // If update interval changed, trigger crontab updates on all hosts with auto-update enabled
       if (oldUpdateInterval !== (updateInterval || 60)) {
@@ -207,6 +199,7 @@ router.put('/', authenticateToken, requireManageSettings, [
           frontend_url: frontendUrl,
           update_interval: updateInterval || 60,
           auto_update: autoUpdate || false,
+          signup_enabled: signupEnabled || false,
           github_repo_url: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
           repository_type: repositoryType || 'public',
           ssh_key_path: sshKeyPath || null,
@@ -228,7 +221,9 @@ router.put('/', authenticateToken, requireManageSettings, [
 // Get server URL for public use (used by installation scripts)
 router.get('/server-url', async (req, res) => {
   try {
-    const settings = await prisma.settings.findFirst();
+    const settings = await prisma.settings.findFirst({
+      orderBy: { updated_at: 'desc' }
+    });
     
     if (!settings) {
       return res.json({ server_url: 'http://localhost:3001' });
@@ -244,7 +239,9 @@ router.get('/server-url', async (req, res) => {
 // Get update interval policy for agents (public endpoint)
 router.get('/update-interval', async (req, res) => {
   try {
-    const settings = await prisma.settings.findFirst();
+    const settings = await prisma.settings.findFirst({
+      orderBy: { updated_at: 'desc' }
+    });
     
     if (!settings) {
       return res.json({ updateInterval: 60 });
@@ -263,7 +260,9 @@ router.get('/update-interval', async (req, res) => {
 // Get auto-update policy for agents (public endpoint)
 router.get('/auto-update', async (req, res) => {
   try {
-    const settings = await prisma.settings.findFirst();
+    const settings = await prisma.settings.findFirst({
+      orderBy: { updated_at: 'desc' }
+    });
     
     if (!settings) {
       return res.json({ autoUpdate: false });
