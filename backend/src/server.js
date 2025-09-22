@@ -60,7 +60,7 @@ async function checkAndImportAgentVersion() {
     const path = require('path');
     const crypto = require('crypto');
 
-    // Path to the agent script file
+    // Read and validate agent script
     const agentScriptPath = path.join(__dirname, '../../agents/patchmon-agent.sh');
     console.log('📁 Agent script path:', agentScriptPath);
 
@@ -72,6 +72,7 @@ async function checkAndImportAgentVersion() {
       }
       return;
     }
+
     console.log('✅ Agent script file found');
 
     // Read the file content
@@ -79,6 +80,7 @@ async function checkAndImportAgentVersion() {
 
     // Extract version from script content
     const versionMatch = scriptContent.match(/AGENT_VERSION="([^"]+)"/);
+
     if (!versionMatch) {
       console.log('❌ Could not extract version from agent script, skipping version check');
       if (process.env.ENABLE_LOGGING === 'true') {
@@ -102,59 +104,80 @@ async function checkAndImportAgentVersion() {
       }
       return;
     }
+
     console.log(`🆕 Agent version ${localVersion} not found in database`);
 
-    // Check if there are any existing versions to compare with
+    // Get existing versions for comparison
     const allVersions = await prisma.agent_versions.findMany({
       select: { version: true },
       orderBy: { created_at: 'desc' }
     });
 
-    if (allVersions.length > 0) {
-      console.log(`📊 Found ${allVersions.length} existing versions in database`);
-      console.log(`📊 Latest version: ${allVersions[0].version}`);
+    // Determine version flags and whether to proceed
+    const isFirstVersion = allVersions.length === 0;
+    const isNewerVersion = !isFirstVersion && compareVersions(localVersion, allVersions[0].version);
 
-      // Simple version comparison (assuming semantic versioning)
-      const isNewer = compareVersions(localVersion, allVersions[0].version);
-      console.log(`🔄 Version comparison: ${localVersion} > ${allVersions[0].version} = ${isNewer}`);
-
-      if (!isNewer) {
-        console.log(`❌ Agent version ${localVersion} is not newer than existing versions, skipping import`);
-        if (process.env.ENABLE_LOGGING === 'true') {
-          logger.info(`Agent version ${localVersion} is not newer than existing versions, skipping import`);
-        }
-        return;
+    if (!isFirstVersion && !isNewerVersion) {
+      console.log(`❌ Agent version ${localVersion} is not newer than existing versions, skipping import`);
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.info(`Agent version ${localVersion} is not newer than existing versions, skipping import`);
       }
+      return;
     }
 
-    // Version doesn't exist, create it
-    const agentVersion = await prisma.agent_versions.create({
+    const shouldSetAsCurrent = isFirstVersion || isNewerVersion;
+    const shouldSetAsDefault = isFirstVersion;
+
+    console.log(isFirstVersion ?
+      `📊 No existing versions found in database` :
+      `📊 Found ${allVersions.length} existing versions in database, latest: ${allVersions[0].version}`
+    );
+
+    if (!isFirstVersion) {
+      console.log(`🔄 Version comparison: ${localVersion} > ${allVersions[0].version} = ${isNewerVersion}`);
+    }
+
+    // Clear existing flags if needed
+    const updatePromises = [];
+    if (shouldSetAsCurrent) {
+      updatePromises.push(prisma.agent_versions.updateMany({
+        where: { is_current: true },
+        data: { is_current: false }
+      }));
+    }
+    if (shouldSetAsDefault) {
+      updatePromises.push(prisma.agent_versions.updateMany({
+        where: { is_default: true },
+        data: { is_default: false }
+      }));
+    }
+
+    if (updatePromises.length > 0) {
+      await Promise.all(updatePromises);
+    }
+
+    // Create new version
+    await prisma.agent_versions.create({
       data: {
         id: crypto.randomUUID(),
         version: localVersion,
         release_notes: `Auto-imported on startup (${new Date().toISOString()})`,
         script_content: scriptContent,
-        is_default: true,
-        is_current: true,
-        updated_at: new Date()
-      }
-    });
-    
-    // Update all other versions to not be default or current
-    await prisma.agent_versions.updateMany({
-      where: { 
-        version: { not: localVersion }
-      },
-      data: { 
-        is_default: false,
-        is_current: false,
+        is_default: shouldSetAsDefault,
+        is_current: shouldSetAsCurrent,
         updated_at: new Date()
       }
     });
 
     console.log(`🎉 Successfully auto-imported new agent version ${localVersion} on startup`);
+    if (shouldSetAsCurrent) {
+      console.log(`✅ Set version ${localVersion} as current version`);
+    }
+    if (shouldSetAsDefault) {
+      console.log(`✅ Set version ${localVersion} as default version`);
+    }
     if (process.env.ENABLE_LOGGING === 'true') {
-      logger.info(`✅ Auto-imported new agent version ${localVersion} on startup`);
+      logger.info(`✅ Auto-imported new agent version ${localVersion} on startup (current: ${shouldSetAsCurrent}, default: ${shouldSetAsDefault})`);
     }
 
   } catch (error) {
@@ -259,7 +282,7 @@ app.use(helmet({
 const parseOrigins = (val) => (val || '').split(',').map(s => s.trim()).filter(Boolean);
 const allowedOrigins = parseOrigins(process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || 'http://localhost:3000');
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     // Allow non-browser/SSR tools with no origin
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
