@@ -19,7 +19,8 @@ FROM node:lts-alpine
 ENV NODE_ENV=production \
     ENABLE_LOGGING=true \
     LOG_LEVEL=info \
-    PM_LOG_TO_CONSOLE=true
+    PM_LOG_TO_CONSOLE=true \
+    PORT=3001
 
 RUN apk add --no-cache openssl tini curl
 

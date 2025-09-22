@@ -1,6 +1,6 @@
 services:
   database:
-    image: postgres:17-alpine3.22
+    image: postgres:17-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: patchmon_db
@@ -16,7 +16,7 @@ services:
 
   backend:
     build:
-      context: .
+      context: ..
       dockerfile: docker/backend.Dockerfile
     restart: unless-stopped
     environment:
@@ -27,20 +27,18 @@ services:
       SERVER_PROTOCOL: http
       SERVER_HOST: localhost
       SERVER_PORT: 3000
-      PORT: 3001
-      API_VERSION: v1
       CORS_ORIGIN: http://localhost:3000
       RATE_LIMIT_WINDOW_MS: 900000
       RATE_LIMIT_MAX: 100
-      ENABLE_HSTS: true
-      TRUST_PROXY: true
+    volumes:
+      - ./agents:/app/agents
     depends_on:
       database:
         condition: service_healthy
 
   frontend:
     build:
-      context: .
+      context: ..
       dockerfile: docker/frontend.Dockerfile
     restart: unless-stopped
     environment:

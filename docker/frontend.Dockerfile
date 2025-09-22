@@ -13,8 +13,8 @@ RUN npm run build:frontend
 
 FROM nginxinc/nginx-unprivileged:alpine
 
-ENV BACKEND_HOST=backend
-ENV BACKEND_PORT=3001
+ENV BACKEND_HOST=backend \
+    BACKEND_PORT=3001
 
 COPY --from=builder /app/frontend/dist /usr/share/nginx/html
 COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
