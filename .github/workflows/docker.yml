@@ -20,13 +20,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        include:
-          - name: backend
-            dockerfile: docker/backend.Dockerfile
-            image: ${{ github.repository_owner }}/patchmon-backend
-          - name: frontend
-            dockerfile: docker/frontend.Dockerfile
-            image: ${{ github.repository_owner }}/patchmon-frontend
+        image: [backend, frontend]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -45,7 +39,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ matrix.image }}
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/patchmon-${{ matrix.image }}
           tags: |
             type=ref,event=pr
             type=semver,pattern={{version}}
@@ -53,14 +47,14 @@ jobs:
             type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push ${{ matrix.name }} image
+      - name: Build and push ${{ matrix.image }} image
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ matrix.dockerfile }}
+          file: docker/${{ matrix.image }}.Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.name }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
