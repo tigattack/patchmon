@@ -112,6 +112,13 @@ The development compose file (`docker/docker-compose.dev.yml`):
 
 ## Building Images Locally
 
+```
+docker build -t patchmon-backend:dev -f docker/backend.Dockerfile .
+docker build -t patchmon-frontend:dev -f docker/frontend.Dockerfile .
+```
+
+## Running in Docker Compose
+
 For development or custom builds:
 
 ```bash
