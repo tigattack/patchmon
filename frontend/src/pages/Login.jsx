@@ -49,7 +49,7 @@ const Login = () => {
 
     try {
       const response = await authAPI.login(formData.username, formData.password)
-      
+
       if (response.data.requiresTfa) {
         setRequiresTfa(true)
         setTfaUsername(formData.username)
@@ -77,12 +77,12 @@ const Login = () => {
 
     try {
       const response = await authAPI.signup(formData.username, formData.email, formData.password)
-      
+
       if (response.data && response.data.token) {
         // Store token and user data
         localStorage.setItem('token', response.data.token)
         localStorage.setItem('user', JSON.stringify(response.data.user))
-        
+
         // Redirect to dashboard
         navigate('/')
       } else {
@@ -90,8 +90,8 @@ const Login = () => {
       }
     } catch (err) {
       console.error('Signup error:', err)
-      const errorMessage = err.response?.data?.error || 
-                           (err.response?.data?.errors && err.response.data.errors.length > 0 
+      const errorMessage = err.response?.data?.error ||
+                           (err.response?.data?.errors && err.response.data.errors.length > 0
                             ? err.response.data.errors.map(e => e.msg).join(', ')
                             : err.message || 'Signup failed')
       setError(errorMessage)
@@ -107,12 +107,12 @@ const Login = () => {
 
     try {
       const response = await authAPI.verifyTfa(tfaUsername, tfaData.token)
-      
+
       if (response.data && response.data.token) {
         // Store token and user data
         localStorage.setItem('token', response.data.token)
         localStorage.setItem('user', JSON.stringify(response.data.user))
-        
+
         // Redirect to dashboard
         navigate('/')
       } else {
@@ -172,7 +172,7 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary-100">
-            <Lock className="h-6 w-6 text-primary-600" />
+            <Lock size={24} color="#2563eb" strokeWidth={2} />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-secondary-900">
             {isSignupMode ? 'Create PatchMon Account' : 'Sign in to PatchMon'}
@@ -190,9 +190,6 @@ const Login = () => {
                 {isSignupMode ? 'Username' : 'Username or Email'}
               </label>
               <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-secondary-400" />
-                </div>
                 <input
                   id="username"
                   name="username"
@@ -203,6 +200,13 @@ const Login = () => {
                   className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-2 border border-secondary-300 placeholder-secondary-500 text-secondary-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                   placeholder={isSignupMode ? "Enter your username" : "Enter your username or email"}
                 />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-20 flex items-center">
+                  <User
+                    size={20}
+                    color="#64748b"
+                    strokeWidth={2}
+                  />
+                </div>
               </div>
             </div>
 
@@ -212,9 +216,6 @@ const Login = () => {
                   Email
                 </label>
                 <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-secondary-400" />
-                  </div>
                   <input
                     id="email"
                     name="email"
@@ -225,6 +226,13 @@ const Login = () => {
                     className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-2 border border-secondary-300 placeholder-secondary-500 text-secondary-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                     placeholder="Enter your email"
                   />
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-20 flex items-center">
+                    <Mail
+                      size={20}
+                      color="#64748b"
+                      strokeWidth={2}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -234,9 +242,6 @@ const Login = () => {
                 Password
               </label>
               <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-secondary-400" />
-                </div>
                 <input
                   id="password"
                   name="password"
@@ -247,16 +252,23 @@ const Login = () => {
                   className="appearance-none rounded-md relative block w-full pl-10 pr-10 py-2 border border-secondary-300 placeholder-secondary-500 text-secondary-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                   placeholder="Enter your password"
                 />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-20 flex items-center">
+                  <Lock
+                    size={20}
+                    color="#64748b"
+                    strokeWidth={2}
+                  />
+                </div>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 z-20 flex items-center">
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-secondary-400 hover:text-secondary-500"
+                    className="bg-transparent border-none cursor-pointer p-1 flex items-center justify-center"
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
+                      <EyeOff size={20} color="#64748b" strokeWidth={2} />
                     ) : (
-                      <Eye className="h-5 w-5" />
+                      <Eye size={20} color="#64748b" strokeWidth={2} />
                     )}
                   </button>
                 </div>
@@ -267,7 +279,7 @@ const Login = () => {
           {error && (
             <div className="bg-danger-50 border border-danger-200 rounded-md p-3">
               <div className="flex">
-                <AlertCircle className="h-5 w-5 text-danger-400" />
+                <AlertCircle size={20} color="#dc2626" strokeWidth={2} />
                 <div className="ml-3">
                   <p className="text-sm text-danger-700">{error}</p>
                 </div>
@@ -311,7 +323,7 @@ const Login = () => {
           <form className="mt-8 space-y-6" onSubmit={handleTfaSubmit}>
             <div className="text-center">
               <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-100">
-                <Smartphone className="h-6 w-6 text-blue-600" />
+                <Smartphone size={24} color="#2563eb" strokeWidth={2} />
               </div>
               <h3 className="mt-4 text-lg font-medium text-secondary-900">
                 Two-Factor Authentication
@@ -343,7 +355,7 @@ const Login = () => {
             {error && (
               <div className="bg-danger-50 border border-danger-200 rounded-md p-3">
                 <div className="flex">
-                  <AlertCircle className="h-5 w-5 text-danger-400" />
+                  <AlertCircle size={20} color="#dc2626" strokeWidth={2} />
                   <div className="ml-3">
                     <p className="text-sm text-danger-700">{error}</p>
                   </div>
@@ -370,9 +382,9 @@ const Login = () => {
               <button
                 type="button"
                 onClick={handleBackToLogin}
-                className="group relative w-full flex justify-center py-2 px-4 border border-secondary-300 text-sm font-medium rounded-md text-secondary-700 bg-white hover:bg-secondary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                className="group relative w-full flex justify-center py-2 px-4 border border-secondary-300 text-sm font-medium rounded-md text-secondary-700 bg-white hover:bg-secondary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 items-center gap-2"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft size={16} color="#475569" strokeWidth={2} />
                 Back to Login
               </button>
             </div>

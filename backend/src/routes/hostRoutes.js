@@ -44,19 +44,15 @@ router.get('/agent/download', async (req, res) => {
             }
         }
 
-        if (!agentVersion) {
-            return res.status(404).json({error: 'No agent version available'});
-        }
-
         // Use script content from database if available, otherwise fallback to file
-        if (agentVersion.script_content) {
+        if (agentVersion && agentVersion.script_content) {
             // Convert Windows line endings to Unix line endings
             const scriptContent = agentVersion.script_content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
             res.setHeader('Content-Type', 'application/x-shellscript');
             res.setHeader('Content-Disposition', `attachment; filename="patchmon-agent-${agentVersion.version}.sh"`);
             res.send(scriptContent);
         } else {
-            // Fallback to file system
+            // Fallback to file system when no database version exists or script has no content
             const agentPath = path.join(__dirname, '../../../agents/patchmon-agent.sh');
             if (!fs.existsSync(agentPath)) {
                 return res.status(404).json({error: 'Agent script not found'});
@@ -64,11 +60,13 @@ router.get('/agent/download', async (req, res) => {
             // Read file and convert line endings
             const scriptContent = fs.readFileSync(agentPath, 'utf8').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
             res.setHeader('Content-Type', 'application/x-shellscript');
-            res.setHeader('Content-Disposition', `attachment; filename="patchmon-agent-${agentVersion.version}.sh"`);
+            const version = agentVersion ? `-${agentVersion.version}` : '';
+            res.setHeader('Content-Disposition', `attachment; filename="patchmon-agent${version}.sh"`);
             res.send(scriptContent);
         }
     } catch (error) {
         console.error('Agent download error:', error);
+        res.status(500).json({error: 'Failed to download agent script'});
     }
 });
 
@@ -108,13 +106,13 @@ const validateApiCredentials = async (req, res, next) => {
   try {
     const apiId = req.headers['x-api-id'] || req.body.apiId;
     const apiKey = req.headers['x-api-key'] || req.body.apiKey;
-    
+
     if (!apiId || !apiKey) {
       return res.status(401).json({ error: 'API ID and Key required' });
     }
 
     const host = await prisma.hosts.findFirst({
-      where: { 
+      where: {
         api_id: apiId,
         api_key: apiKey
       }
@@ -144,10 +142,10 @@ router.post('/create', authenticateToken, requireManageHosts, [
     }
 
     const { friendly_name, hostGroupId } = req.body;
-    
+
     // Generate unique API credentials for this host
     const { apiId, apiKey } = generateApiCredentials();
-    
+
     // Check if host already exists
     const existingHost = await prisma.hosts.findUnique({
       where: { friendly_name: friendly_name }
@@ -211,7 +209,7 @@ router.post('/create', authenticateToken, requireManageHosts, [
 
 // Legacy register endpoint (deprecated - returns error message)
 router.post('/register', async (req, res) => {
-  res.status(400).json({ 
+  res.status(400).json({
     error: 'Host registration has been disabled. Please contact your administrator to add this host to PatchMon.',
     deprecated: true,
     message: 'Hosts must now be pre-created by administrators with specific API credentials.'
@@ -253,11 +251,11 @@ router.post('/update', validateApiCredentials, [
     const host = req.hostRecord;
 
     // Update host last update timestamp and system info if provided
-    const updateData = { 
+    const updateData = {
       last_update: new Date(),
       updated_at: new Date()
     };
-    
+
     // Basic system info
     if (req.body.osType) updateData.os_type = req.body.osType;
     if (req.body.osVersion) updateData.os_version = req.body.osVersion;
@@ -265,25 +263,25 @@ router.post('/update', validateApiCredentials, [
     if (req.body.ip) updateData.ip = req.body.ip;
     if (req.body.architecture) updateData.architecture = req.body.architecture;
     if (req.body.agentVersion) updateData.agent_version = req.body.agentVersion;
-    
+
     // Hardware Information
     if (req.body.cpuModel) updateData.cpu_model = req.body.cpuModel;
     if (req.body.cpuCores) updateData.cpu_cores = req.body.cpuCores;
     if (req.body.ramInstalled) updateData.ram_installed = req.body.ramInstalled;
     if (req.body.swapSize !== undefined) updateData.swap_size = req.body.swapSize;
     if (req.body.diskDetails) updateData.disk_details = req.body.diskDetails;
-    
+
     // Network Information
     if (req.body.gatewayIp) updateData.gateway_ip = req.body.gatewayIp;
     if (req.body.dnsServers) updateData.dns_servers = req.body.dnsServers;
     if (req.body.networkInterfaces) updateData.network_interfaces = req.body.networkInterfaces;
-    
+
     // System Information
     if (req.body.kernelVersion) updateData.kernel_version = req.body.kernelVersion;
     if (req.body.selinuxStatus) updateData.selinux_status = req.body.selinuxStatus;
     if (req.body.systemUptime) updateData.system_uptime = req.body.systemUptime;
     if (req.body.loadAverage) updateData.load_average = req.body.loadAverage;
-    
+
     // If this is the first update (status is 'pending'), change to 'active'
     if (host.status === 'pending') {
       updateData.status = 'active';
@@ -324,7 +322,7 @@ router.post('/update', validateApiCredentials, [
           if (packageData.availableVersion && packageData.availableVersion !== pkg.latest_version) {
             await tx.packages.update({
               where: { id: pkg.id },
-              data: { 
+              data: {
                 latest_version: packageData.availableVersion,
                 updated_at: new Date()
               }
@@ -427,14 +425,14 @@ router.post('/update', validateApiCredentials, [
       if (settings && settings.auto_update && host.auto_update) {
         // Get current agent version from the request
         const currentAgentVersion = req.body.agentVersion;
-        
+
         if (currentAgentVersion) {
           // Get the latest agent version
           const latestAgentVersion = await prisma.agent_versions.findFirst({
             where: { is_current: true },
             orderBy: { created_at: 'desc' }
           });
-          
+
           if (latestAgentVersion && latestAgentVersion.version !== currentAgentVersion) {
             // There's a newer version available
             autoUpdateResponse = {
@@ -479,7 +477,7 @@ router.post('/update', validateApiCredentials, [
     res.json(response);
   } catch (error) {
     console.error('Host update error:', error);
-    
+
     // Log error in update history
     try {
       await prisma.update_history.create({
@@ -533,13 +531,13 @@ router.post('/ping', validateApiCredentials, async (req, res) => {
     // Update last update timestamp
     await prisma.hosts.update({
       where: { id: req.hostRecord.id },
-      data: { 
+      data: {
         last_update: new Date(),
         updated_at: new Date()
       }
     });
 
-    const response = { 
+    const response = {
       message: 'Ping successful',
       timestamp: new Date().toISOString(),
       friendlyName: req.hostRecord.friendly_name
@@ -566,7 +564,7 @@ router.post('/ping', validateApiCredentials, async (req, res) => {
 router.post('/:hostId/regenerate-credentials', authenticateToken, requireManageHosts, async (req, res) => {
   try {
     const { hostId } = req.params;
-    
+
     const host = await prisma.hosts.findUnique({
       where: { id: hostId }
     });
@@ -581,8 +579,8 @@ router.post('/:hostId/regenerate-credentials', authenticateToken, requireManageH
     // Update host with new credentials
     const updatedHost = await prisma.hosts.update({
       where: { id: hostId },
-      data: { 
-        api_id: apiId, 
+      data: {
+        api_id: apiId,
         api_key: apiKey,
         updated_at: new Date()
       }
@@ -635,7 +633,7 @@ router.put('/bulk/group', authenticateToken, requireManageHosts, [
     if (existingHosts.length !== hostIds.length) {
       const foundIds = existingHosts.map(h => h.id);
       const missingIds = hostIds.filter(id => !foundIds.includes(id));
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Some hosts not found',
         missingHostIds: missingIds
       });
@@ -787,7 +785,7 @@ router.delete('/bulk', authenticateToken, requireManageHosts, [
     }
 
     const { hostIds } = req.body;
-    
+
     // Verify all hosts exist before deletion
     const existingHosts = await prisma.hosts.findMany({
       where: { id: { in: hostIds } },
@@ -797,9 +795,9 @@ router.delete('/bulk', authenticateToken, requireManageHosts, [
     if (existingHosts.length !== hostIds.length) {
       const foundIds = existingHosts.map(h => h.id);
       const missingIds = hostIds.filter(id => !foundIds.includes(id));
-      return res.status(404).json({ 
-        error: 'Some hosts not found', 
-        missingIds 
+      return res.status(404).json({
+        error: 'Some hosts not found',
+        missingIds
       });
     }
 
@@ -813,7 +811,7 @@ router.delete('/bulk', authenticateToken, requireManageHosts, [
       console.warn(`Expected to delete ${hostIds.length} hosts, but only deleted ${deleteResult.count}`);
     }
 
-    res.json({ 
+    res.json({
       message: `${deleteResult.count} host${deleteResult.count !== 1 ? 's' : ''} deleted successfully`,
       deletedCount: deleteResult.count,
       requestedCount: hostIds.length,
@@ -821,23 +819,23 @@ router.delete('/bulk', authenticateToken, requireManageHosts, [
     });
   } catch (error) {
     console.error('Bulk host deletion error:', error);
-    
+
     // Handle specific Prisma errors
     if (error.code === 'P2025') {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Some hosts were not found or already deleted',
         details: 'The hosts may have been deleted by another process or do not exist'
       });
     }
-    
+
     if (error.code === 'P2003') {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Cannot delete hosts due to foreign key constraints',
         details: 'Some hosts have related data that prevents deletion'
       });
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: 'Failed to delete hosts',
       details: error.message || 'An unexpected error occurred'
     });
@@ -848,7 +846,7 @@ router.delete('/bulk', authenticateToken, requireManageHosts, [
 router.delete('/:hostId', authenticateToken, requireManageHosts, async (req, res) => {
   try {
     const { hostId } = req.params;
-    
+
     // Check if host exists first
     const existingHost = await prisma.hosts.findUnique({
       where: { id: hostId },
@@ -856,40 +854,40 @@ router.delete('/:hostId', authenticateToken, requireManageHosts, async (req, res
     });
 
     if (!existingHost) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Host not found',
         details: 'The host may have been deleted or does not exist'
       });
     }
-    
+
     // Delete host and all related data (cascade)
     await prisma.hosts.delete({
       where: { id: hostId }
     });
 
-    res.json({ 
+    res.json({
       message: 'Host deleted successfully',
       deletedHost: { id: existingHost.id, friendly_name: existingHost.friendly_name }
     });
   } catch (error) {
     console.error('Host deletion error:', error);
-    
+
     // Handle specific Prisma errors
     if (error.code === 'P2025') {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Host not found',
         details: 'The host may have been deleted or does not exist'
       });
     }
-    
+
     if (error.code === 'P2003') {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Cannot delete host due to foreign key constraints',
         details: 'The host has related data that prevents deletion'
       });
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: 'Failed to delete host',
       details: error.message || 'An unexpected error occurred'
     });
@@ -911,7 +909,7 @@ router.patch('/:hostId/auto-update', authenticateToken, requireManageHosts, [
 
     const host = await prisma.hosts.update({
       where: { id: hostId },
-      data: { 
+      data: {
         auto_update: auto_update,
         updated_at: new Date()
       }
@@ -938,17 +936,17 @@ router.get('/install', async (req, res) => {
     const path = require('path');
 
     const scriptPath = path.join(__dirname, '../../../agents/patchmon_install.sh');
-    
+
     if (!fs.existsSync(scriptPath)) {
       return res.status(404).json({ error: 'Installation script not found' });
     }
 
       let script = fs.readFileSync(scriptPath, 'utf8');
 
-// Convert Windows line endings to Unix line endings
+      // Convert Windows line endings to Unix line endings
       script = script.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-// Get the configured server URL from settings
+      // Get the configured server URL from settings
       try {
           const settings = await prisma.settings.findFirst();
           if (settings) {
@@ -1017,7 +1015,7 @@ router.post('/agent/versions', authenticateToken, requireManageSettings, [
     if (isDefault) {
       await prisma.agent_versions.updateMany({
         where: { is_default: true },
-        data: { 
+        data: {
           is_default: false,
           updated_at: new Date()
         }
@@ -1100,7 +1098,7 @@ router.delete('/agent/versions/:versionId', authenticateToken, requireManageSett
 
     // Validate versionId format
     if (!versionId || versionId.length < 10) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Invalid agent version ID format',
         details: 'The provided ID does not match expected format'
       });
@@ -1111,7 +1109,7 @@ router.delete('/agent/versions/:versionId', authenticateToken, requireManageSett
     });
 
     if (!agentVersion) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Agent version not found',
         details: `No agent version found with ID: ${versionId}`,
         suggestion: 'Please refresh the page to get the latest agent versions'
@@ -1119,7 +1117,7 @@ router.delete('/agent/versions/:versionId', authenticateToken, requireManageSett
     }
 
     if (agentVersion.is_current) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Cannot delete current agent version',
         details: `Version ${agentVersion.version} is currently active`,
         suggestion: 'Set another version as current before deleting this one'
@@ -1130,13 +1128,13 @@ router.delete('/agent/versions/:versionId', authenticateToken, requireManageSett
       where: { id: versionId }
     });
 
-    res.json({ 
+    res.json({
       message: 'Agent version deleted successfully',
       deletedVersion: agentVersion.version
     });
   } catch (error) {
     console.error('Delete agent version error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to delete agent version',
       details: error.message
     });
@@ -1216,4 +1214,4 @@ router.patch('/:hostId/friendly-name', authenticateToken, requireManageHosts, [
   }
 });
 
-module.exports = router; 
+module.exports = router;

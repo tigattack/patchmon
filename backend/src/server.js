@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const { createPrismaClient, checkDatabaseConnection, disconnectPrisma } = require('./config/database');
+const { createPrismaClient, waitForDatabase, disconnectPrisma } = require('./config/database');
 const winston = require('winston');
 
 // Import routes
@@ -19,6 +19,7 @@ const repositoryRoutes = require('./routes/repositoryRoutes');
 const versionRoutes = require('./routes/versionRoutes');
 const tfaRoutes = require('./routes/tfaRoutes');
 const updateScheduler = require('./services/updateScheduler');
+const { initSettings } = require('./services/settingsService');
 
 // Initialize Prisma client with optimized connection pooling for multiple instances
 const prisma = createPrismaClient();
@@ -27,24 +28,24 @@ const prisma = createPrismaClient();
 function compareVersions(version1, version2) {
   const v1Parts = version1.split('.').map(Number);
   const v2Parts = version2.split('.').map(Number);
-  
+
   // Ensure both arrays have the same length
   const maxLength = Math.max(v1Parts.length, v2Parts.length);
   while (v1Parts.length < maxLength) v1Parts.push(0);
   while (v2Parts.length < maxLength) v2Parts.push(0);
-  
+
   for (let i = 0; i < maxLength; i++) {
     if (v1Parts[i] > v2Parts[i]) return true;
     if (v1Parts[i] < v2Parts[i]) return false;
   }
-  
+
   return false; // versions are equal
 }
 
 // Function to check and import agent version on startup
 async function checkAndImportAgentVersion() {
   console.log('🔍 Starting agent version auto-import check...');
-  
+
   // Skip if auto-import is disabled
   if (process.env.AUTO_IMPORT_AGENT_VERSION === 'false') {
     console.log('❌ Auto-import of agent version is disabled');
@@ -53,16 +54,16 @@ async function checkAndImportAgentVersion() {
     }
     return;
   }
-  
+
   try {
     const fs = require('fs');
     const path = require('path');
     const crypto = require('crypto');
-    
-    // Path to the agent script file
+
+    // Read and validate agent script
     const agentScriptPath = path.join(__dirname, '../../agents/patchmon-agent.sh');
     console.log('📁 Agent script path:', agentScriptPath);
-    
+
     // Check if file exists
     if (!fs.existsSync(agentScriptPath)) {
       console.log('❌ Agent script file not found, skipping version check');
@@ -71,13 +72,15 @@ async function checkAndImportAgentVersion() {
       }
       return;
     }
+
     console.log('✅ Agent script file found');
-    
+
     // Read the file content
     const scriptContent = fs.readFileSync(agentScriptPath, 'utf8');
-    
+
     // Extract version from script content
     const versionMatch = scriptContent.match(/AGENT_VERSION="([^"]+)"/);
+
     if (!versionMatch) {
       console.log('❌ Could not extract version from agent script, skipping version check');
       if (process.env.ENABLE_LOGGING === 'true') {
@@ -85,15 +88,15 @@ async function checkAndImportAgentVersion() {
       }
       return;
     }
-    
+
     const localVersion = versionMatch[1];
     console.log('📋 Local version:', localVersion);
-    
+
     // Check if this version already exists in database
     const existingVersion = await prisma.agent_versions.findUnique({
       where: { version: localVersion }
     });
-    
+
     if (existingVersion) {
       console.log(`✅ Agent version ${localVersion} already exists in database`);
       if (process.env.ENABLE_LOGGING === 'true') {
@@ -101,61 +104,82 @@ async function checkAndImportAgentVersion() {
       }
       return;
     }
+
     console.log(`🆕 Agent version ${localVersion} not found in database`);
-    
-    // Check if there are any existing versions to compare with
+
+    // Get existing versions for comparison
     const allVersions = await prisma.agent_versions.findMany({
       select: { version: true },
       orderBy: { created_at: 'desc' }
     });
-    
-    if (allVersions.length > 0) {
-      console.log(`📊 Found ${allVersions.length} existing versions in database`);
-      console.log(`📊 Latest version: ${allVersions[0].version}`);
-      
-      // Simple version comparison (assuming semantic versioning)
-      const isNewer = compareVersions(localVersion, allVersions[0].version);
-      console.log(`🔄 Version comparison: ${localVersion} > ${allVersions[0].version} = ${isNewer}`);
-      
-      if (!isNewer) {
-        console.log(`❌ Agent version ${localVersion} is not newer than existing versions, skipping import`);
-        if (process.env.ENABLE_LOGGING === 'true') {
-          logger.info(`Agent version ${localVersion} is not newer than existing versions, skipping import`);
-        }
-        return;
+
+    // Determine version flags and whether to proceed
+    const isFirstVersion = allVersions.length === 0;
+    const isNewerVersion = !isFirstVersion && compareVersions(localVersion, allVersions[0].version);
+
+    if (!isFirstVersion && !isNewerVersion) {
+      console.log(`❌ Agent version ${localVersion} is not newer than existing versions, skipping import`);
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.info(`Agent version ${localVersion} is not newer than existing versions, skipping import`);
       }
+      return;
     }
-    
-    // Version doesn't exist, create it
-    const agentVersion = await prisma.agent_versions.create({
+
+    const shouldSetAsCurrent = isFirstVersion || isNewerVersion;
+    const shouldSetAsDefault = isFirstVersion;
+
+    console.log(isFirstVersion ?
+      `📊 No existing versions found in database` :
+      `📊 Found ${allVersions.length} existing versions in database, latest: ${allVersions[0].version}`
+    );
+
+    if (!isFirstVersion) {
+      console.log(`🔄 Version comparison: ${localVersion} > ${allVersions[0].version} = ${isNewerVersion}`);
+    }
+
+    // Clear existing flags if needed
+    const updatePromises = [];
+    if (shouldSetAsCurrent) {
+      updatePromises.push(prisma.agent_versions.updateMany({
+        where: { is_current: true },
+        data: { is_current: false }
+      }));
+    }
+    if (shouldSetAsDefault) {
+      updatePromises.push(prisma.agent_versions.updateMany({
+        where: { is_default: true },
+        data: { is_default: false }
+      }));
+    }
+
+    if (updatePromises.length > 0) {
+      await Promise.all(updatePromises);
+    }
+
+    // Create new version
+    await prisma.agent_versions.create({
       data: {
         id: crypto.randomUUID(),
         version: localVersion,
         release_notes: `Auto-imported on startup (${new Date().toISOString()})`,
         script_content: scriptContent,
-        is_default: true,
-        is_current: true,
+        is_default: shouldSetAsDefault,
+        is_current: shouldSetAsCurrent,
         updated_at: new Date()
       }
     });
-    
-    // Update all other versions to not be default or current
-    await prisma.agent_versions.updateMany({
-      where: { 
-        version: { not: localVersion }
-      },
-      data: { 
-        is_default: false,
-        is_current: false,
-        updated_at: new Date()
-      }
-    });
-    
+
     console.log(`🎉 Successfully auto-imported new agent version ${localVersion} on startup`);
-    if (process.env.ENABLE_LOGGING === 'true') {
-      logger.info(`✅ Auto-imported new agent version ${localVersion} on startup`);
+    if (shouldSetAsCurrent) {
+      console.log(`✅ Set version ${localVersion} as current version`);
     }
-    
+    if (shouldSetAsDefault) {
+      console.log(`✅ Set version ${localVersion} as default version`);
+    }
+    if (process.env.ENABLE_LOGGING === 'true') {
+      logger.info(`✅ Auto-imported new agent version ${localVersion} on startup (current: ${shouldSetAsCurrent}, default: ${shouldSetAsDefault})`);
+    }
+
   } catch (error) {
     console.error('❌ Failed to check/import agent version on startup:', error.message);
     if (process.env.ENABLE_LOGGING === 'true') {
@@ -172,10 +196,7 @@ const logger = process.env.ENABLE_LOGGING === 'true' ? winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json()
   ),
-  transports: [
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' }),
-  ],
+  transports: [],
 }) : {
   info: () => {},
   error: () => {},
@@ -183,10 +204,34 @@ const logger = process.env.ENABLE_LOGGING === 'true' ? winston.createLogger({
   debug: () => {}
 };
 
-if (process.env.ENABLE_LOGGING === 'true' && process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple()
-  }));
+// Configure transports based on PM_LOG_TO_CONSOLE environment variable
+if (process.env.ENABLE_LOGGING === 'true') {
+  const logToConsole = process.env.PM_LOG_TO_CONSOLE === '1' || process.env.PM_LOG_TO_CONSOLE === 'true';
+
+  if (logToConsole) {
+    // Log to stdout/stderr instead of files
+    logger.add(new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.errors({ stack: true }),
+        winston.format.printf(({ timestamp, level, message, stack }) => {
+          return `${timestamp} [${level.toUpperCase()}]: ${stack || message}`;
+        })
+      ),
+      stderrLevels: ['error', 'warn']
+    }));
+  } else {
+    // Log to files (default behavior)
+    logger.add(new winston.transports.File({ filename: 'logs/error.log', level: 'error' }));
+    logger.add(new winston.transports.File({ filename: 'logs/combined.log' }));
+
+    // Also add console logging for non-production environments
+    if (process.env.NODE_ENV !== 'production') {
+      logger.add(new winston.transports.Console({
+        format: winston.format.simple()
+      }));
+    }
+  }
 }
 
 const app = express();
@@ -194,7 +239,24 @@ const PORT = process.env.PORT || 3001;
 
 // Trust proxy (needed when behind reverse proxy) and remove X-Powered-By
 if (process.env.TRUST_PROXY) {
-  app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? 1 : parseInt(process.env.TRUST_PROXY, 10) || true);
+  const trustProxyValue = process.env.TRUST_PROXY;
+  
+  // Parse the trust proxy setting according to Express documentation
+  if (trustProxyValue === 'true') {
+    app.set('trust proxy', true);
+  } else if (trustProxyValue === 'false') {
+    app.set('trust proxy', false);
+  } else if (/^\d+$/.test(trustProxyValue)) {
+    // If it's a number (hop count)
+    app.set('trust proxy', parseInt(trustProxyValue, 10));
+  } else {
+    // If it contains commas, split into array; otherwise use as single value
+    // This handles: IP addresses, subnets, named subnets (loopback, linklocal, uniquelocal)
+    app.set('trust proxy', trustProxyValue.includes(',') 
+      ? trustProxyValue.split(',').map(s => s.trim())
+      : trustProxyValue
+    );
+  }
 } else {
   app.set('trust proxy', 1);
 }
@@ -237,7 +299,7 @@ app.use(helmet({
 const parseOrigins = (val) => (val || '').split(',').map(s => s.trim()).filter(Boolean);
 const allowedOrigins = parseOrigins(process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || 'http://localhost:3000');
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     // Allow non-browser/SSR tools with no origin
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
@@ -252,8 +314,13 @@ app.use(express.urlencoded({ extended: true, limit: process.env.JSON_BODY_LIMIT 
 
 // Request logging - only if logging is enabled
 if (process.env.ENABLE_LOGGING === 'true') {
-  app.use((req, res, next) => {
-    logger.info(`${req.method} ${req.path} - ${req.ip}`);
+  app.use((req, _, next) => {
+    // Log health check requests at debug level to reduce log spam
+    if (req.path === '/health') {
+      logger.debug(`${req.method} ${req.path} - ${req.ip}`);
+    } else {
+      logger.info(`${req.method} ${req.path} - ${req.ip}`);
+    }
     next();
   });
 }
@@ -308,9 +375,9 @@ app.use((err, req, res, next) => {
   if (process.env.ENABLE_LOGGING === 'true') {
     logger.error(err.stack);
   }
-  res.status(500).json({ 
-    error: 'Something went wrong!', 
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined 
+  res.status(500).json({
+    error: 'Something went wrong!',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
 
@@ -341,26 +408,35 @@ process.on('SIGTERM', async () => {
 // Start server with database health check
 async function startServer() {
   try {
-    // Check database connection before starting server
-    const isConnected = await checkDatabaseConnection(prisma);
-    if (!isConnected) {
-      console.error('❌ Database connection failed. Server not started.');
-      process.exit(1);
-    }
-    
+    // Wait for database to be available
+    await waitForDatabase(prisma);
+
     if (process.env.ENABLE_LOGGING === 'true') {
       logger.info('✅ Database connection successful');
     }
-    
+
+    // Initialise settings on startup
+    try {
+      await initSettings();
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.info('✅ Settings initialised');
+      }
+    } catch (initError) {
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.error('❌ Failed to initialise settings:', initError.message);
+      }
+      throw initError; // Fail startup if settings can't be initialised
+    }
+
     // Check and import agent version on startup
     await checkAndImportAgentVersion();
-    
+
     app.listen(PORT, () => {
       if (process.env.ENABLE_LOGGING === 'true') {
         logger.info(`Server running on port ${PORT}`);
         logger.info(`Environment: ${process.env.NODE_ENV}`);
       }
-      
+
       // Start update scheduler
       updateScheduler.start();
     });
@@ -372,4 +448,4 @@ async function startServer() {
 
 startServer();
 
-module.exports = app; 
+module.exports = app;

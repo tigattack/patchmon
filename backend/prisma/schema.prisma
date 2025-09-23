@@ -157,7 +157,6 @@ model settings {
   server_protocol   String    @default("http")
   server_host       String    @default("localhost")
   server_port       Int       @default(3001)
-  frontend_url      String    @default("http://localhost:3000")
   created_at        DateTime  @default(now())
   updated_at        DateTime
   update_interval   Int       @default(60)

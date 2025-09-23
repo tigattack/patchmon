@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Save, Server, Globe, Shield, AlertCircle, CheckCircle, Code, Plus, Trash2, Star, Download, X, Settings as SettingsIcon, Clock } from 'lucide-react';
+import { Save, Server, Shield, AlertCircle, CheckCircle, Code, Plus, Trash2, Star, Download, X, Settings as SettingsIcon, Clock } from 'lucide-react';
 import { settingsAPI, agentVersionAPI, versionAPI } from '../utils/api';
 import { useUpdateNotification } from '../contexts/UpdateNotificationContext';
 import UpgradeNotificationIcon from '../components/UpgradeNotificationIcon';
@@ -10,7 +10,6 @@ const Settings = () => {
     serverProtocol: 'http',
     serverHost: 'localhost',
     serverPort: 3001,
-    frontendUrl: 'http://localhost:3000',
     updateInterval: 60,
     autoUpdate: false,
     signupEnabled: false,
@@ -21,21 +20,20 @@ const Settings = () => {
   });
   const [errors, setErrors] = useState({});
   const [isDirty, setIsDirty] = useState(false);
-  
+
   // Tab management
   const [activeTab, setActiveTab] = useState('server');
-  
+
   // Get update notification state
   const { updateAvailable } = useUpdateNotification();
-  
+
   // Tab configuration
   const tabs = [
     { id: 'server', name: 'Server Configuration', icon: Server },
-    { id: 'frontend', name: 'Frontend Configuration', icon: Globe },
     { id: 'agent', name: 'Agent Management', icon: SettingsIcon },
     { id: 'version', name: 'Server Version', icon: Code, showUpgradeIcon: updateAvailable }
   ];
-  
+
   // Agent version management state
   const [showAgentVersionModal, setShowAgentVersionModal] = useState(false);
   const [editingAgentVersion, setEditingAgentVersion] = useState(null);
@@ -54,7 +52,7 @@ const Settings = () => {
     checking: false,
     error: null
   });
-  
+
   const [sshTestResult, setSshTestResult] = useState({
     testing: false,
     success: null,
@@ -77,7 +75,6 @@ const Settings = () => {
         serverProtocol: settings.server_protocol || 'http',
         serverHost: settings.server_host || 'localhost',
         serverPort: settings.server_port || 3001,
-        frontendUrl: settings.frontend_url || 'http://localhost:3000',
         updateInterval: settings.update_interval || 60,
         autoUpdate: settings.auto_update || false,
         signupEnabled: settings.signup_enabled === true ? true : false, // Explicit boolean conversion
@@ -189,11 +186,11 @@ const Settings = () => {
   // Version checking functions
   const checkForUpdates = async () => {
     setVersionInfo(prev => ({ ...prev, checking: true, error: null }));
-    
+
     try {
       const response = await versionAPI.checkUpdates();
       const data = response.data;
-      
+
       setVersionInfo({
         currentVersion: data.currentVersion,
         latestVersion: data.latestVersion,
@@ -224,13 +221,13 @@ const Settings = () => {
     }
 
     setSshTestResult({ testing: true, success: null, message: null, error: null });
-    
+
     try {
       const response = await versionAPI.testSshKey({
         sshKeyPath: formData.sshKeyPath,
         githubRepoUrl: formData.githubRepoUrl
       });
-      
+
       setSshTestResult({
         testing: false,
         success: true,
@@ -261,7 +258,7 @@ const Settings = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Only include sshKeyPath if the toggle is enabled
     const dataToSubmit = { ...formData };
     if (!dataToSubmit.useCustomSshKey) {
@@ -269,31 +266,25 @@ const Settings = () => {
     }
     // Remove the frontend-only field
     delete dataToSubmit.useCustomSshKey;
-    
+
     updateSettingsMutation.mutate(dataToSubmit);
   };
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.serverHost.trim()) {
       newErrors.serverHost = 'Server host is required';
     }
-    
+
     if (!formData.serverPort || formData.serverPort < 1 || formData.serverPort > 65535) {
       newErrors.serverPort = 'Port must be between 1 and 65535';
     }
-    
-    try {
-      new URL(formData.frontendUrl);
-    } catch {
-      newErrors.frontendUrl = 'Frontend URL must be a valid URL';
-    }
-    
+
     if (!formData.updateInterval || formData.updateInterval < 5 || formData.updateInterval > 1440) {
       newErrors.updateInterval = 'Update interval must be between 5 and 1440 minutes';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -307,7 +298,7 @@ const Settings = () => {
       }
       // Remove the frontend-only field
       delete dataToSubmit.useCustomSshKey;
-      
+
       updateSettingsMutation.mutate(dataToSubmit);
     }
   };
@@ -391,7 +382,7 @@ const Settings = () => {
                 <Server className="h-6 w-6 text-primary-600 mr-3" />
                 <h2 className="text-xl font-semibold text-secondary-900 dark:text-white">Server Configuration</h2>
               </div>
-          
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
@@ -448,7 +439,7 @@ const Settings = () => {
           <div className="mt-4 p-4 bg-secondary-50 dark:bg-secondary-700 rounded-md">
             <h4 className="text-sm font-medium text-secondary-900 dark:text-white mb-2">Server URL</h4>
             <p className="text-sm text-secondary-600 dark:text-secondary-300 font-mono">
-              {formData.serverProtocol}://{formData.serverHost}{formData.serverProtocol === 'https' ? ':443' : `:${formData.serverPort}`}
+              {formData.serverProtocol}://{formData.serverHost}:{formData.serverPort}
             </p>
             <p className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
               This URL will be used in installation scripts and agent communications.
@@ -581,79 +572,11 @@ const Settings = () => {
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">Security Notice</h3>
                     <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
-                      Changing these settings will affect all installation scripts and agent communications. 
+                      Changing these settings will affect all installation scripts and agent communications.
                       Make sure the server URL is accessible from your client networks.
                     </p>
                   </div>
                 </div>
-              </div>
-
-              {/* Save Button */}
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={!isDirty || updateSettingsMutation.isPending}
-                  className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
-                    !isDirty || updateSettingsMutation.isPending
-                      ? 'bg-secondary-400 cursor-not-allowed'
-                      : 'bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
-                  }`}
-                >
-                  {updateSettingsMutation.isPending ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save Settings
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {updateSettingsMutation.isSuccess && (
-                <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-md p-4">
-                  <div className="flex">
-                    <CheckCircle className="h-5 w-5 text-green-400 dark:text-green-300" />
-                    <div className="ml-3">
-                      <p className="text-sm text-green-700 dark:text-green-300">Settings saved successfully!</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </form>
-          )}
-
-          {/* Frontend Configuration Tab */}
-          {activeTab === 'frontend' && (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="flex items-center mb-6">
-                <Globe className="h-6 w-6 text-primary-600 mr-3" />
-                <h2 className="text-xl font-semibold text-secondary-900 dark:text-white">Frontend Configuration</h2>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
-                  Frontend URL *
-                </label>
-                <input
-                  type="url"
-                  value={formData.frontendUrl}
-                  onChange={(e) => handleInputChange('frontendUrl', e.target.value)}
-                  className={`w-full border rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white ${
-                    errors.frontendUrl ? 'border-red-300 dark:border-red-500' : 'border-secondary-300 dark:border-secondary-600'
-                  }`}
-                  placeholder="https://patchmon.example.com"
-                />
-                {errors.frontendUrl && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.frontendUrl}</p>
-                )}
-                <p className="mt-1 text-sm text-secondary-500 dark:text-secondary-400">
-                  The URL where users will access the PatchMon web interface.
-                </p>
               </div>
 
               {/* Save Button */}
@@ -826,7 +749,7 @@ const Settings = () => {
                 </div>
               </div>
             ))}
-            
+
             {agentVersions?.length === 0 && (
               <div className="text-center py-8">
                 <Code className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
@@ -848,13 +771,13 @@ const Settings = () => {
                 <Code className="h-6 w-6 text-primary-600 mr-3" />
                 <h2 className="text-xl font-semibold text-secondary-900 dark:text-white">Server Version Management</h2>
               </div>
-              
+
               <div className="bg-secondary-50 dark:bg-secondary-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Version Check Configuration</h3>
                 <p className="text-sm text-secondary-600 dark:text-secondary-300 mb-6">
                   Configure automatic version checking against your GitHub repository to notify users of available updates.
                 </p>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
@@ -894,7 +817,7 @@ const Settings = () => {
                       Choose whether your repository is public or private to determine the appropriate access method.
                     </p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
                       GitHub Repository URL
@@ -910,7 +833,7 @@ const Settings = () => {
                       SSH or HTTPS URL to your GitHub repository
                     </p>
                   </div>
-                  
+
                   {formData.repositoryType === 'private' && (
                     <div>
                       <div className="flex items-center gap-3 mb-3">
@@ -931,7 +854,7 @@ const Settings = () => {
                           Set custom SSH key path
                         </label>
                       </div>
-                    
+
                     {formData.useCustomSshKey && (
                       <div>
                         <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
@@ -947,7 +870,7 @@ const Settings = () => {
                         <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
                           Path to your SSH deploy key. If not set, will auto-detect from common locations.
                         </p>
-                        
+
                         <div className="mt-3">
                           <button
                             type="button"
@@ -957,7 +880,7 @@ const Settings = () => {
                           >
                             {sshTestResult.testing ? 'Testing...' : 'Test SSH Key'}
                           </button>
-                          
+
                           {sshTestResult.success && (
                             <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
                               <div className="flex items-center">
@@ -968,7 +891,7 @@ const Settings = () => {
                               </div>
                             </div>
                           )}
-                          
+
                           {sshTestResult.error && (
                             <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
                               <div className="flex items-center">
@@ -982,7 +905,7 @@ const Settings = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     {!formData.useCustomSshKey && (
                       <p className="text-xs text-secondary-500 dark:text-secondary-400">
                         Using auto-detection for SSH key location
@@ -990,7 +913,7 @@ const Settings = () => {
                     )}
                     </div>
                   )}
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-white dark:bg-secondary-800 rounded-lg p-4 border border-secondary-200 dark:border-secondary-600">
                       <div className="flex items-center gap-2 mb-2">
@@ -999,7 +922,7 @@ const Settings = () => {
                       </div>
                       <span className="text-lg font-mono text-secondary-900 dark:text-white">{versionInfo.currentVersion}</span>
                     </div>
-                    
+
                     <div className="bg-white dark:bg-secondary-800 rounded-lg p-4 border border-secondary-200 dark:border-secondary-600">
                       <div className="flex items-center gap-2 mb-2">
                         <Download className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -1019,7 +942,7 @@ const Settings = () => {
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Last Checked Time */}
                   {versionInfo.last_update_check && (
                     <div className="bg-white dark:bg-secondary-800 rounded-lg p-4 border border-secondary-200 dark:border-secondary-600">
@@ -1035,7 +958,7 @@ const Settings = () => {
                       </p>
                     </div>
                   )}
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <button
@@ -1047,7 +970,7 @@ const Settings = () => {
                         {versionInfo.checking ? 'Checking...' : 'Check for Updates'}
                       </button>
                     </div>
-                    
+
                     {/* Save Button for Version Settings */}
                     <button
                       type="button"
@@ -1072,7 +995,7 @@ const Settings = () => {
                       )}
                     </button>
                   </div>
-                  
+
                   {versionInfo.error && (
                     <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
                       <div className="flex">
@@ -1091,7 +1014,7 @@ const Settings = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Success Message for Version Settings */}
                   {updateSettingsMutation.isSuccess && (
                     <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-md p-4">
@@ -1105,7 +1028,7 @@ const Settings = () => {
                   )}
                 </div>
               </div>
-              
+
             </div>
           )}
         </div>
@@ -1139,17 +1062,17 @@ const AgentVersionModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Basic validation
     const newErrors = {};
     if (!formData.version.trim()) newErrors.version = 'Version is required';
     if (!formData.scriptContent.trim()) newErrors.scriptContent = 'Script content is required';
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    
+
     onSubmit(formData);
   };
 
@@ -1180,7 +1103,7 @@ const AgentVersionModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             </button>
           </div>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="px-6 py-4">
           <div className="space-y-4">
             <div>
@@ -1253,7 +1176,7 @@ const AgentVersionModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
               </label>
             </div>
           </div>
-          
+
           <div className="flex justify-end gap-3 mt-6">
             <button
               type="button"
