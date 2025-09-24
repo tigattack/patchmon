@@ -209,7 +209,7 @@ We welcome contributions from the community! Here's how you can get involved:
    - Link any related issues
 
 ### Contribution Guidelines
-- **Code Style**: Follow the existing code patterns and ESLint configuration
+- **Code Style**: Follow the existing code patterns and Biome configuration
 - **Commits**: Use conventional commit messages (feat:, fix:, docs:, etc.)
 - **Testing**: Ensure all tests pass and add tests for new features
 - **Documentation**: Update README and code comments as needed
