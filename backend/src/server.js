@@ -666,30 +666,33 @@ async function getPermissionBasedPreferences(userRole) {
   const permissions = await getUserPermissions(userRole);
   
   // Define all possible dashboard cards with their required permissions
+  // Order matches iby's (Muhammad Ibrahim) preferred layout
   const allCards = [
     // Host-related cards
     { cardId: 'totalHosts', requiredPermission: 'can_view_hosts', order: 0 },
     { cardId: 'hostsNeedingUpdates', requiredPermission: 'can_view_hosts', order: 1 },
-    { cardId: 'upToDateHosts', requiredPermission: 'can_view_hosts', order: 2 },
-    { cardId: 'totalHostGroups', requiredPermission: 'can_view_hosts', order: 3 },
     
     // Package-related cards
-    { cardId: 'totalOutdatedPackages', requiredPermission: 'can_view_packages', order: 4 },
-    { cardId: 'securityUpdates', requiredPermission: 'can_view_packages', order: 5 },
-    { cardId: 'packagePriority', requiredPermission: 'can_view_packages', order: 6 },
+    { cardId: 'totalOutdatedPackages', requiredPermission: 'can_view_packages', order: 2 },
+    { cardId: 'securityUpdates', requiredPermission: 'can_view_packages', order: 3 },
+    
+    // Host-related cards (continued)
+    { cardId: 'totalHostGroups', requiredPermission: 'can_view_hosts', order: 4 },
+    { cardId: 'upToDateHosts', requiredPermission: 'can_view_hosts', order: 5 },
     
     // Repository-related cards
-    { cardId: 'totalRepos', requiredPermission: 'can_view_hosts', order: 7 }, // Repos are host-related
+    { cardId: 'totalRepos', requiredPermission: 'can_view_hosts', order: 6 }, // Repos are host-related
     
     // User management cards (admin only)
-    { cardId: 'totalUsers', requiredPermission: 'can_view_users', order: 8 },
-    { cardId: 'recentUsers', requiredPermission: 'can_view_users', order: 9 },
+    { cardId: 'totalUsers', requiredPermission: 'can_view_users', order: 7 },
     
     // System/Report cards
-    { cardId: 'osDistribution', requiredPermission: 'can_view_reports', order: 10 },
-    { cardId: 'osDistributionBar', requiredPermission: 'can_view_reports', order: 11 },
-    { cardId: 'updateStatus', requiredPermission: 'can_view_reports', order: 12 },
-    { cardId: 'recentCollection', requiredPermission: 'can_view_hosts', order: 13 }, // Collection is host-related
+    { cardId: 'osDistribution', requiredPermission: 'can_view_reports', order: 8 },
+    { cardId: 'osDistributionBar', requiredPermission: 'can_view_reports', order: 9 },
+    { cardId: 'recentCollection', requiredPermission: 'can_view_hosts', order: 10 }, // Collection is host-related
+    { cardId: 'updateStatus', requiredPermission: 'can_view_reports', order: 11 },
+    { cardId: 'packagePriority', requiredPermission: 'can_view_packages', order: 12 },
+    { cardId: 'recentUsers', requiredPermission: 'can_view_users', order: 13 },
     { cardId: 'quickStats', requiredPermission: 'can_view_dashboard', order: 14 }
   ];
 
