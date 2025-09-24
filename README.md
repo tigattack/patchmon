@@ -6,6 +6,8 @@
 [![Roadmap](https://img.shields.io/badge/Roadmap-View%20Progress-green?style=for-the-badge&logo=github)](https://github.com/users/9technologygroup/projects/1)
 ---
 
+## Please STAR this repo :D
+
 ## Purpose
 
 PatchMon provides centralized patch management across diverse server environments. Agents communicate outbound-only to the PatchMon server, eliminating inbound ports on monitored hosts while delivering comprehensive visibility and safe automation.
@@ -241,7 +243,7 @@ Thank you to all our contributors who help make PatchMon better every day!
 
 ## 🔗 Links
 
-- **Website**: [patchmon.net](https://patchmon.net) **(New website ocming soon)**
+- **Website**: [patchmon.net](https://patchmon.net) **(New website coming soon)**
 - **Discord**: [discord.gg/S7RXUHwg](https://discord.gg/S7RXUHwg)
 - **Roadmap**: [GitHub Projects](https://github.com/users/9technologygroup/projects/1)
 - **Documentation**: [Coming Soon]
