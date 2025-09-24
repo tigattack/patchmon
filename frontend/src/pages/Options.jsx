@@ -143,6 +143,7 @@ const Options = () => {
 						</p>
 					</div>
 					<button
+						type="button"
 						onClick={() => setShowCreateModal(true)}
 						className="btn-primary flex items-center gap-2"
 					>
@@ -178,6 +179,7 @@ const Options = () => {
 									</div>
 									<div className="flex items-center gap-2">
 										<button
+											type="button"
 											onClick={() => handleEdit(group)}
 											className="p-1 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 rounded"
 											title="Edit group"
@@ -185,6 +187,7 @@ const Options = () => {
 											<Edit className="h-4 w-4" />
 										</button>
 										<button
+											type="button"
 											onClick={() => handleDeleteClick(group)}
 											className="p-1 text-secondary-400 hover:text-danger-600 hover:bg-danger-50 rounded"
 											title="Delete group"
@@ -216,6 +219,7 @@ const Options = () => {
 							Create your first host group to organize your hosts
 						</p>
 						<button
+							type="button"
 							onClick={() => setShowCreateModal(true)}
 							className="btn-primary flex items-center gap-2 mx-auto"
 						>
@@ -260,6 +264,7 @@ const Options = () => {
 						const Icon = tab.icon;
 						return (
 							<button
+								type="button"
 								key={tab.id}
 								onClick={() => setActiveTab(tab.id)}
 								className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
@@ -558,6 +563,7 @@ const DeleteHostGroupModal = ({ group, onClose, onConfirm, isLoading }) => {
 
 				<div className="flex justify-end gap-3">
 					<button
+						type="button"
 						onClick={onClose}
 						className="btn-outline"
 						disabled={isLoading}
@@ -565,6 +571,7 @@ const DeleteHostGroupModal = ({ group, onClose, onConfirm, isLoading }) => {
 						Cancel
 					</button>
 					<button
+						type="button"
 						onClick={onConfirm}
 						className="btn-danger"
 						disabled={isLoading || group._count.hosts > 0}

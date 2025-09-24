@@ -163,6 +163,7 @@ const HostDetail = () => {
 								{error.message || "Failed to load host details"}
 							</p>
 							<button
+								type="button"
 								onClick={() => refetch()}
 								className="mt-2 btn-danger text-xs"
 							>
@@ -257,6 +258,7 @@ const HostDetail = () => {
 				</div>
 				<div className="flex items-center gap-2">
 					<button
+						type="button"
 						onClick={() => refetch()}
 						disabled={isFetching}
 						className="btn-outline flex items-center gap-2 text-sm"
@@ -268,6 +270,7 @@ const HostDetail = () => {
 						{isFetching ? "Refreshing..." : "Refresh"}
 					</button>
 					<button
+						type="button"
 						onClick={() => setShowCredentialsModal(true)}
 						className="btn-outline flex items-center gap-2 text-sm"
 					>
@@ -275,6 +278,7 @@ const HostDetail = () => {
 						Deploy Agent
 					</button>
 					<button
+						type="button"
 						onClick={() => setShowDeleteModal(true)}
 						className="btn-danger flex items-center gap-2 text-sm"
 					>
@@ -292,6 +296,7 @@ const HostDetail = () => {
 					<div className="card">
 						<div className="flex border-b border-secondary-200 dark:border-secondary-600">
 							<button
+								type="button"
 								onClick={() => handleTabChange("host")}
 								className={`px-4 py-2 text-sm font-medium ${
 									activeTab === "host"
@@ -302,6 +307,7 @@ const HostDetail = () => {
 								Host Info
 							</button>
 							<button
+								type="button"
 								onClick={() => handleTabChange("network")}
 								className={`px-4 py-2 text-sm font-medium ${
 									activeTab === "network"
@@ -312,6 +318,7 @@ const HostDetail = () => {
 								Network
 							</button>
 							<button
+								type="button"
 								onClick={() => handleTabChange("system")}
 								className={`px-4 py-2 text-sm font-medium ${
 									activeTab === "system"
@@ -322,6 +329,7 @@ const HostDetail = () => {
 								System
 							</button>
 							<button
+								type="button"
 								onClick={() => handleTabChange("monitoring")}
 								className={`px-4 py-2 text-sm font-medium ${
 									activeTab === "monitoring"
@@ -332,6 +340,7 @@ const HostDetail = () => {
 								Resource
 							</button>
 							<button
+								type="button"
 								onClick={() => handleTabChange("history")}
 								className={`px-4 py-2 text-sm font-medium ${
 									activeTab === "history"
@@ -427,6 +436,7 @@ const HostDetail = () => {
 														Auto-update
 													</span>
 													<button
+														type="button"
 														onClick={() =>
 															toggleAutoUpdateMutation.mutate(!host.auto_update)
 														}
@@ -862,6 +872,7 @@ const HostDetail = () => {
 											{host.update_history.length > 5 && (
 												<div className="px-4 py-2 border-t border-secondary-200 dark:border-secondary-600 bg-secondary-50 dark:bg-secondary-700">
 													<button
+														type="button"
 														onClick={() => setShowAllUpdates(!showAllUpdates)}
 														className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
 													>
@@ -906,6 +917,7 @@ const HostDetail = () => {
 						<div className="p-4">
 							<div className="grid grid-cols-3 gap-4">
 								<button
+									type="button"
 									onClick={() => navigate(`/packages?host=${hostId}`)}
 									className="text-center p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors group"
 									title="View all packages for this host"
@@ -922,6 +934,7 @@ const HostDetail = () => {
 								</button>
 
 								<button
+									type="button"
 									onClick={() => navigate(`/packages?host=${hostId}`)}
 									className="text-center p-4 bg-warning-50 dark:bg-warning-900/20 rounded-lg hover:bg-warning-100 dark:hover:bg-warning-900/30 transition-colors group"
 									title="View outdated packages for this host"
@@ -938,6 +951,7 @@ const HostDetail = () => {
 								</button>
 
 								<button
+									type="button"
 									onClick={() =>
 										navigate(`/packages?host=${hostId}&filter=security`)
 									}
@@ -1083,6 +1097,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 						Host Setup - {host.friendly_name}
 					</h3>
 					<button
+						type="button"
 						onClick={onClose}
 						className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300"
 					>
@@ -1094,6 +1109,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 				<div className="border-b border-secondary-200 dark:border-secondary-600 mb-6">
 					<nav className="-mb-px flex space-x-8">
 						<button
+							type="button"
 							onClick={() => setActiveTab("quick-install")}
 							className={`py-2 px-1 border-b-2 font-medium text-sm ${
 								activeTab === "quick-install"
@@ -1104,6 +1120,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 							Quick Install
 						</button>
 						<button
+							type="button"
 							onClick={() => setActiveTab("credentials")}
 							className={`py-2 px-1 border-b-2 font-medium text-sm ${
 								activeTab === "credentials"
@@ -1135,6 +1152,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 									className="flex-1 px-3 py-2 border border-primary-300 dark:border-primary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
 								/>
 								<button
+									type="button"
 									onClick={() =>
 										copyToClipboard(
 											`curl -s ${serverUrl}/api/v1/hosts/install | bash -s -- ${serverUrl} "${host.api_id}" "${host.api_key}"`,
@@ -1168,6 +1186,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 											className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
 										/>
 										<button
+											type="button"
 											onClick={() =>
 												copyToClipboard(
 													`curl -o /tmp/patchmon-agent.sh ${serverUrl}/api/v1/hosts/agent/download`,
@@ -1193,6 +1212,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 											className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
 										/>
 										<button
+											type="button"
 											onClick={() =>
 												copyToClipboard(
 													"sudo mkdir -p /etc/patchmon && sudo mv /tmp/patchmon-agent.sh /usr/local/bin/patchmon-agent.sh && sudo chmod +x /usr/local/bin/patchmon-agent.sh",
@@ -1218,6 +1238,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 											className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
 										/>
 										<button
+											type="button"
 											onClick={() =>
 												copyToClipboard(
 													`sudo /usr/local/bin/patchmon-agent.sh configure "${host.api_id}" "${host.api_key}"`,
@@ -1243,6 +1264,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 											className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
 										/>
 										<button
+											type="button"
 											onClick={() =>
 												copyToClipboard(
 													"sudo /usr/local/bin/patchmon-agent.sh test",
@@ -1268,6 +1290,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 											className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
 										/>
 										<button
+											type="button"
 											onClick={() =>
 												copyToClipboard(
 													"sudo /usr/local/bin/patchmon-agent.sh update",
@@ -1293,6 +1316,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 											className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
 										/>
 										<button
+											type="button"
 											onClick={() =>
 												copyToClipboard(
 													`echo "${new Date().getMinutes()} * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -`,
@@ -1329,6 +1353,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 											className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-secondary-50 dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
 										/>
 										<button
+											type="button"
 											onClick={() => copyToClipboard(host.api_id)}
 											className="btn-outline flex items-center gap-1"
 										>
@@ -1350,6 +1375,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 											className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-secondary-50 dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
 										/>
 										<button
+											type="button"
 											onClick={() => setShowApiKey(!showApiKey)}
 											className="btn-outline flex items-center gap-1"
 										>
@@ -1360,6 +1386,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 											)}
 										</button>
 										<button
+											type="button"
 											onClick={() => copyToClipboard(host.api_key)}
 											className="btn-outline flex items-center gap-1"
 										>
@@ -1389,7 +1416,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 				)}
 
 				<div className="flex justify-end pt-6">
-					<button onClick={onClose} className="btn-primary">
+					<button type="button" onClick={onClose} className="btn-primary">
 						Close
 					</button>
 				</div>
@@ -1441,6 +1468,7 @@ const DeleteConfirmationModal = ({
 
 				<div className="flex justify-end gap-3">
 					<button
+						type="button"
 						onClick={onClose}
 						className="btn-outline"
 						disabled={isLoading}
@@ -1448,6 +1476,7 @@ const DeleteConfirmationModal = ({
 						Cancel
 					</button>
 					<button
+						type="button"
 						onClick={onConfirm}
 						className="btn-danger"
 						disabled={isLoading}

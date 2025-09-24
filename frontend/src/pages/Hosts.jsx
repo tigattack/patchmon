@@ -103,6 +103,7 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 						Add New Host
 					</h3>
 					<button
+						type="button"
 						onClick={onClose}
 						className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300"
 					>
@@ -369,6 +370,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 						Host Setup - {host.friendly_name}
 					</h3>
 					<button
+						type="button"
 						onClick={onClose}
 						className="text-secondary-400 hover:text-secondary-600"
 					>
@@ -379,6 +381,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 				{/* Tabs */}
 				<div className="flex space-x-1 mb-6 bg-secondary-100 p-1 rounded-lg">
 					<button
+						type="button"
 						onClick={() => setActiveTab("quick")}
 						className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
 							activeTab === "quick"
@@ -389,6 +392,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 						Quick Install
 					</button>
 					<button
+						type="button"
 						onClick={() => setActiveTab("credentials")}
 						className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
 							activeTab === "credentials"
@@ -399,6 +403,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 						API Credentials
 					</button>
 					<button
+						type="button"
 						onClick={() => setActiveTab("setup")}
 						className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
 							activeTab === "setup"
@@ -409,6 +414,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 						Setup Instructions
 					</button>
 					<button
+						type="button"
 						onClick={() => setActiveTab("script")}
 						className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
 							activeTab === "script"
@@ -444,6 +450,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 										{commands.oneLine}
 									</code>
 									<button
+										type="button"
 										onClick={() =>
 											copyToClipboard(commands.oneLine, "Installation command")
 										}
@@ -512,6 +519,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 									className="flex-1 block w-full border-secondary-300 rounded-l-md shadow-sm bg-secondary-50"
 								/>
 								<button
+									type="button"
 									onClick={() => copyToClipboard(host.apiId, "API ID")}
 									className="px-3 py-2 border border-l-0 border-secondary-300 rounded-r-md bg-secondary-50 hover:bg-secondary-100"
 								>
@@ -532,6 +540,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 									className="flex-1 block w-full border-secondary-300 rounded-l-md shadow-sm bg-secondary-50"
 								/>
 								<button
+									type="button"
 									onClick={() => setShowApiKey(!showApiKey)}
 									className="px-3 py-2 border border-l-0 border-r-0 border-secondary-300 bg-secondary-50 hover:bg-secondary-100"
 								>
@@ -542,6 +551,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 									)}
 								</button>
 								<button
+									type="button"
 									onClick={() => copyToClipboard(host.apiKey, "API Key")}
 									className="px-3 py-2 border border-l-0 border-secondary-300 rounded-r-md bg-secondary-50 hover:bg-secondary-100"
 								>
@@ -586,6 +596,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 										{commands.download}
 									</code>
 									<button
+										type="button"
 										onClick={() =>
 											copyToClipboard(commands.download, "Download commands")
 										}
@@ -606,6 +617,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 								<div className="flex justify-between items-start">
 									<code className="flex-1">{commands.configure}</code>
 									<button
+										type="button"
 										onClick={() =>
 											copyToClipboard(commands.configure, "Configure command")
 										}
@@ -626,6 +638,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 								<div className="flex justify-between items-start">
 									<code className="flex-1">{commands.test}</code>
 									<button
+										type="button"
 										onClick={() =>
 											copyToClipboard(commands.test, "Test command")
 										}
@@ -650,6 +663,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 								<div className="flex justify-between items-start">
 									<code className="flex-1">{commands.initialUpdate}</code>
 									<button
+										type="button"
 										onClick={() =>
 											copyToClipboard(
 												commands.initialUpdate,
@@ -673,6 +687,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 								<div className="flex justify-between items-start">
 									<code className="flex-1">{commands.crontab}</code>
 									<button
+										type="button"
 										onClick={() =>
 											copyToClipboard(commands.crontab, "Crontab command")
 										}
@@ -709,6 +724,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 									Complete Setup Script
 								</h5>
 								<button
+									type="button"
 									onClick={() =>
 										copyToClipboard(commands.fullSetup, "Complete setup script")
 									}
@@ -750,6 +766,7 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 						Download Agent Script
 					</a>
 					<button
+						type="button"
 						onClick={onClose}
 						className="px-4 py-2 text-sm font-medium text-secondary-700 bg-white border border-secondary-300 rounded-md hover:bg-secondary-50"
 					>
@@ -1270,6 +1287,7 @@ const Hosts = () => {
 			case "select":
 				return (
 					<button
+						type="button"
 						onClick={() => handleSelectHost(host.id)}
 						className="flex items-center gap-2 hover:text-secondary-700"
 					>
@@ -1373,6 +1391,7 @@ const Hosts = () => {
 			case "updates":
 				return (
 					<button
+						type="button"
 						onClick={() => navigate(`/packages?host=${host.id}`)}
 						className="text-sm text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 font-medium hover:underline"
 						title="View packages for this host"
@@ -1472,6 +1491,7 @@ const Hosts = () => {
 							{error.message || "Failed to load hosts"}
 						</p>
 						<button
+							type="button"
 							onClick={() => refetch()}
 							className="mt-2 btn-danger text-xs"
 						>
@@ -1515,6 +1535,7 @@ const Hosts = () => {
 				</div>
 				<div className="flex items-center gap-3">
 					<button
+						type="button"
 						onClick={() => refetch()}
 						disabled={isFetching}
 						className="btn-outline flex items-center gap-2"
@@ -1526,6 +1547,7 @@ const Hosts = () => {
 						{isFetching ? "Refreshing..." : "Refresh"}
 					</button>
 					<button
+						type="button"
 						onClick={() => setShowAddModal(true)}
 						className="btn-primary flex items-center gap-2"
 					>
@@ -1615,6 +1637,7 @@ const Hosts = () => {
 									{selectedHosts.length !== 1 ? "s" : ""} selected
 								</span>
 								<button
+									type="button"
 									onClick={() => setShowBulkAssignModal(true)}
 									className="btn-outline flex items-center gap-2"
 								>
@@ -1622,6 +1645,7 @@ const Hosts = () => {
 									Assign to Group
 								</button>
 								<button
+									type="button"
 									onClick={() => setShowBulkDeleteModal(true)}
 									className="btn-danger flex items-center gap-2"
 								>
@@ -1629,6 +1653,7 @@ const Hosts = () => {
 									Delete
 								</button>
 								<button
+									type="button"
 									onClick={() => setSelectedHosts([])}
 									className="text-sm text-secondary-500 hover:text-secondary-700"
 								>
@@ -1656,6 +1681,7 @@ const Hosts = () => {
 							</div>
 							<div className="flex gap-2">
 								<button
+									type="button"
 									onClick={() => setShowFilters(!showFilters)}
 									className={`btn-outline flex items-center gap-2 ${showFilters ? "bg-primary-50 border-primary-300" : ""}`}
 								>
@@ -1663,6 +1689,7 @@ const Hosts = () => {
 									Filters
 								</button>
 								<button
+									type="button"
 									onClick={() => setShowColumnSettings(true)}
 									className="btn-outline flex items-center gap-2"
 								>
@@ -1683,6 +1710,7 @@ const Hosts = () => {
 									<ChevronDown className="absolute right-1 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400 dark:text-secondary-500 pointer-events-none" />
 								</div>
 								<button
+									type="button"
 									onClick={() => setHideStale(!hideStale)}
 									className={`btn-outline flex items-center gap-2 ${hideStale ? "bg-primary-50 border-primary-300" : ""}`}
 								>
@@ -1690,6 +1718,7 @@ const Hosts = () => {
 									Hide Stale
 								</button>
 								<button
+									type="button"
 									onClick={() => setShowAddModal(true)}
 									className="btn-primary flex items-center gap-2"
 								>
@@ -1754,6 +1783,7 @@ const Hosts = () => {
 									</div>
 									<div className="flex items-end">
 										<button
+											type="button"
 											onClick={() => {
 												setSearchTerm("");
 												setGroupFilter("all");
@@ -1819,6 +1849,7 @@ const Hosts = () => {
 																	>
 																		{column.id === "select" ? (
 																			<button
+																				type="button"
 																				onClick={handleSelectAll}
 																				className="flex items-center gap-2 hover:text-secondary-700"
 																			>
@@ -1831,6 +1862,7 @@ const Hosts = () => {
 																			</button>
 																		) : column.id === "host" ? (
 																			<button
+																				type="button"
 																				onClick={() =>
 																					handleSort("friendlyName")
 																				}
@@ -1841,6 +1873,7 @@ const Hosts = () => {
 																			</button>
 																		) : column.id === "hostname" ? (
 																			<button
+																				type="button"
 																				onClick={() => handleSort("hostname")}
 																				className="flex items-center gap-2 hover:text-secondary-700"
 																			>
@@ -1849,6 +1882,7 @@ const Hosts = () => {
 																			</button>
 																		) : column.id === "ip" ? (
 																			<button
+																				type="button"
 																				onClick={() => handleSort("ip")}
 																				className="flex items-center gap-2 hover:text-secondary-700"
 																			>
@@ -1857,6 +1891,7 @@ const Hosts = () => {
 																			</button>
 																		) : column.id === "group" ? (
 																			<button
+																				type="button"
 																				onClick={() => handleSort("group")}
 																				className="flex items-center gap-2 hover:text-secondary-700"
 																			>
@@ -1865,6 +1900,7 @@ const Hosts = () => {
 																			</button>
 																		) : column.id === "os" ? (
 																			<button
+																				type="button"
 																				onClick={() => handleSort("os")}
 																				className="flex items-center gap-2 hover:text-secondary-700"
 																			>
@@ -1873,6 +1909,7 @@ const Hosts = () => {
 																			</button>
 																		) : column.id === "os_version" ? (
 																			<button
+																				type="button"
 																				onClick={() => handleSort("os_version")}
 																				className="flex items-center gap-2 hover:text-secondary-700"
 																			>
@@ -1881,6 +1918,7 @@ const Hosts = () => {
 																			</button>
 																		) : column.id === "agent_version" ? (
 																			<button
+																				type="button"
 																				onClick={() =>
 																					handleSort("agent_version")
 																				}
@@ -1895,6 +1933,7 @@ const Hosts = () => {
 																			</div>
 																		) : column.id === "status" ? (
 																			<button
+																				type="button"
 																				onClick={() => handleSort("status")}
 																				className="flex items-center gap-2 hover:text-secondary-700"
 																			>
@@ -1903,6 +1942,7 @@ const Hosts = () => {
 																			</button>
 																		) : column.id === "updates" ? (
 																			<button
+																				type="button"
 																				onClick={() => handleSort("updates")}
 																				className="flex items-center gap-2 hover:text-secondary-700"
 																			>
@@ -1911,6 +1951,7 @@ const Hosts = () => {
 																			</button>
 																		) : column.id === "last_update" ? (
 																			<button
+																				type="button"
 																				onClick={() =>
 																					handleSort("last_update")
 																				}
@@ -2047,6 +2088,7 @@ const BulkAssignModal = ({
 						Assign to Host Group
 					</h3>
 					<button
+						type="button"
 						onClick={onClose}
 						className="text-secondary-400 hover:text-secondary-600"
 					>
@@ -2135,6 +2177,7 @@ const BulkDeleteModal = ({
 							Delete Hosts
 						</h3>
 						<button
+							type="button"
 							onClick={onClose}
 							className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300"
 							disabled={isLoading}
@@ -2236,6 +2279,7 @@ const ColumnSettingsModal = ({
 							Column Settings
 						</h3>
 						<button
+							type="button"
 							onClick={onClose}
 							className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300"
 						>
@@ -2270,6 +2314,7 @@ const ColumnSettingsModal = ({
 									</span>
 								</div>
 								<button
+									type="button"
 									onClick={() => onToggleVisibility(column.id)}
 									className={`p-1 rounded ${
 										column.visible
@@ -2288,10 +2333,10 @@ const ColumnSettingsModal = ({
 					</div>
 
 					<div className="flex justify-between mt-6">
-						<button onClick={onReset} className="btn-outline">
+						<button type="button" onClick={onReset} className="btn-outline">
 							Reset to Default
 						</button>
-						<button onClick={onClose} className="btn-primary">
+						<button type="button" onClick={onClose} className="btn-primary">
 							Done
 						</button>
 					</div>

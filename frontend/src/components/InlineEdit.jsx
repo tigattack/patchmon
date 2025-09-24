@@ -102,6 +102,7 @@ const InlineEdit = ({
 					} ${isLoading ? "opacity-50" : ""}`}
 				/>
 				<button
+					type="button"
 					onClick={handleSave}
 					disabled={isLoading || editValue.trim() === ""}
 					className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -110,6 +111,7 @@ const InlineEdit = ({
 					<Check className="h-4 w-4" />
 				</button>
 				<button
+					type="button"
 					onClick={handleCancel}
 					disabled={isLoading}
 					className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -145,6 +147,7 @@ const InlineEdit = ({
 			{displayValue}
 			{!disabled && (
 				<button
+					type="button"
 					onClick={handleEdit}
 					className="p-1 text-secondary-400 hover:text-secondary-600 dark:hover:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded transition-colors opacity-0 group-hover:opacity-100"
 					title="Edit"

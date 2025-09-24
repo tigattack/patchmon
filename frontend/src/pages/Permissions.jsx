@@ -108,6 +108,7 @@ const Permissions = () => {
 			<div className="flex justify-end items-center">
 				<div className="flex space-x-3">
 					<button
+						type="button"
 						onClick={() => refreshPermissions()}
 						className="inline-flex items-center px-4 py-2 border border-secondary-300 text-sm font-medium rounded-md text-secondary-700 bg-white hover:bg-secondary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
 					>
@@ -115,6 +116,7 @@ const Permissions = () => {
 						Refresh Permissions
 					</button>
 					<button
+						type="button"
 						onClick={() => setShowAddModal(true)}
 						className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
 					>
@@ -265,6 +267,7 @@ const RolePermissionsCard = ({
 						{isEditing ? (
 							<>
 								<button
+									type="button"
 									onClick={handleSave}
 									className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
 								>
@@ -272,6 +275,7 @@ const RolePermissionsCard = ({
 									Save
 								</button>
 								<button
+									type="button"
 									onClick={onCancel}
 									className="inline-flex items-center px-3 py-1 border border-secondary-300 dark:border-secondary-600 text-sm font-medium rounded-md text-secondary-700 dark:text-secondary-200 bg-white dark:bg-secondary-700 hover:bg-secondary-50 dark:hover:bg-secondary-600"
 								>
@@ -282,6 +286,7 @@ const RolePermissionsCard = ({
 						) : (
 							<>
 								<button
+									type="button"
 									onClick={onEdit}
 									disabled={isBuiltInRole}
 									className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -291,6 +296,7 @@ const RolePermissionsCard = ({
 								</button>
 								{!isBuiltInRole && (
 									<button
+										type="button"
 										onClick={() => onDelete(role.role)}
 										className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
 									>

@@ -75,6 +75,7 @@ const SortableCardItem = ({ card, onToggle }) => {
 			</div>
 
 			<button
+				type="button"
 				onClick={() => onToggle(card.cardId)}
 				className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors ${
 					card.enabled
@@ -271,6 +272,7 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
 								</h3>
 							</div>
 							<button
+								type="button"
 								onClick={onClose}
 								className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300"
 							>
@@ -314,6 +316,7 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
 
 					<div className="bg-secondary-50 dark:bg-secondary-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
 						<button
+							type="button"
 							onClick={handleSave}
 							disabled={!hasChanges || updatePreferencesMutation.isPending}
 							className={`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white sm:ml-3 sm:w-auto sm:text-sm ${
@@ -336,6 +339,7 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
 						</button>
 
 						<button
+							type="button"
 							onClick={handleReset}
 							className="mt-3 w-full inline-flex justify-center rounded-md border border-secondary-300 dark:border-secondary-600 shadow-sm px-4 py-2 bg-white dark:bg-secondary-800 text-base font-medium text-secondary-700 dark:text-secondary-200 hover:bg-secondary-50 dark:hover:bg-secondary-700 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
 						>
@@ -344,6 +348,7 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
 						</button>
 
 						<button
+							type="button"
 							onClick={onClose}
 							className="mt-3 w-full inline-flex justify-center rounded-md border border-secondary-300 dark:border-secondary-600 shadow-sm px-4 py-2 bg-white dark:bg-secondary-800 text-base font-medium text-secondary-700 dark:text-secondary-200 hover:bg-secondary-50 dark:hover:bg-secondary-700 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
 						>

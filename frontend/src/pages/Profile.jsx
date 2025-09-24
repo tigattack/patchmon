@@ -192,6 +192,7 @@ const Profile = () => {
 							const Icon = tab.icon;
 							return (
 								<button
+									type="button"
 									key={tab.id}
 									onClick={() => setActiveTab(tab.id)}
 									className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center ${
@@ -505,6 +506,7 @@ const Profile = () => {
 													</div>
 												</div>
 												<button
+													type="button"
 													onClick={toggleTheme}
 													className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
 														isDark ? "bg-primary-600" : "bg-secondary-300"
@@ -797,6 +799,7 @@ const TfaTab = () => {
 							<div>
 								{tfaStatus?.enabled ? (
 									<button
+										type="button"
 										onClick={() => setSetupStep("disable")}
 										className="btn-outline text-danger-600 border-danger-300 hover:bg-danger-50"
 									>
@@ -805,6 +808,7 @@ const TfaTab = () => {
 									</button>
 								) : (
 									<button
+										type="button"
 										onClick={handleSetup}
 										disabled={setupMutation.isPending}
 										className="btn-primary"
@@ -827,6 +831,7 @@ const TfaTab = () => {
 								authenticator device.
 							</p>
 							<button
+								type="button"
 								onClick={handleRegenerateBackupCodes}
 								disabled={regenerateBackupCodesMutation.isPending}
 								className="btn-outline"
@@ -871,6 +876,7 @@ const TfaTab = () => {
 										{setupMutation.data.manualEntryKey}
 									</code>
 									<button
+										type="button"
 										onClick={() =>
 											copyToClipboard(setupMutation.data.manualEntryKey)
 										}
@@ -884,6 +890,7 @@ const TfaTab = () => {
 
 							<div className="text-center">
 								<button
+									type="button"
 									onClick={() => setSetupStep("verify")}
 									className="btn-primary"
 								>
@@ -979,11 +986,12 @@ const TfaTab = () => {
 							</div>
 						</div>
 						<div className="flex space-x-3">
-							<button onClick={downloadBackupCodes} className="btn-outline">
+							<button type="button" onClick={downloadBackupCodes} className="btn-outline">
 								<Download className="h-4 w-4 mr-2" />
 								Download Codes
 							</button>
 							<button
+								type="button"
 								onClick={() => {
 									setSetupStep("status");
 									queryClient.invalidateQueries(["tfaStatus"]);

@@ -831,6 +831,7 @@ const Dashboard = () => {
 							{error.message || "Failed to load dashboard statistics"}
 						</p>
 						<button
+							type="button"
 							onClick={() => refetch()}
 							className="mt-2 btn-danger text-xs"
 						>
@@ -1010,6 +1011,7 @@ const Dashboard = () => {
 				</div>
 				<div className="flex items-center gap-3">
 					<button
+						type="button"
 						onClick={() => setShowSettingsModal(true)}
 						className="btn-outline flex items-center gap-2"
 						title="Customize dashboard layout"
@@ -1018,6 +1020,7 @@ const Dashboard = () => {
 						Customize Dashboard
 					</button>
 					<button
+						type="button"
 						onClick={() => refetch()}
 						disabled={isFetching}
 						className="btn-outline flex items-center gap-2"

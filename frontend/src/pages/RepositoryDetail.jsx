@@ -161,6 +161,7 @@ const RepositoryDetail = () => {
 					{editMode ? (
 						<>
 							<button
+								type="button"
 								onClick={handleCancel}
 								className="btn-outline"
 								disabled={updateRepositoryMutation.isPending}
@@ -168,6 +169,7 @@ const RepositoryDetail = () => {
 								Cancel
 							</button>
 							<button
+								type="button"
 								onClick={handleSave}
 								className="btn-primary"
 								disabled={updateRepositoryMutation.isPending}
@@ -178,7 +180,7 @@ const RepositoryDetail = () => {
 							</button>
 						</>
 					) : (
-						<button onClick={handleEdit} className="btn-primary">
+						<button type="button" onClick={handleEdit} className="btn-primary">
 							Edit Repository
 						</button>
 					)}

@@ -238,6 +238,7 @@ const Repositories = () => {
 				</div>
 				<div className="flex items-center gap-3">
 					<button
+						type="button"
 						onClick={() => refetch()}
 						disabled={isFetching}
 						className="btn-outline flex items-center gap-2"
@@ -363,6 +364,7 @@ const Repositories = () => {
 							{/* Columns Button */}
 							<div className="flex items-center">
 								<button
+									type="button"
 									onClick={() => setShowColumnSettings(true)}
 									className="flex items-center gap-2 px-3 py-2 text-sm text-secondary-700 dark:text-secondary-300 bg-white dark:bg-secondary-700 border border-secondary-300 dark:border-secondary-600 rounded-md hover:bg-secondary-50 dark:hover:bg-secondary-600 transition-colors"
 								>
@@ -399,6 +401,7 @@ const Repositories = () => {
 													className="px-4 py-2 text-center text-xs font-medium text-secondary-500 dark:text-secondary-300 uppercase tracking-wider"
 												>
 													<button
+														type="button"
 														onClick={() => handleSort(column.id)}
 														className="flex items-center gap-1 hover:text-secondary-700 dark:hover:text-secondary-200 transition-colors"
 													>
@@ -567,6 +570,7 @@ const ColumnSettingsModal = ({
 						Column Settings
 					</h3>
 					<button
+						type="button"
 						onClick={onClose}
 						className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300"
 					>
@@ -591,6 +595,7 @@ const ColumnSettingsModal = ({
 								</span>
 							</div>
 							<button
+								type="button"
 								onClick={() => onToggleVisibility(column.id)}
 								className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
 									column.visible
@@ -606,12 +611,14 @@ const ColumnSettingsModal = ({
 
 				<div className="flex justify-between mt-6">
 					<button
+						type="button"
 						onClick={onReset}
 						className="px-4 py-2 text-sm text-secondary-600 dark:text-secondary-400 hover:text-secondary-800 dark:hover:text-secondary-200"
 					>
 						Reset to Default
 					</button>
 					<button
+						type="button"
 						onClick={onClose}
 						className="px-4 py-2 bg-primary-600 text-white text-sm rounded-md hover:bg-primary-700 transition-colors"
 					>

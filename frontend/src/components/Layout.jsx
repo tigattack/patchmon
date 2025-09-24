@@ -386,6 +386,7 @@ const Layout = ({ children }) => {
 																{subItem.name}
 															</span>
 															<button
+																type="button"
 																onClick={(e) => {
 																	e.preventDefault();
 																	setSidebarOpen(false);
@@ -453,6 +454,7 @@ const Layout = ({ children }) => {
 					>
 						{sidebarCollapsed ? (
 							<button
+								type="button"
 								onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
 								className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-secondary-100 transition-colors"
 								title="Expand sidebar"
@@ -468,6 +470,7 @@ const Layout = ({ children }) => {
 									</h1>
 								</div>
 								<button
+									type="button"
 									onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
 									className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-secondary-100 transition-colors"
 									title="Collapse sidebar"
@@ -549,6 +552,7 @@ const Layout = ({ children }) => {
 																	)}
 																	{!sidebarCollapsed && (
 																		<button
+																			type="button"
 																			onClick={(e) => {
 																				e.preventDefault();
 																				handleAddHost();
@@ -659,6 +663,7 @@ const Layout = ({ children }) => {
 										</div>
 									</Link>
 									<button
+										type="button"
 										onClick={handleLogout}
 										className="ml-2 p-1.5 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 rounded transition-colors"
 										title="Sign out"
@@ -675,6 +680,7 @@ const Layout = ({ children }) => {
 												Updated: {formatRelativeTimeShort(stats.lastUpdated)}
 											</span>
 											<button
+												type="button"
 												onClick={() => refetch()}
 												disabled={isFetching}
 												className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded flex-shrink-0 disabled:opacity-50"
@@ -707,6 +713,7 @@ const Layout = ({ children }) => {
 									<UserCircle className="h-5 w-5" />
 								</Link>
 								<button
+									type="button"
 									onClick={handleLogout}
 									className="flex items-center justify-center w-full p-2 text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded-md transition-colors"
 									title="Sign out"
@@ -717,6 +724,7 @@ const Layout = ({ children }) => {
 								{stats && (
 									<div className="flex flex-col items-center py-1 border-t border-secondary-200 dark:border-secondary-700">
 										<button
+											type="button"
 											onClick={() => refetch()}
 											disabled={isFetching}
 											className="p-1 hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded disabled:opacity-50"

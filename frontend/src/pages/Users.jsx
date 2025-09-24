@@ -121,6 +121,7 @@ const Users = () => {
 			{/* Header */}
 			<div className="flex justify-end items-center">
 				<button
+					type="button"
 					onClick={() => setShowAddModal(true)}
 					className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
 				>
@@ -193,6 +194,7 @@ const Users = () => {
 									</div>
 									<div className="flex items-center space-x-2">
 										<button
+											type="button"
 											onClick={() => handleEditUser(user)}
 											className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300"
 											title="Edit user"
@@ -200,6 +202,7 @@ const Users = () => {
 											<Edit className="h-4 w-4" />
 										</button>
 										<button
+											type="button"
 											onClick={() => handleResetPassword(user)}
 											className="text-blue-400 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-300 disabled:text-gray-300 disabled:cursor-not-allowed"
 											title={
@@ -212,6 +215,7 @@ const Users = () => {
 											<Key className="h-4 w-4" />
 										</button>
 										<button
+											type="button"
 											onClick={() => handleDeleteUser(user.id, user.username)}
 											className="text-danger-400 hover:text-danger-600 dark:text-danger-500 dark:hover:text-danger-400 disabled:text-gray-300 disabled:cursor-not-allowed"
 											title={

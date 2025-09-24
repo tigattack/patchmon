@@ -431,6 +431,7 @@ const Settings = () => {
 							const Icon = tab.icon;
 							return (
 								<button
+									type="button"
 									key={tab.id}
 									onClick={() => setActiveTab(tab.id)}
 									className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
@@ -792,6 +793,7 @@ const Settings = () => {
 									</p>
 								</div>
 								<button
+									type="button"
 									onClick={() => setShowAgentVersionModal(true)}
 									className="btn-primary flex items-center gap-2"
 								>
@@ -888,6 +890,7 @@ const Settings = () => {
 												</div>
 												<div className="flex items-center gap-2">
 													<button
+														type="button"
 														onClick={() => {
 															const downloadUrl = `/api/v1/hosts/agent/download?version=${version.version}`;
 															window.open(downloadUrl, "_blank");
@@ -898,6 +901,7 @@ const Settings = () => {
 														Download
 													</button>
 													<button
+														type="button"
 														onClick={() =>
 															setCurrentAgentVersionMutation.mutate(version.id)
 														}
@@ -911,6 +915,7 @@ const Settings = () => {
 														Set Current
 													</button>
 													<button
+														type="button"
 														onClick={() =>
 															setDefaultAgentVersionMutation.mutate(version.id)
 														}
@@ -924,6 +929,7 @@ const Settings = () => {
 														Set Default
 													</button>
 													<button
+														type="button"
 														onClick={() =>
 															deleteAgentVersionMutation.mutate(version.id)
 														}
@@ -1208,6 +1214,7 @@ const Settings = () => {
 									<div className="flex items-center justify-between">
 										<div className="flex items-center gap-3">
 											<button
+												type="button"
 												onClick={checkForUpdates}
 												disabled={versionInfo.checking}
 												className="btn-primary flex items-center gap-2"
@@ -1360,6 +1367,7 @@ const AgentVersionModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 							Add Agent Version
 						</h3>
 						<button
+							type="button"
 							onClick={onClose}
 							className="text-secondary-400 hover:text-secondary-600 dark:text-secondary-500 dark:hover:text-secondary-300"
 						>
