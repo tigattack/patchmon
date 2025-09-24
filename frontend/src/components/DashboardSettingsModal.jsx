@@ -24,7 +24,7 @@ import {
 	Settings as SettingsIcon,
 	X,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { dashboardPreferencesAPI } from "../utils/api";
 

@@ -4,7 +4,6 @@ import {
 	BarChart3,
 	Download,
 	Edit,
-	Eye,
 	Package,
 	Plus,
 	RefreshCw,
@@ -16,7 +15,7 @@ import {
 	Users,
 	X,
 } from "lucide-react";
-import React, { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { permissionsAPI } from "../utils/api";
 

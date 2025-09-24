@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import React, { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { settingsAPI, versionAPI } from "../utils/api";
 import { useAuth } from "./AuthContext";
 

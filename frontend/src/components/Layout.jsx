@@ -5,10 +5,6 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	Clock,
-	Cog,
-	Container,
-	FileText,
-	GitBranch,
 	Github,
 	Globe,
 	Home,
@@ -23,17 +19,16 @@ import {
 	Settings,
 	Shield,
 	Star,
-	User,
 	UserCircle,
 	Users,
 	Wrench,
 	X,
 } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useUpdateNotification } from "../contexts/UpdateNotificationContext";
-import { dashboardAPI, formatRelativeTime, versionAPI } from "../utils/api";
+import { dashboardAPI, versionAPI } from "../utils/api";
 import UpgradeNotificationIcon from "./UpgradeNotificationIcon";
 
 const Layout = ({ children }) => {

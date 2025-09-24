@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-	Activity,
 	AlertTriangle,
 	ArrowLeft,
 	Calendar,
@@ -14,7 +13,7 @@ import {
 	Users,
 } from "lucide-react";
 
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { Link, useParams } from "react-router-dom";
 import { repositoryAPI } from "../utils/api";

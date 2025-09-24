@@ -11,7 +11,7 @@ import {
 	User,
 	XCircle,
 } from "lucide-react";
-import React, { useId, useState } from "react";
+import { useId, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { adminUsersAPI, permissionsAPI } from "../utils/api";
 

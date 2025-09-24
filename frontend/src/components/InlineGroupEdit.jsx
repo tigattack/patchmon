@@ -1,11 +1,5 @@
 import { Check, ChevronDown, Edit2, X } from "lucide-react";
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const InlineGroupEdit = ({
 	value,

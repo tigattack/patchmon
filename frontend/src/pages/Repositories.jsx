@@ -8,7 +8,6 @@ import {
 	Columns,
 	Database,
 	Eye,
-	Globe,
 	GripVertical,
 	Lock,
 	RefreshCw,
@@ -20,7 +19,7 @@ import {
 	Users,
 	X,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { repositoryAPI } from "../utils/api";
 

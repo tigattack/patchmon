@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	AlertTriangle,
-	CheckCircle,
 	Edit,
 	Plus,
 	Server,
@@ -9,7 +8,7 @@ import {
 	Trash2,
 	Users,
 } from "lucide-react";
-import React, { useId, useState } from "react";
+import { useId, useState } from "react";
 import { hostGroupsAPI } from "../utils/api";
 
 const Options = () => {

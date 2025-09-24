@@ -17,18 +17,16 @@ import {
 	EyeOff as EyeOffIcon,
 	Filter,
 	GripVertical,
-	Key,
 	Plus,
 	RefreshCw,
 	Search,
 	Server,
-	Settings,
 	Square,
 	Trash2,
 	Users,
 	X,
 } from "lucide-react";
-import React, { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import InlineEdit from "../components/InlineEdit";
 import InlineGroupEdit from "../components/InlineGroupEdit";

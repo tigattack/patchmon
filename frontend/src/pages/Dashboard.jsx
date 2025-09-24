@@ -11,7 +11,6 @@ import {
 } from "chart.js";
 import {
 	AlertTriangle,
-	Clock,
 	Folder,
 	GitBranch,
 	Package,
@@ -23,7 +22,7 @@ import {
 	Users,
 	WifiOff,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Bar, Pie } from "react-chartjs-2";
 import { useNavigate } from "react-router-dom";
 import DashboardSettingsModal from "../components/DashboardSettingsModal";

@@ -4,23 +4,19 @@ import {
 	ArrowDown,
 	ArrowUp,
 	ArrowUpDown,
-	ChevronDown,
 	Columns,
-	ExternalLink,
 	Eye as EyeIcon,
 	EyeOff as EyeOffIcon,
-	Filter,
 	GripVertical,
 	Package,
 	RefreshCw,
 	Search,
 	Server,
-	Settings,
 	Shield,
 	X,
 } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { dashboardAPI } from "../utils/api";
 
 const Packages = () => {

@@ -1,5 +1,4 @@
 import { ArrowUpCircle } from "lucide-react";
-import React from "react";
 
 const UpgradeNotificationIcon = ({ className = "h-4 w-4", show = true }) => {
 	if (!show) return null;

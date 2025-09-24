@@ -9,7 +9,6 @@ import {
 	Key,
 	Mail,
 	Moon,
-	QrCode,
 	RefreshCw,
 	Save,
 	Settings,
@@ -20,7 +19,7 @@ import {
 	User,
 } from "lucide-react";
 
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -34,10 +33,8 @@ const Profile = () => {
 	const currentPasswordId = useId();
 	const newPasswordId = useId();
 	const confirmPasswordId = useId();
-	const verificationTokenId = useId();
-	const disablePasswordId = useId();
 	const { user, updateProfile, changePassword } = useAuth();
-	const { theme, toggleTheme, isDark } = useTheme();
+	const { toggleTheme, isDark } = useTheme();
 	const [activeTab, setActiveTab] = useState("profile");
 	const [isLoading, setIsLoading] = useState(false);
 	const [message, setMessage] = useState({ type: "", text: "" });

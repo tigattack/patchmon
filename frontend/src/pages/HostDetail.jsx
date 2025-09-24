@@ -4,18 +4,14 @@ import {
 	AlertTriangle,
 	ArrowLeft,
 	Calendar,
-	Check,
 	CheckCircle,
 	ChevronDown,
 	ChevronUp,
 	Clock,
-	Code,
 	Copy,
 	Cpu,
-	Edit,
 	Eye,
 	EyeOff,
-	Globe,
 	HardDrive,
 	Key,
 	MemoryStick,
@@ -25,13 +21,11 @@ import {
 	Server,
 	Shield,
 	Terminal,
-	ToggleLeft,
-	ToggleRight,
 	Trash2,
 	Wifi,
 	X,
 } from "lucide-react";
-import React, { useId, useState } from "react";
+import { useId, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import InlineEdit from "../components/InlineEdit";
 import {
