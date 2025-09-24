@@ -4,6 +4,12 @@ import { useAuth } from "../contexts/AuthContext";
 
 const FirstTimeAdminSetup = () => {
 	const { login } = useAuth();
+	const firstNameId = useId();
+	const lastNameId = useId();
+	const usernameId = useId();
+	const emailId = useId();
+	const passwordId = useId();
+	const confirmPasswordId = useId();
 	const [formData, setFormData] = useState({
 		username: "",
 		email: "",
@@ -163,14 +169,14 @@ const FirstTimeAdminSetup = () => {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
 								<label
-									htmlFor="firstName"
+									htmlFor={firstNameId}
 									className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2"
 								>
 									First Name
 								</label>
 								<input
 									type="text"
-									id="firstName"
+									id={firstNameId}
 									name="firstName"
 									value={formData.firstName}
 									onChange={handleInputChange}
@@ -182,14 +188,14 @@ const FirstTimeAdminSetup = () => {
 							</div>
 							<div>
 								<label
-									htmlFor="lastName"
+									htmlFor={lastNameId}
 									className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2"
 								>
 									Last Name
 								</label>
 								<input
 									type="text"
-									id="lastName"
+									id={lastNameId}
 									name="lastName"
 									value={formData.lastName}
 									onChange={handleInputChange}
@@ -203,14 +209,14 @@ const FirstTimeAdminSetup = () => {
 
 						<div>
 							<label
-								htmlFor="username"
+								htmlFor={usernameId}
 								className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2"
 							>
 								Username
 							</label>
 							<input
 								type="text"
-								id="username"
+								id={usernameId}
 								name="username"
 								value={formData.username}
 								onChange={handleInputChange}
@@ -223,14 +229,14 @@ const FirstTimeAdminSetup = () => {
 
 						<div>
 							<label
-								htmlFor="email"
+								htmlFor={emailId}
 								className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2"
 							>
 								Email Address
 							</label>
 							<input
 								type="email"
-								id="email"
+								id={emailId}
 								name="email"
 								value={formData.email}
 								onChange={handleInputChange}
@@ -243,14 +249,14 @@ const FirstTimeAdminSetup = () => {
 
 						<div>
 							<label
-								htmlFor="password"
+								htmlFor={passwordId}
 								className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2"
 							>
 								Password
 							</label>
 							<input
 								type="password"
-								id="password"
+								id={passwordId}
 								name="password"
 								value={formData.password}
 								onChange={handleInputChange}
@@ -263,14 +269,14 @@ const FirstTimeAdminSetup = () => {
 
 						<div>
 							<label
-								htmlFor="confirmPassword"
+								htmlFor={confirmPasswordId}
 								className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2"
 							>
 								Confirm Password
 							</label>
 							<input
 								type="password"
-								id="confirmPassword"
+								id={confirmPasswordId}
 								name="confirmPassword"
 								value={formData.confirmPassword}
 								onChange={handleInputChange}
