@@ -68,6 +68,21 @@ For getting started with Docker, see the [Docker documentation](https://github.c
 
 Run on a clean Ubuntu/Debian server with internet access:
 
+#### Debian:
+```bash
+apt update -y
+apt upgrade -y
+apt install curl -y
+```
+
+#### Ubuntu:
+```bash
+apt-get update -y
+apt-get upgrade -y
+apt install curl -y
+```
+
+#### Script
 ```bash
 curl -fsSL -o setup.sh https://raw.githubusercontent.com/9technologygroup/patchmon.net/main/setup.sh && chmod +x setup.sh && bash setup.sh
 ```

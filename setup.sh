@@ -722,7 +722,7 @@ install_dependencies() {
         export NPM_CONFIG_CACHE=$APP_DIR/.npm
         export NPM_CONFIG_PREFIX=$APP_DIR/.npm-global
         export NPM_CONFIG_TMP=$APP_DIR/.npm/tmp
-        npm install --production --no-audit --no-fund --no-save
+        npm install --omit=dev --no-audit --no-fund --no-save
     "; then
         print_error "Failed to install root dependencies"
         return 1
@@ -737,7 +737,7 @@ install_dependencies() {
         export NPM_CONFIG_CACHE=$APP_DIR/.npm
         export NPM_CONFIG_PREFIX=$APP_DIR/.npm-global
         export NPM_CONFIG_TMP=$APP_DIR/.npm/tmp
-        npm install --production --no-audit --no-fund --no-save
+        npm install --omit=dev --no-audit --no-fund --no-save
     "; then
         print_error "Failed to install backend dependencies"
         return 1
