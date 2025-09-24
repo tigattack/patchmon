@@ -69,6 +69,18 @@ Version tags are also available (e.g. `1.2.3`) for both of these images.
 - `BACKEND_HOST`: Backend service hostname (default: `backend`)
 - `BACKEND_PORT`: Backend service port (default: 3001)
 
+### Volumes
+
+The compose file creates two Docker volumes:
+
+* `postgres_data`: PostgreSQL's data directory.
+* `agent_files`: PatchMon's agent files.
+
+If you wish to bind either if their respective container paths to a host path rather than a Docker volume, you can do so in the Docker Compose file.
+
+> [!TIP]
+> The backend container runs as user & group ID 1000. If you plan to re-bind the agent files directory, ensure that the same user and/or group ID has permission to write to the host path to which it's bound.
+
 ---
 
 # Development
