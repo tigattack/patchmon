@@ -134,7 +134,7 @@ Managed, zero-maintenance PatchMon hosting. Stay tuned.
 Run on a clean Ubuntu/Debian server with internet access:
 
 ```bash
-curl -fsSL -o setup.sh https://raw.githubusercontent.com/9technologygroup/patchmon.net/main/setup.sh && chmod +x && bash setup.sh
+curl -fsSL -o setup.sh https://raw.githubusercontent.com/9technologygroup/patchmon.net/main/setup.sh && chmod +x setup.sh && bash setup.sh
 ```
 
 During setup you’ll be asked:
