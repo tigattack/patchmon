@@ -259,7 +259,7 @@ const Layout = ({ children }) => {
 		const dateObj = new Date(date);
 
 		// Check if date is valid
-		if (isNaN(dateObj.getTime())) return "Invalid date";
+		if (Number.isNaN(dateObj.getTime())) return "Invalid date";
 
 		const diff = now - dateObj;
 		const seconds = Math.floor(diff / 1000);

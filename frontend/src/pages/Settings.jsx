@@ -580,7 +580,7 @@ const Settings = () => {
 										value={formData.updateInterval}
 										onChange={(e) => {
 											const val = parseInt(e.target.value);
-											if (!isNaN(val)) {
+											if (!Number.isNaN(val)) {
 												handleInputChange(
 													"updateInterval",
 													Math.min(1440, Math.max(5, val)),
