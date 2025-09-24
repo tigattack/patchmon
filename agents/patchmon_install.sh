@@ -180,7 +180,7 @@ fi
 echo "   • Config directory: /etc/patchmon/"
 echo "   • Credentials file: /etc/patchmon/credentials"
 echo "   • Automatic updates: Every $UPDATE_INTERVAL minutes via crontab"
-echo "   • View logs: tail -f /var/log/patchmon-agent.sh"
+echo "   • View logs: tail -f /var/log/patchmon-agent.log"
 echo ""
 echo "🔧 Manual commands:"
 echo "   • Test connection: patchmon-agent.sh test"

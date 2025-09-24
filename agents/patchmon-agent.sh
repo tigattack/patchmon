@@ -550,33 +550,36 @@ get_apt_packages() {
     local -n packages_ref=$1
     local -n first_ref=$2
     
-    # Update package lists
+    # Update package lists (use apt-get for older distros; quieter output)
     apt-get update -qq
     
-    # Get upgradable packages
-    local upgradable=$(apt list --upgradable 2>/dev/null | grep -v "WARNING")
+    # Determine upgradable packages using apt-get simulation (compatible with Ubuntu 18.04)
+    # Example line format:
+    # Inst bash [4.4.18-2ubuntu1] (4.4.18-2ubuntu1.2 Ubuntu:18.04/bionic-updates [amd64])
+    local upgradable_sim=$(apt-get -s -o Debug::NoLocking=1 upgrade 2>/dev/null | grep "^Inst ")
     
     while IFS= read -r line; do
-        if [[ "$line" =~ ^([^/]+)/([^[:space:]]+)[[:space:]]+([^[:space:]]+)[[:space:]]+.*[[:space:]]([^[:space:]]+)[[:space:]]*(\[.*\])? ]]; then
+        # Extract package name, current version (in brackets), and available version (first token inside parentheses)
+        if [[ "$line" =~ ^Inst[[:space:]]+([^[:space:]]+)[[:space:]]+\[([^\]]+)\][[:space:]]+\(([^[:space:]]+) ]]; then
             local package_name="${BASH_REMATCH[1]}"
-            local current_version="${BASH_REMATCH[4]}"
+            local current_version="${BASH_REMATCH[2]}"
             local available_version="${BASH_REMATCH[3]}"
             local is_security_update=false
             
-            # Check if it's a security update
-            if echo "$line" | grep -q "security"; then
+            # Mark as security update if the line references a security pocket
+            if echo "$line" | grep -qiE "(-|/)security"; then
                 is_security_update=true
             fi
             
             if [[ "$first_ref" == true ]]; then
                 first_ref=false
             else
-                packages_ref+=","
+                packages_ref+="," 
             fi
             
             packages_ref+="{\"name\":\"$package_name\",\"currentVersion\":\"$current_version\",\"availableVersion\":\"$available_version\",\"needsUpdate\":true,\"isSecurityUpdate\":$is_security_update}"
         fi
-    done <<< "$upgradable"
+    done <<< "$upgradable_sim"
     
     # Get installed packages that are up to date
     local installed=$(dpkg-query -W -f='${Package} ${Version}\n' | head -100)
