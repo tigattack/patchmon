@@ -8,7 +8,6 @@ const InlineGroupEdit = ({
 	options = [],
 	className = "",
 	disabled = false,
-	placeholder = "Select group...",
 }) => {
 	const [isEditing, setIsEditing] = useState(false);
 	const [selectedValue, setSelectedValue] = useState(value);

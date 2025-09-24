@@ -29,18 +29,13 @@ const Settings = () => {
 	const repoPublicId = useId();
 	const repoPrivateId = useId();
 	const useCustomSshKeyId = useId();
-	const isDefaultId = useId();
 	const protocolId = useId();
 	const hostId = useId();
 	const portId = useId();
 	const updateIntervalId = useId();
 	const defaultRoleId = useId();
-	const repositoryTypeId = useId();
 	const githubRepoUrlId = useId();
 	const sshKeyPathId = useId();
-	const versionId = useId();
-	const releaseNotesId = useId();
-	const scriptContentId = useId();
 	const [formData, setFormData] = useState({
 		serverProtocol: "http",
 		serverHost: "localhost",
@@ -77,13 +72,6 @@ const Settings = () => {
 
 	// Agent version management state
 	const [showAgentVersionModal, setShowAgentVersionModal] = useState(false);
-	const [editingAgentVersion, setEditingAgentVersion] = useState(null);
-	const [agentVersionForm, setAgentVersionForm] = useState({
-		version: "",
-		releaseNotes: "",
-		scriptContent: "",
-		isDefault: false,
-	});
 
 	// Version checking state
 	const [versionInfo, setVersionInfo] = useState({
@@ -147,7 +135,7 @@ const Settings = () => {
 		mutationFn: (data) => {
 			return settingsAPI.update(data).then((res) => res.data);
 		},
-		onSuccess: (data) => {
+		onSuccess: () => {
 			queryClient.invalidateQueries(["settings"]);
 			setIsDirty(false);
 			setErrors({});

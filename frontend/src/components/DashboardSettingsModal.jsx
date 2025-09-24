@@ -25,12 +25,10 @@ import {
 	X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useTheme } from "../contexts/ThemeContext";
 import { dashboardPreferencesAPI } from "../utils/api";
 
 // Sortable Card Item Component
 const SortableCardItem = ({ card, onToggle }) => {
-	const { isDark } = useTheme();
 	const {
 		attributes,
 		listeners,
@@ -103,7 +101,6 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
 	const [cards, setCards] = useState([]);
 	const [hasChanges, setHasChanges] = useState(false);
 	const queryClient = useQueryClient();
-	const { isDark } = useTheme();
 
 	const sensors = useSensors(
 		useSensor(PointerSensor),

@@ -104,7 +104,7 @@ const Dashboard = () => {
 	};
 
 	// Chart click handlers
-	const handleOSChartClick = (event, elements) => {
+	const handleOSChartClick = (_, elements) => {
 		if (elements.length > 0) {
 			const elementIndex = elements[0].index;
 			const osName =
@@ -113,7 +113,7 @@ const Dashboard = () => {
 		}
 	};
 
-	const handleUpdateStatusChartClick = (event, elements) => {
+	const handleUpdateStatusChartClick = (_, elements) => {
 		if (elements.length > 0) {
 			const elementIndex = elements[0].index;
 			const statusName =
@@ -135,7 +135,7 @@ const Dashboard = () => {
 		}
 	};
 
-	const handlePackagePriorityChartClick = (event, elements) => {
+	const handlePackagePriorityChartClick = (_, elements) => {
 		if (elements.length > 0) {
 			const elementIndex = elements[0].index;
 			const priorityName =
@@ -210,7 +210,7 @@ const Dashboard = () => {
 	});
 
 	// Fetch user's dashboard preferences
-	const { data: preferences, refetch: refetchPreferences } = useQuery({
+	const { data: preferences } = useQuery({
 		queryKey: ["dashboardPreferences"],
 		queryFn: () => dashboardPreferencesAPI.get().then((res) => res.data),
 		staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes

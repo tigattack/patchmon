@@ -73,7 +73,7 @@ const Profile = () => {
 					text: result.error || "Failed to update profile",
 				});
 			}
-		} catch (error) {
+		} catch {
 			setMessage({ type: "error", text: "Network error occurred" });
 		} finally {
 			setIsLoading(false);
@@ -118,7 +118,7 @@ const Profile = () => {
 					text: result.error || "Failed to change password",
 				});
 			}
-		} catch (error) {
+		} catch {
 			setMessage({ type: "error", text: "Network error occurred" });
 		} finally {
 			setIsLoading(false);
@@ -545,7 +545,6 @@ const TfaTab = () => {
 	const [verificationToken, setVerificationToken] = useState("");
 	const [password, setPassword] = useState("");
 	const [backupCodes, setBackupCodes] = useState([]);
-	const [isLoading, setIsLoading] = useState(false);
 	const [message, setMessage] = useState({ type: "", text: "" });
 	const queryClient = useQueryClient();
 
@@ -558,7 +557,7 @@ const TfaTab = () => {
 	// Setup TFA mutation
 	const setupMutation = useMutation({
 		mutationFn: () => tfaAPI.setup().then((res) => res.data),
-		onSuccess: (data) => {
+		onSuccess: () => {
 			setSetupStep("setup");
 			setMessage({
 				type: "info",
@@ -688,7 +687,7 @@ const TfaTab = () => {
 				} else {
 					throw new Error("Copy command failed");
 				}
-			} catch (err) {
+			} catch {
 				// If all else fails, show the text in a prompt
 				prompt("Copy this text:", text);
 				setMessage({

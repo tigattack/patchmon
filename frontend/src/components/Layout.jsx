@@ -38,7 +38,7 @@ const Layout = ({ children }) => {
 		const saved = localStorage.getItem("sidebarCollapsed");
 		return saved ? JSON.parse(saved) : false;
 	});
-	const [userMenuOpen, setUserMenuOpen] = useState(false);
+	const [_userMenuOpen, setUserMenuOpen] = useState(false);
 	const [githubStars, setGithubStars] = useState(null);
 	const location = useLocation();
 	const {
@@ -339,7 +339,7 @@ const Layout = ({ children }) => {
 								</div>
 							</div>
 						)}
-						{navigation.map((item, index) => {
+						{navigation.map((item) => {
 							if (item.name) {
 								// Single item (Dashboard)
 								return (
@@ -490,7 +490,7 @@ const Layout = ({ children }) => {
 									</div>
 								</li>
 							)}
-							{navigation.map((item, index) => {
+							{navigation.map((item) => {
 								if (item.name) {
 									// Single item (Dashboard)
 									return (

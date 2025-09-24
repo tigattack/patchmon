@@ -123,7 +123,7 @@ export const AuthProvider = ({ children }) => {
 			} else {
 				return { success: false, error: data.error || "Login failed" };
 			}
-		} catch (error) {
+		} catch {
 			return { success: false, error: "Network error occurred" };
 		}
 	};
@@ -171,7 +171,7 @@ export const AuthProvider = ({ children }) => {
 			} else {
 				return { success: false, error: data.error || "Update failed" };
 			}
-		} catch (error) {
+		} catch {
 			return { success: false, error: "Network error occurred" };
 		}
 	};
@@ -197,7 +197,7 @@ export const AuthProvider = ({ children }) => {
 					error: data.error || "Password change failed",
 				};
 			}
-		} catch (error) {
+		} catch {
 			return { success: false, error: "Network error occurred" };
 		}
 	};

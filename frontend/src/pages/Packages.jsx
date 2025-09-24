@@ -69,7 +69,6 @@ const Packages = () => {
 	const handleAffectedHostsClick = (pkg) => {
 		const affectedHosts = pkg.affectedHosts || [];
 		const hostIds = affectedHosts.map((host) => host.hostId);
-		const hostNames = affectedHosts.map((host) => host.friendlyName);
 
 		// Create URL with selected hosts and filter
 		const params = new URLSearchParams();

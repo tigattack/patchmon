@@ -323,7 +323,7 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
 			if (roles && Array.isArray(roles) && roles.length > 0) {
 				payload.role = formData.role;
 			}
-			const response = await adminUsersAPI.create(payload);
+			await adminUsersAPI.create(payload);
 			onUserCreated();
 		} catch (err) {
 			setError(err.response?.data?.error || "Failed to create user");

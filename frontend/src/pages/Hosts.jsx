@@ -42,7 +42,6 @@ import { OSIcon } from "../utils/osIcons.jsx";
 // Add Host Modal Component
 const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 	const friendlyNameId = useId();
-	const hostGroupId = useId();
 	const [formData, setFormData] = useState({
 		friendly_name: "",
 		hostGroupId: "",
@@ -277,7 +276,7 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
 				} else {
 					throw new Error("Copy command failed");
 				}
-			} catch (err) {
+			} catch {
 				// If all else fails, show the text in a prompt
 				prompt(`Copy this ${label.toLowerCase()}:`, text);
 			} finally {
@@ -796,7 +795,6 @@ const Hosts = () => {
 	const hostGroupFilterId = useId();
 	const statusFilterId = useId();
 	const osFilterId = useId();
-	const bulkHostGroupId = useId();
 	const [showAddModal, setShowAddModal] = useState(false);
 	const [selectedHosts, setSelectedHosts] = useState([]);
 	const [showBulkAssignModal, setShowBulkAssignModal] = useState(false);
@@ -915,7 +913,7 @@ const Hosts = () => {
 					// Use the existing configuration
 					return savedConfig;
 				}
-			} catch (error) {
+			} catch {
 				// If there's an error parsing the config, clear it and use default
 				localStorage.removeItem("hosts-column-config");
 				return defaultConfig;
@@ -952,7 +950,7 @@ const Hosts = () => {
 			console.log("bulkUpdateGroupMutation success:", data);
 
 			// Update the cache with the new host data
-			if (data && data.hosts) {
+			if (data?.hosts) {
 				queryClient.setQueryData(["hosts"], (oldData) => {
 					if (!oldData) return oldData;
 					return oldData.map((host) => {
@@ -973,17 +971,6 @@ const Hosts = () => {
 			queryClient.invalidateQueries(["hosts"]);
 			setSelectedHosts([]);
 			setShowBulkAssignModal(false);
-		},
-	});
-
-	// Toggle auto-update mutation
-	const toggleAutoUpdateMutation = useMutation({
-		mutationFn: ({ hostId, auto_update }) =>
-			adminHostsAPI
-				.toggleAutoUpdate(hostId, auto_update)
-				.then((res) => res.data),
-		onSuccess: () => {
-			queryClient.invalidateQueries(["hosts"]);
 		},
 	});
 
@@ -1521,24 +1508,6 @@ const Hosts = () => {
 			</div>
 		);
 	}
-
-	const getStatusColor = (host) => {
-		if (host.isStale) return "text-danger-600";
-		if (host.updatesCount > 0) return "text-warning-600";
-		return "text-success-600";
-	};
-
-	const getStatusIcon = (host) => {
-		if (host.isStale) return <AlertTriangle className="h-5 w-5" />;
-		if (host.updatesCount > 0) return <Clock className="h-5 w-5" />;
-		return <CheckCircle className="h-5 w-5" />;
-	};
-
-	const getStatusText = (host) => {
-		if (host.isStale) return "Stale";
-		if (host.updatesCount > 0) return "Needs Updates";
-		return "Up to Date";
-	};
 
 	return (
 		<div className="h-[calc(100vh-7rem)] flex flex-col overflow-hidden">
@@ -2137,7 +2106,7 @@ const BulkAssignModal = ({
 						{selectedHosts.length !== 1 ? "s" : ""}:
 					</p>
 					<div className="max-h-32 overflow-y-auto bg-secondary-50 rounded-md p-3">
-						{selectedHostNames.map((friendlyName, index) => (
+						{selectedHostNames.map((friendlyName) => (
 							<div key={friendlyName} className="text-sm text-secondary-700">
 								• {friendlyName}
 							</div>
@@ -2247,7 +2216,7 @@ const BulkDeleteModal = ({
 							Hosts to be deleted:
 						</p>
 						<div className="max-h-32 overflow-y-auto bg-secondary-50 dark:bg-secondary-700 rounded-md p-3">
-							{selectedHostNames.map((friendlyName, index) => (
+							{selectedHostNames.map((friendlyName) => (
 								<div
 									key={friendlyName}
 									className="text-sm text-secondary-700 dark:text-secondary-300"

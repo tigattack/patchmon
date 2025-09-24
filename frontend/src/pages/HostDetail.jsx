@@ -43,8 +43,6 @@ const HostDetail = () => {
 	const queryClient = useQueryClient();
 	const [showCredentialsModal, setShowCredentialsModal] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
-	const [isEditingFriendlyName, setIsEditingFriendlyName] = useState(false);
-	const [editedFriendlyName, setEditedFriendlyName] = useState("");
 	const [showAllUpdates, setShowAllUpdates] = useState(false);
 	const [activeTab, setActiveTab] = useState(() => {
 		// Restore tab state from localStorage
@@ -482,7 +480,7 @@ const HostDetail = () => {
 															DNS Servers
 														</p>
 														<div className="space-y-1">
-															{host.dns_servers.map((dns, index) => (
+															{host.dns_servers.map((dns) => (
 																<p
 																	key={dns}
 																	className="font-medium text-secondary-900 dark:text-white font-mono text-sm"
@@ -502,7 +500,7 @@ const HostDetail = () => {
 															Network Interfaces
 														</p>
 														<div className="space-y-1">
-															{host.network_interfaces.map((iface, index) => (
+															{host.network_interfaces.map((iface) => (
 																<p
 																	key={iface.name}
 																	className="font-medium text-secondary-900 dark:text-white text-sm"
@@ -815,7 +813,7 @@ const HostDetail = () => {
 													{(showAllUpdates
 														? host.update_history
 														: host.update_history.slice(0, 5)
-													).map((update, index) => (
+													).map((update) => (
 														<tr
 															key={update.id}
 															className="hover:bg-secondary-50 dark:hover:bg-secondary-700"
@@ -1028,7 +1026,7 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
 				if (!successful) {
 					throw new Error("Copy command failed");
 				}
-			} catch (err) {
+			} catch {
 				// If all else fails, show the text in a prompt
 				prompt("Copy this command:", text);
 			} finally {
@@ -1041,49 +1039,7 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
 		}
 	};
 
-	const getSetupCommands = () => {
-		// Get current time for crontab scheduling
-		const now = new Date();
-		const currentMinute = now.getMinutes();
-		const currentHour = now.getHours();
-
-		return `# Run this on the target host: ${host?.friendly_name}
-
-echo "🔄 Setting up PatchMon agent..."
-
-# Download and install agent
-echo "📥 Downloading agent script..."
-curl -o /tmp/patchmon-agent.sh ${serverUrl}/api/v1/hosts/agent/download
-sudo mkdir -p /etc/patchmon
-sudo mv /tmp/patchmon-agent.sh /usr/local/bin/patchmon-agent.sh
-sudo chmod +x /usr/local/bin/patchmon-agent.sh
-
-# Configure credentials
-echo "🔑 Configuring API credentials..."
-sudo /usr/local/bin/patchmon-agent.sh configure "${host?.apiId}" "${host?.apiKey}"
-
-# Test configuration
-echo "🧪 Testing configuration..."
-sudo /usr/local/bin/patchmon-agent.sh test
-
-# Send initial update
-echo "📊 Sending initial package data..."
-sudo /usr/local/bin/patchmon-agent.sh update
-
-# Setup crontab starting at current time
-echo "⏰ Setting up hourly crontab starting at ${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}..."
-echo "${currentMinute} * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | sudo crontab -
-
-echo "✅ PatchMon agent setup complete!"
-echo "   - Agent installed: /usr/local/bin/patchmon-agent.sh"
-echo "   - Config directory: /etc/patchmon/"
-echo "   - Updates: Every hour via crontab (starting at ${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")})"
-echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
-	};
-
 	if (!isOpen || !host) return null;
-
-	const commands = getSetupCommands();
 
 	return (
 		<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
