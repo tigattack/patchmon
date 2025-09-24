@@ -2336,11 +2336,11 @@ const ColumnSettingsModal = ({
 
 					<div className="space-y-2">
 						{columnConfig.map((column, index) => (
-							<div
+							<button
 								key={column.id}
+								type="button"
 								draggable
 								tabIndex={0}
-								role="button"
 								aria-label={`Drag to reorder ${column.label} column`}
 								onDragStart={(e) => handleDragStart(e, index)}
 								onDragOver={handleDragOver}
@@ -2351,7 +2351,7 @@ const ColumnSettingsModal = ({
 										// Focus handling for keyboard users
 									}
 								}}
-								className={`flex items-center justify-between p-3 border rounded-lg cursor-move ${
+								className={`flex items-center justify-between p-3 border rounded-lg cursor-move w-full text-left ${
 									draggedIndex === index
 										? "opacity-50"
 										: "hover:bg-secondary-50 dark:hover:bg-secondary-700"
@@ -2378,7 +2378,7 @@ const ColumnSettingsModal = ({
 										<EyeOffIcon className="h-4 w-4" />
 									)}
 								</button>
-							</div>
+							</button>
 						))}
 					</div>
 
