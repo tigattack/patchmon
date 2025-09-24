@@ -72,9 +72,9 @@ Run on a clean Ubuntu/Debian server with internet access:
 curl -fsSL -o setup.sh https://raw.githubusercontent.com/9technologygroup/patchmon.net/main/setup.sh && chmod +x setup.sh && bash setup.sh
 ```
 
-#### Minimum specs : #####
-CPU : 1 vCPU
-RAM : 1GB
+#### Minimum specs for building : #####
+CPU : 2 vCPU
+RAM : 2GB
 Disk : 15GB
 
 During setup you’ll be asked:
