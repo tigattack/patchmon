@@ -180,13 +180,49 @@ check_timezone() {
     fi
 }
 
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        print_error "This script must be run as root"
+        print_info "Please run: sudo $0"
+        exit 1
+    fi
+}
+
+# Function to run commands as a specific user with better error handling
+run_as_user() {
+    local user="$1"
+    local command="$2"
+    
+    if ! command -v sudo >/dev/null 2>&1; then
+        print_error "sudo is required but not installed. Please install sudo first."
+        exit 1
+    fi
+    
+    if ! id "$user" &>/dev/null; then
+        print_error "User '$user' does not exist"
+        exit 1
+    fi
+    
+    sudo -u "$user" bash -c "$command"
+}
+
 check_prerequisites() {
     print_info "Running and checking prerequisites..."
+    
+    # Check if running as root
+    check_root
+    
     print_info "Installing updates..."
     apt-get update -y
     apt-get upgrade -y
     
     print_info "Installing prerequisite applications..."
+    # Install sudo if not present (needed for user switching)
+    if ! command -v sudo >/dev/null 2>&1; then
+        print_info "Installing sudo (required for user switching)..."
+        apt-get install -y sudo
+    fi
+    
     apt-get install -y wget curl jq git netcat-openbsd
     
     print_status "Prerequisites installed successfully"
@@ -579,14 +615,27 @@ EOF
 setup_database() {
     print_info "Creating database: $DB_NAME"
     
-    # Drop and recreate database and user for clean state
-    sudo -u postgres psql -c "DROP DATABASE IF EXISTS $DB_NAME;" || true
-    sudo -u postgres psql -c "DROP USER IF EXISTS $DB_USER;" || true
-    
-    # Create database and user
-    sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASS';"
-    sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
-    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
+    # Check if sudo is available for user switching
+    if command -v sudo >/dev/null 2>&1; then
+        # Drop and recreate database and user for clean state
+        sudo -u postgres psql -c "DROP DATABASE IF EXISTS $DB_NAME;" || true
+        sudo -u postgres psql -c "DROP USER IF EXISTS $DB_USER;" || true
+        
+        # Create database and user
+        sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASS';"
+        sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
+        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
+    else
+        # Alternative method for systems without sudo (run as postgres user directly)
+        print_warning "sudo not available, using alternative method for PostgreSQL setup"
+        
+        # Switch to postgres user using su
+        su - postgres -c "psql -c \"DROP DATABASE IF EXISTS $DB_NAME;\"" || true
+        su - postgres -c "psql -c \"DROP USER IF EXISTS $DB_USER;\"" || true
+        su - postgres -c "psql -c \"CREATE USER $DB_USER WITH PASSWORD '$DB_PASS';\""
+        su - postgres -c "psql -c \"CREATE DATABASE $DB_NAME OWNER $DB_USER;\""
+        su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;\""
+    fi
     
     print_status "Database $DB_NAME created with user $DB_USER"
 }
@@ -639,11 +688,11 @@ install_dependencies() {
     chown -R "$INSTANCE_USER:$INSTANCE_USER" "$APP_DIR/.npm"
     
     # Clean npm cache to avoid permission issues
-    sudo -u "$INSTANCE_USER" bash -c "cd $APP_DIR && npm cache clean --force" 2>/dev/null || true
+    run_as_user "$INSTANCE_USER" "cd $APP_DIR && npm cache clean --force" 2>/dev/null || true
     
     # Install root dependencies as the dedicated user
     print_info "Installing root dependencies..."
-    if ! sudo -u "$INSTANCE_USER" bash -c "
+    if ! run_as_user "$INSTANCE_USER" "
         cd $APP_DIR
         export NPM_CONFIG_CACHE=$APP_DIR/.npm
         export NPM_CONFIG_PREFIX=$APP_DIR/.npm-global
@@ -658,7 +707,7 @@ install_dependencies() {
     print_info "Installing backend dependencies..."
     cd backend
     rm -rf node_modules
-    if ! sudo -u "$INSTANCE_USER" bash -c "
+    if ! run_as_user "$INSTANCE_USER" "
         cd $APP_DIR/backend
         export NPM_CONFIG_CACHE=$APP_DIR/.npm
         export NPM_CONFIG_PREFIX=$APP_DIR/.npm-global
@@ -674,7 +723,7 @@ install_dependencies() {
     print_info "Installing frontend dependencies..."
     cd frontend
     rm -rf node_modules
-    if ! sudo -u "$INSTANCE_USER" bash -c "
+    if ! run_as_user "$INSTANCE_USER" "
         cd $APP_DIR/frontend
         export NPM_CONFIG_CACHE=$APP_DIR/.npm
         export NPM_CONFIG_PREFIX=$APP_DIR/.npm-global
@@ -687,7 +736,7 @@ install_dependencies() {
     
     # Build frontend
     print_info "Building frontend..."
-    if ! sudo -u "$INSTANCE_USER" bash -c "
+    if ! run_as_user "$INSTANCE_USER" "
         cd $APP_DIR/frontend
         export NPM_CONFIG_CACHE=$APP_DIR/.npm
         export NPM_CONFIG_PREFIX=$APP_DIR/.npm-global
@@ -757,8 +806,8 @@ run_migrations() {
     
     cd "$APP_DIR/backend"
     # Suppress Prisma CLI output (still logged to install log via tee)
-    sudo -u "$INSTANCE_USER" npx prisma migrate deploy >/dev/null 2>&1 || true
-    sudo -u "$INSTANCE_USER" npx prisma generate >/dev/null 2>&1 || true
+    run_as_user "$INSTANCE_USER" "cd $APP_DIR/backend && npx prisma migrate deploy" >/dev/null 2>&1 || true
+    run_as_user "$INSTANCE_USER" "cd $APP_DIR/backend && npx prisma generate" >/dev/null 2>&1 || true
     
     print_status "Database migrations completed as $INSTANCE_USER"
 }
@@ -1048,7 +1097,7 @@ populate_server_settings() {
     cd "$APP_DIR/backend"
     
     # Create settings update script
-    sudo -u "$INSTANCE_USER" cat > update_settings.js << EOF
+    cat > update_settings.js << EOF
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -1092,7 +1141,7 @@ updateSettings();
 EOF
 
     # Run the settings update script as the dedicated user
-    sudo -u "$INSTANCE_USER" node update_settings.js
+    run_as_user "$INSTANCE_USER" "cd $APP_DIR/backend && node update_settings.js"
     
     # Clean up temporary script
     rm -f update_settings.js
