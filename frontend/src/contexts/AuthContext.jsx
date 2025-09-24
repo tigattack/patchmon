@@ -255,6 +255,13 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token, user, checkAdminUsersExist])
 
+  const setAuthState = (authToken, authUser) => {
+    setToken(authToken)
+    setUser(authUser)
+    localStorage.setItem('token', authToken)
+    localStorage.setItem('user', JSON.stringify(authUser))
+  }
+
   const value = {
     user,
     token,
@@ -267,6 +274,7 @@ export const AuthProvider = ({ children }) => {
     updateProfile,
     changePassword,
     refreshPermissions,
+    setAuthState,
     isAuthenticated,
     isAdmin,
     hasPermission,

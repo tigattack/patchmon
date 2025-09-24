@@ -666,7 +666,6 @@ async function getPermissionBasedPreferences(userRole) {
   const permissions = await getUserPermissions(userRole);
   
   // Define all possible dashboard cards with their required permissions
-  // Order matches iby's (Muhammad Ibrahim) preferred layout
   const allCards = [
     // Host-related cards
     { cardId: 'totalHosts', requiredPermission: 'can_view_hosts', order: 0 },

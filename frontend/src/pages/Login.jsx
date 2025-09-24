@@ -24,7 +24,7 @@ const Login = () => {
   const [signupEnabled, setSignupEnabled] = useState(false)
 
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, setAuthState } = useAuth()
 
   // Check if signup is enabled
   useEffect(() => {
@@ -80,9 +80,8 @@ const Login = () => {
     try {
       const response = await authAPI.signup(formData.username, formData.email, formData.password, formData.firstName, formData.lastName)
       if (response.data && response.data.token) {
-        // Store token and user data
-        localStorage.setItem('token', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
+        // Update AuthContext state and localStorage
+        setAuthState(response.data.token, response.data.user)
 
         // Redirect to dashboard
         navigate('/')
