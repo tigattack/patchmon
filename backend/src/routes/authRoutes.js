@@ -98,6 +98,8 @@ router.post('/setup-admin', [
         id: true,
         username: true,
         email: true,
+        first_name: true,
+        last_name: true,
         role: true,
         created_at: true
       }
@@ -523,6 +525,8 @@ router.post('/signup', [
         id: true,
         username: true,
         email: true,
+        first_name: true,
+        last_name: true,
         role: true,
         is_active: true,
         created_at: true
