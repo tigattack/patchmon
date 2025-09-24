@@ -1,6 +1,6 @@
 services:
   database:
-    image: postgres:17-alpine3.22
+    image: postgres:17-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: patchmon_db
