@@ -1,3 +1,11 @@
+# PatchMon
+
+[![Discord](https://img.shields.io/badge/Discord-Join%20Server-blue?style=for-the-badge&logo=discord)](https://discord.gg/S7RXUHwg)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/9technologygroup/patchmon.net)
+[![Roadmap](https://img.shields.io/badge/Roadmap-View%20Progress-green?style=for-the-badge&logo=github)](https://github.com/users/9technologygroup/projects/1)
+
+---
+
 ## Purpose
 
 PatchMon provides centralized patch management across diverse server environments. Agents communicate outbound-only to the PatchMon server, eliminating inbound ports on monitored hosts while delivering comprehensive visibility and safe automation.
@@ -131,6 +139,12 @@ Managed, zero-maintenance PatchMon hosting. Stay tuned.
 
 ### Self-hosted Installation
 
+#### Docker
+
+For getting started with Docker, see the [Docker documentation](https://github.com/9technologygroup/patchmon.net/blob/main/docker/README.md)
+
+#### Native Install
+
 Run on a clean Ubuntu/Debian server with internet access:
 
 ```bash
@@ -189,17 +203,6 @@ AGPLv3 (More information on this soon)
 
 - Repository: https://github.com/9technologygroup/patchmon.net/
 - Raw installer: https://raw.githubusercontent.com/9technologygroup/patchmon.net/main/setup.sh
----
-
-
-# PatchMon
-
-[![Discord](https://img.shields.io/badge/Discord-Join%20Server-blue?style=for-the-badge&logo=discord)](https://discord.gg/S7RXUHwg)
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/9technologygroup/patchmon.net)
-[![Roadmap](https://img.shields.io/badge/Roadmap-View%20Progress-green?style=for-the-badge&logo=github)](https://github.com/users/9technologygroup/projects/1)
-
-
-
 ---
 
 ## 🤝 Contributing
