@@ -20,15 +20,22 @@ Version tags are also available (e.g. `1.2.3`) for both of these images.
 ### Production Deployment
 
 1. Download the [Docker Compose file](docker-compose.yml)
-
-2. Configure environment variables (see [Configuration](#configuration) section)
-
-3. Start the application:
+2. Change the default database password in the file:
+   ```yaml
+   environment:
+     POSTGRES_PASSWORD: YOUR_SECURE_PASSWORD_HERE
+   ```
+3. Update the corresponding `DATABASE_URL` in the backend service:
+   ```yaml
+   environment:
+     DATABASE_URL: postgresql://patchmon_user:YOUR_SECURE_PASSWORD_HERE@database:5432/patchmon_db
+   ```
+4. Configure environment variables (see [Configuration](#configuration) section)
+5. Start the application:
    ```bash
    docker compose up -d
    ```
-
-4. Access the application at `http://localhost:3000`
+6. Access the application at `http://localhost:3000`
 
 ## Configuration
 
@@ -61,22 +68,6 @@ Version tags are also available (e.g. `1.2.3`) for both of these images.
 
 - `BACKEND_HOST`: Backend service hostname (default: `backend`)
 - `BACKEND_PORT`: Backend service port (default: 3001)
-
-### Security Configuration
-
-**⚠️ IMPORTANT**: Before deploying to production, you MUST:
-
-1. Change the default database password in `docker-compose.yml`:
-   ```yaml
-   environment:
-     POSTGRES_PASSWORD: YOUR_SECURE_PASSWORD_HERE
-   ```
-
-2. Update the corresponding `DATABASE_URL` in the backend service:
-   ```yaml
-   environment:
-     DATABASE_URL: postgresql://patchmon_user:YOUR_SECURE_PASSWORD_HERE@database:5432/patchmon_db
-   ```
 
 ---
 
