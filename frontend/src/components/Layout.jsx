@@ -29,7 +29,7 @@ import {
 	Wrench,
 	X,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useUpdateNotification } from "../contexts/UpdateNotificationContext";
@@ -242,7 +242,7 @@ const Layout = ({ children }) => {
 	};
 
 	// Fetch GitHub stars count
-	const fetchGitHubStars = async () => {
+	const fetchGitHubStars = useCallback(async () => {
 		try {
 			const response = await fetch(
 				"https://api.github.com/repos/9technologygroup/patchmon.net",
@@ -254,7 +254,7 @@ const Layout = ({ children }) => {
 		} catch (error) {
 			console.error("Failed to fetch GitHub stars:", error);
 		}
-	};
+	}, []);
 
 	// Short format for navigation area
 	const formatRelativeTimeShort = (date) => {
@@ -300,7 +300,7 @@ const Layout = ({ children }) => {
 	// Fetch GitHub stars on component mount
 	useEffect(() => {
 		fetchGitHubStars();
-	}, []);
+	}, [fetchGitHubStars]);
 
 	return (
 		<div className="min-h-screen bg-secondary-50">

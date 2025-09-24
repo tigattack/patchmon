@@ -186,6 +186,7 @@ const Packages = () => {
 		securityFilter,
 		sortField,
 		sortDirection,
+		hostFilter,
 	]);
 
 	// Get visible columns in order

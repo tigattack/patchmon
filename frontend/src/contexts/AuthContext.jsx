@@ -26,41 +26,8 @@ export const AuthProvider = ({ children }) => {
 
 	const [checkingSetup, setCheckingSetup] = useState(true);
 
-	// Initialize auth state from localStorage
-	useEffect(() => {
-		const storedToken = localStorage.getItem("token");
-		const storedUser = localStorage.getItem("user");
-		const storedPermissions = localStorage.getItem("permissions");
-
-		if (storedToken && storedUser) {
-			try {
-				setToken(storedToken);
-				setUser(JSON.parse(storedUser));
-				if (storedPermissions) {
-					setPermissions(JSON.parse(storedPermissions));
-				} else {
-					// Fetch permissions if not stored
-					fetchPermissions(storedToken);
-				}
-			} catch (error) {
-				console.error("Error parsing stored user data:", error);
-				localStorage.removeItem("token");
-				localStorage.removeItem("user");
-				localStorage.removeItem("permissions");
-			}
-		}
-		setIsLoading(false);
-	}, []);
-
-	// Refresh permissions when user logs in (no automatic refresh)
-	useEffect(() => {
-		if (token && user) {
-			// Only refresh permissions once when user logs in
-			refreshPermissions();
-		}
-	}, [token, user]);
-
-	const fetchPermissions = async (authToken) => {
+	// Define functions first
+	const fetchPermissions = useCallback(async (authToken) => {
 		try {
 			setPermissionsLoading(true);
 			const response = await fetch("/api/v1/permissions/user-permissions", {
@@ -84,15 +51,49 @@ export const AuthProvider = ({ children }) => {
 		} finally {
 			setPermissionsLoading(false);
 		}
-	};
+	}, []);
 
-	const refreshPermissions = async () => {
+	const refreshPermissions = useCallback(async () => {
 		if (token) {
 			const updatedPermissions = await fetchPermissions(token);
 			return updatedPermissions;
 		}
 		return null;
-	};
+	}, [token, fetchPermissions]);
+
+	// Initialize auth state from localStorage
+	useEffect(() => {
+		const storedToken = localStorage.getItem("token");
+		const storedUser = localStorage.getItem("user");
+		const storedPermissions = localStorage.getItem("permissions");
+
+		if (storedToken && storedUser) {
+			try {
+				setToken(storedToken);
+				setUser(JSON.parse(storedUser));
+				if (storedPermissions) {
+					setPermissions(JSON.parse(storedPermissions));
+				} else {
+					// Use the proper fetchPermissions function
+					fetchPermissions(storedToken);
+				}
+			} catch (error) {
+				console.error("Error parsing stored user data:", error);
+				localStorage.removeItem("token");
+				localStorage.removeItem("user");
+				localStorage.removeItem("permissions");
+			}
+		}
+		setIsLoading(false);
+	}, [fetchPermissions]);
+
+	// Refresh permissions when user logs in (no automatic refresh)
+	useEffect(() => {
+		if (token && user) {
+			// Only refresh permissions once when user logs in
+			refreshPermissions();
+		}
+	}, [token, user, refreshPermissions]);
 
 	const login = async (username, password) => {
 		try {

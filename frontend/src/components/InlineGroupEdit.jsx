@@ -1,5 +1,11 @@
 import { Check, ChevronDown, Edit2, X } from "lucide-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 
 const InlineGroupEdit = ({
 	value,
@@ -38,7 +44,7 @@ const InlineGroupEdit = ({
 	}, [value, isEditing]);
 
 	// Calculate dropdown position
-	const calculateDropdownPosition = () => {
+	const calculateDropdownPosition = useCallback(() => {
 		if (buttonRef.current) {
 			const rect = buttonRef.current.getBoundingClientRect();
 			setDropdownPosition({
@@ -47,7 +53,7 @@ const InlineGroupEdit = ({
 				width: rect.width,
 			});
 		}
-	};
+	}, []);
 
 	// Close dropdown when clicking outside
 	useEffect(() => {
@@ -68,7 +74,7 @@ const InlineGroupEdit = ({
 				window.removeEventListener("scroll", calculateDropdownPosition);
 			};
 		}
-	}, [isOpen]);
+	}, [isOpen, calculateDropdownPosition]);
 
 	const handleEdit = () => {
 		if (disabled) return;

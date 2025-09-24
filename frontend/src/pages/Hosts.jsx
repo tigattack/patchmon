@@ -1199,6 +1199,7 @@ const Hosts = () => {
 		sortField,
 		sortDirection,
 		searchParams,
+		hideStale,
 	]);
 
 	// Group hosts by selected field
