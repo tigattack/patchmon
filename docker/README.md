@@ -10,8 +10,8 @@ PatchMon is a containerised application that monitors system patches and updates
 
 ## Images
 
-- **Backend**: `ghcr.io/9technologygroup/patchmon-backend:latest`
-- **Frontend**: `ghcr.io/9technologygroup/patchmon-frontend:latest`
+- **Backend**: [ghcr.io/9technologygroup/patchmon-backend:latest](https://github.com/9technologygroup/patchmon.net/pkgs/container/patchmon-backend)
+- **Frontend**: [ghcr.io/9technologygroup/patchmon-frontend:latest](https://github.com/9technologygroup/patchmon.net/pkgs/container/patchmon-frontend)
 
 Version tags are also available (e.g. `1.2.3`) for both of these images.
 
