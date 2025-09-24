@@ -376,6 +376,16 @@ init_instance_vars() {
     
     # Create safe database name from FQDN
     DB_SAFE_NAME=$(echo "$FQDN" | sed 's/[^a-zA-Z0-9]/_/g' | sed 's/^_*//' | sed 's/_*$//')
+    
+    # Check if FQDN starts with a digit (likely an IP address)
+    if [[ "$FQDN" =~ ^[0-9] ]]; then
+        # Generate 2 random letters for IP address prefixing
+        RANDOM_PREFIX=$(tr -dc 'a-z' < /dev/urandom | head -c 2)
+        DB_SAFE_NAME="${RANDOM_PREFIX}${DB_SAFE_NAME}"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] IP address detected, prefixed with: $RANDOM_PREFIX" >> "$DEBUG_LOG"
+        print_info "IP address detected ($FQDN), using prefix '$RANDOM_PREFIX' for database/service names"
+    fi
+    
     DB_NAME="${DB_SAFE_NAME}"
     DB_USER="${DB_SAFE_NAME}"
     
@@ -416,7 +426,7 @@ init_instance_vars() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Creating dedicated user name..." >> "$DEBUG_LOG"
     
     # Create dedicated user name (safe for system users)
-    INSTANCE_USER=$(echo "$FQDN" | sed 's/[^a-zA-Z0-9]/_/g' | sed 's/^_*//' | sed 's/_*$//' | cut -c1-32)
+    INSTANCE_USER=$(echo "$DB_SAFE_NAME" | cut -c1-32)
     
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] INSTANCE_USER: $INSTANCE_USER" >> "$DEBUG_LOG"
     
