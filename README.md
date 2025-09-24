@@ -100,37 +100,6 @@ PatchMon provides centralized patch management across diverse server environment
 - Works for internal (HTTP) and public (HTTPS) deployments
 - Defaults safe for first‑time setup; admin created interactively
 
-## Communication Model
-
-- Outbound-only agents: servers initiate communication to PatchMon
-- No inbound connections required on monitored servers
-- Secure server-side API with JWT authentication and rate limiting
-
-## Architecture
-
-- Backend: Node.js/Express + Prisma + PostgreSQL
-- Frontend: Vite + React
-- Reverse proxy: nginx
-- Database: PostgreSQL
-- System service: systemd-managed backend
-
-```
-+----------------------+    HTTPS    +--------------------+    HTTP    +------------------------+    TCP    +---------------+
-|  End Users (Browser) | --------->  |       nginx        | --------> | Backend (Node/Express) | ------> |  PostgreSQL   |
-|  Admin UI / Frontend |            | serve FE, proxy API|           |  /api, auth, Prisma    |         |   Database    |
-+----------------------+            +--------------------+           +------------------------+         +---------------+
-
-Agents (Outbound Only)
-+---------------------------+    HTTPS    +------------------------+
-|  Agents on your servers   | ----------> | Backend API (/api/v1)  |
-+---------------------------+             +------------------------+
-
-Operational
-- systemd manages backend service
-- certbot/nginx for TLS (public)
-- setup.sh bootstraps OS, app, DB, config
-```
-
 ## Getting Started
 
 ### PatchMon Cloud (coming soon)
@@ -168,6 +137,37 @@ The script will:
 After installation:
 - Visit `http(s)://<your-domain>` and complete first-time admin setup
 - See all useful info in `deployment-info.txt`
+
+## Communication Model
+
+- Outbound-only agents: servers initiate communication to PatchMon
+- No inbound connections required on monitored servers
+- Secure server-side API with JWT authentication and rate limiting
+
+## Architecture
+
+- Backend: Node.js/Express + Prisma + PostgreSQL
+- Frontend: Vite + React
+- Reverse proxy: nginx
+- Database: PostgreSQL
+- System service: systemd-managed backend
+
+```
++----------------------+    HTTPS    +--------------------+    HTTP    +------------------------+    TCP    +---------------+
+|  End Users (Browser) | --------->  |       nginx        | --------> | Backend (Node/Express) | ------> |  PostgreSQL   |
+|  Admin UI / Frontend |            | serve FE, proxy API|           |  /api, auth, Prisma    |         |   Database    |
++----------------------+            +--------------------+           +------------------------+         +---------------+
+
+Agents (Outbound Only)
++---------------------------+    HTTPS    +------------------------+
+|  Agents on your servers   | ----------> | Backend API (/api/v1)  |
++---------------------------+             +------------------------+
+
+Operational
+- systemd manages backend service
+- certbot/nginx for TLS (public)
+- setup.sh bootstraps OS, app, DB, config
+```
 
 ## Support
 
