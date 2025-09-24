@@ -28,7 +28,7 @@ import {
 	Users,
 	X,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import InlineEdit from "../components/InlineEdit";
 import InlineGroupEdit from "../components/InlineGroupEdit";
@@ -43,6 +43,8 @@ import { OSIcon } from "../utils/osIcons.jsx";
 
 // Add Host Modal Component
 const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
+	const friendlyNameId = useId();
+	const hostGroupId = useId();
 	const [formData, setFormData] = useState({
 		friendly_name: "",
 		hostGroupId: "",
@@ -113,11 +115,15 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 
 				<form onSubmit={handleSubmit} className="space-y-6">
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+						<label
+							htmlFor={friendlyNameId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2"
+						>
 							Friendly Name *
 						</label>
 						<input
 							type="text"
+							id={friendlyNameId}
 							required
 							value={formData.friendly_name}
 							onChange={(e) =>
@@ -133,9 +139,9 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-3">
+						<span className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-3">
 							Host Group
-						</label>
+						</span>
 						<div className="grid grid-cols-3 gap-2">
 							{/* No Group Option */}
 							<button
@@ -231,6 +237,8 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 
 // Credentials Modal Component
 const CredentialsModal = ({ host, isOpen, onClose }) => {
+	const apiIdId = useId();
+	const apiKeyId = useId();
 	const [showApiKey, setShowApiKey] = useState(false);
 	const [activeTab, setActiveTab] = useState(
 		host?.isNewHost ? "quick" : "credentials",
@@ -508,12 +516,16 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 				{activeTab === "credentials" && (
 					<div className="space-y-4">
 						<div>
-							<label className="block text-sm font-medium text-secondary-700 mb-2">
+							<label
+								htmlFor={apiIdId}
+								className="block text-sm font-medium text-secondary-700 mb-2"
+							>
 								API ID
 							</label>
 							<div className="flex">
 								<input
 									type="text"
+									id={apiIdId}
 									readOnly
 									value={host.apiId}
 									className="flex-1 block w-full border-secondary-300 rounded-l-md shadow-sm bg-secondary-50"
@@ -529,12 +541,16 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium text-secondary-700 mb-2">
+							<label
+								htmlFor={apiKeyId}
+								className="block text-sm font-medium text-secondary-700 mb-2"
+							>
 								API Key
 							</label>
 							<div className="flex">
 								<input
 									type={showApiKey ? "text" : "password"}
+									id={apiKeyId}
 									readOnly
 									value={host.apiKey}
 									className="flex-1 block w-full border-secondary-300 rounded-l-md shadow-sm bg-secondary-50"
@@ -779,6 +795,10 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`,
 };
 
 const Hosts = () => {
+	const hostGroupFilterId = useId();
+	const statusFilterId = useId();
+	const osFilterId = useId();
+	const bulkHostGroupId = useId();
 	const [showAddModal, setShowAddModal] = useState(false);
 	const [selectedHosts, setSelectedHosts] = useState([]);
 	const [showBulkAssignModal, setShowBulkAssignModal] = useState(false);
@@ -1737,10 +1757,14 @@ const Hosts = () => {
 							<div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg border dark:border-secondary-600">
 								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 									<div>
-										<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+										<label
+											htmlFor={hostGroupFilterId}
+											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+										>
 											Host Group
 										</label>
 										<select
+											id={hostGroupFilterId}
 											value={groupFilter}
 											onChange={(e) => setGroupFilter(e.target.value)}
 											className="w-full border border-secondary-300 dark:border-secondary-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-800 text-secondary-900 dark:text-white"
@@ -1755,10 +1779,14 @@ const Hosts = () => {
 										</select>
 									</div>
 									<div>
-										<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+										<label
+											htmlFor={statusFilterId}
+											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+										>
 											Status
 										</label>
 										<select
+											id={statusFilterId}
 											value={statusFilter}
 											onChange={(e) => setStatusFilter(e.target.value)}
 											className="w-full border border-secondary-300 dark:border-secondary-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-800 text-secondary-900 dark:text-white"
@@ -1771,10 +1799,14 @@ const Hosts = () => {
 										</select>
 									</div>
 									<div>
-										<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+										<label
+											htmlFor={osFilterId}
+											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+										>
 											Operating System
 										</label>
 										<select
+											id={osFilterId}
 											value={osFilter}
 											onChange={(e) => setOsFilter(e.target.value)}
 											className="w-full border border-secondary-300 dark:border-secondary-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-800 text-secondary-900 dark:text-white"
@@ -2116,10 +2148,14 @@ const BulkAssignModal = ({
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 mb-1">
+						<label
+							htmlFor={bulkHostGroupId}
+							className="block text-sm font-medium text-secondary-700 mb-1"
+						>
 							Host Group
 						</label>
 						<select
+							id={bulkHostGroupId}
 							value={selectedGroupId}
 							onChange={(e) => setSelectedGroupId(e.target.value)}
 							className="w-full px-3 py-2 border border-secondary-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -2309,7 +2345,7 @@ const ColumnSettingsModal = ({
 								onDragOver={handleDragOver}
 								onDrop={(e) => handleDrop(e, index)}
 								onKeyDown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
+									if (e.key === "Enter" || e.key === " ") {
 										e.preventDefault();
 										// Focus handling for keyboard users
 									}

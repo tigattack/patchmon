@@ -11,7 +11,7 @@ import {
 	User,
 	XCircle,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { adminUsersAPI, permissionsAPI } from "../utils/api";
 
@@ -290,6 +290,13 @@ const Users = () => {
 
 // Add User Modal Component
 const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
+	const usernameId = useId();
+	const emailId = useId();
+	const firstNameId = useId();
+	const lastNameId = useId();
+	const passwordId = useId();
+	const roleId = useId();
+
 	const [formData, setFormData] = useState({
 		username: "",
 		email: "",
@@ -343,10 +350,14 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={usernameId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Username
 						</label>
 						<input
+							id={usernameId}
 							type="text"
 							name="username"
 							required
@@ -357,10 +368,14 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={emailId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Email
 						</label>
 						<input
+							id={emailId}
 							type="email"
 							name="email"
 							required
@@ -372,10 +387,14 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
 
 					<div className="grid grid-cols-2 gap-4">
 						<div>
-							<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+							<label
+								htmlFor={firstNameId}
+								className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+							>
 								First Name
 							</label>
 							<input
+								id={firstNameId}
 								type="text"
 								name="first_name"
 								value={formData.first_name}
@@ -384,10 +403,14 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
 							/>
 						</div>
 						<div>
-							<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+							<label
+								htmlFor={lastNameId}
+								className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+							>
 								Last Name
 							</label>
 							<input
+								id={lastNameId}
 								type="text"
 								name="last_name"
 								value={formData.last_name}
@@ -398,10 +421,14 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={passwordId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Password
 						</label>
 						<input
+							id={passwordId}
 							type="password"
 							name="password"
 							required
@@ -416,10 +443,14 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={roleId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Role
 						</label>
 						<select
+							id={roleId}
 							name="role"
 							value={formData.role}
 							onChange={handleInputChange}
@@ -473,6 +504,13 @@ const AddUserModal = ({ isOpen, onClose, onUserCreated, roles }) => {
 
 // Edit User Modal Component
 const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
+	const editUsernameId = useId();
+	const editEmailId = useId();
+	const editFirstNameId = useId();
+	const editLastNameId = useId();
+	const editRoleId = useId();
+	const editActiveId = useId();
+
 	const [formData, setFormData] = useState({
 		username: user?.username || "",
 		email: user?.email || "",
@@ -518,10 +556,14 @@ const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={editUsernameId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Username
 						</label>
 						<input
+							id={editUsernameId}
 							type="text"
 							name="username"
 							required
@@ -532,10 +574,14 @@ const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={editEmailId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Email
 						</label>
 						<input
+							id={editEmailId}
 							type="email"
 							name="email"
 							required
@@ -547,10 +593,14 @@ const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
 
 					<div className="grid grid-cols-2 gap-4">
 						<div>
-							<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+							<label
+								htmlFor={editFirstNameId}
+								className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+							>
 								First Name
 							</label>
 							<input
+								id={editFirstNameId}
 								type="text"
 								name="first_name"
 								value={formData.first_name}
@@ -559,10 +609,14 @@ const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
 							/>
 						</div>
 						<div>
-							<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+							<label
+								htmlFor={editLastNameId}
+								className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+							>
 								Last Name
 							</label>
 							<input
+								id={editLastNameId}
 								type="text"
 								name="last_name"
 								value={formData.last_name}
@@ -573,10 +627,14 @@ const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={editRoleId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Role
 						</label>
 						<select
+							id={editRoleId}
 							name="role"
 							value={formData.role}
 							onChange={handleInputChange}
@@ -600,13 +658,17 @@ const EditUserModal = ({ user, isOpen, onClose, onUserUpdated, roles }) => {
 
 					<div className="flex items-center">
 						<input
+							id={editActiveId}
 							type="checkbox"
 							name="is_active"
 							checked={formData.is_active}
 							onChange={handleInputChange}
 							className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
 						/>
-						<label className="ml-2 block text-sm text-secondary-700 dark:text-secondary-200">
+						<label
+							htmlFor={editActiveId}
+							className="ml-2 block text-sm text-secondary-700 dark:text-secondary-200"
+						>
 							Active user
 						</label>
 					</div>
@@ -649,6 +711,8 @@ const ResetPasswordModal = ({
 	onPasswordReset,
 	isLoading,
 }) => {
+	const newPasswordId = useId();
+	const confirmPasswordId = useId();
 	const [newPassword, setNewPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [error, setError] = useState("");
@@ -696,10 +760,14 @@ const ResetPasswordModal = ({
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={newPasswordId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							New Password
 						</label>
 						<input
+							id={newPasswordId}
 							type="password"
 							required
 							minLength={6}
@@ -711,10 +779,14 @@ const ResetPasswordModal = ({
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={confirmPasswordId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Confirm Password
 						</label>
 						<input
+							id={confirmPasswordId}
 							type="password"
 							required
 							value={confirmPassword}

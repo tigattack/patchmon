@@ -30,6 +30,17 @@ const Settings = () => {
 	const repoPrivateId = useId();
 	const useCustomSshKeyId = useId();
 	const isDefaultId = useId();
+	const protocolId = useId();
+	const hostId = useId();
+	const portId = useId();
+	const updateIntervalId = useId();
+	const defaultRoleId = useId();
+	const repositoryTypeId = useId();
+	const githubRepoUrlId = useId();
+	const sshKeyPathId = useId();
+	const versionId = useId();
+	const releaseNotesId = useId();
+	const scriptContentId = useId();
 	const [formData, setFormData] = useState({
 		serverProtocol: "http",
 		serverHost: "localhost",
@@ -470,10 +481,14 @@ const Settings = () => {
 
 							<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 								<div>
-									<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+									<label
+										htmlFor={protocolId}
+										className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2"
+									>
 										Protocol
 									</label>
 									<select
+										id={protocolId}
 										value={formData.serverProtocol}
 										onChange={(e) =>
 											handleInputChange("serverProtocol", e.target.value)
@@ -486,10 +501,14 @@ const Settings = () => {
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+									<label
+										htmlFor={hostId}
+										className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2"
+									>
 										Host *
 									</label>
 									<input
+										id={hostId}
 										type="text"
 										value={formData.serverHost}
 										onChange={(e) =>
@@ -510,10 +529,14 @@ const Settings = () => {
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+									<label
+										htmlFor={portId}
+										className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2"
+									>
 										Port *
 									</label>
 									<input
+										id={portId}
 										type="number"
 										value={formData.serverPort}
 										onChange={(e) =>
@@ -551,13 +574,17 @@ const Settings = () => {
 
 							{/* Update Interval */}
 							<div>
-								<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+								<label
+									htmlFor={updateIntervalId}
+									className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2"
+								>
 									Agent Update Interval (minutes)
 								</label>
 
 								{/* Numeric input (concise width) */}
 								<div className="flex items-center gap-2">
 									<input
+										id={updateIntervalId}
 										type="number"
 										min="5"
 										max="1440"
@@ -687,10 +714,14 @@ const Settings = () => {
 								{/* Default User Role Dropdown */}
 								{formData.signupEnabled && (
 									<div className="mt-3 ml-6">
-										<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+										<label
+											htmlFor={defaultRoleId}
+											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2"
+										>
 											Default Role for New Users
 										</label>
 										<select
+											id={defaultRoleId}
 											value={formData.defaultUserRole}
 											onChange={(e) =>
 												handleInputChange("defaultUserRole", e.target.value)
@@ -989,10 +1020,10 @@ const Settings = () => {
 								</p>
 
 								<div className="space-y-4">
-									<div>
-										<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+									<fieldset>
+										<legend className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
 											Repository Type
-										</label>
+										</legend>
 										<div className="space-y-2">
 											<div className="flex items-center">
 												<input
@@ -1038,13 +1069,17 @@ const Settings = () => {
 											Choose whether your repository is public or private to
 											determine the appropriate access method.
 										</p>
-									</div>
+									</fieldset>
 
 									<div>
-										<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+										<label
+											htmlFor={githubRepoUrlId}
+											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2"
+										>
 											GitHub Repository URL
 										</label>
 										<input
+											id={githubRepoUrlId}
 											type="text"
 											value={formData.githubRepoUrl || ""}
 											onChange={(e) =>
@@ -1084,10 +1119,14 @@ const Settings = () => {
 
 											{formData.useCustomSshKey && (
 												<div>
-													<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+													<label
+														htmlFor={sshKeyPathId}
+														className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2"
+													>
 														SSH Key Path
 													</label>
 													<input
+														id={sshKeyPathId}
 														type="text"
 														value={formData.sshKeyPath || ""}
 														onChange={(e) =>
@@ -1384,10 +1423,14 @@ const AgentVersionModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 				<form onSubmit={handleSubmit} className="px-6 py-4">
 					<div className="space-y-4">
 						<div>
-							<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+							<label
+								htmlFor={versionId}
+								className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+							>
 								Version *
 							</label>
 							<input
+								id={versionId}
 								type="text"
 								value={formData.version}
 								onChange={(e) =>
@@ -1408,10 +1451,14 @@ const AgentVersionModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+							<label
+								htmlFor={releaseNotesId}
+								className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+							>
 								Release Notes
 							</label>
 							<textarea
+								id={releaseNotesId}
 								value={formData.releaseNotes}
 								onChange={(e) =>
 									setFormData((prev) => ({
@@ -1426,7 +1473,10 @@ const AgentVersionModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 						</div>
 
 						<div>
-							<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+							<label
+								htmlFor={scriptContentId}
+								className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+							>
 								Script Content *
 							</label>
 							<div className="space-y-2">
@@ -1437,6 +1487,7 @@ const AgentVersionModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 									className="block w-full text-sm text-secondary-500 dark:text-secondary-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900 dark:file:text-primary-200"
 								/>
 								<textarea
+									id={scriptContentId}
 									value={formData.scriptContent}
 									onChange={(e) =>
 										setFormData((prev) => ({

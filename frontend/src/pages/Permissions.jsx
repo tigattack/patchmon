@@ -16,7 +16,7 @@ import {
 	Users,
 	X,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { permissionsAPI } from "../utils/api";
 
@@ -320,6 +320,7 @@ const RolePermissionsCard = ({
 							<div key={field.key} className="flex items-start">
 								<div className="flex items-center h-5">
 									<input
+										id={`${role.role}-${field.key}`}
 										type="checkbox"
 										checked={isChecked}
 										onChange={(e) =>
@@ -335,7 +336,10 @@ const RolePermissionsCard = ({
 								<div className="ml-3">
 									<div className="flex items-center">
 										<Icon className="h-4 w-4 text-secondary-400 mr-2" />
-										<label className="text-sm font-medium text-secondary-900 dark:text-white">
+										<label
+											htmlFor={`${role.role}-${field.key}`}
+											className="text-sm font-medium text-secondary-900 dark:text-white"
+										>
 											{field.label}
 										</label>
 									</div>
@@ -354,6 +358,7 @@ const RolePermissionsCard = ({
 
 // Add Role Modal Component
 const AddRoleModal = ({ isOpen, onClose, onSuccess }) => {
+	const roleNameInputId = useId();
 	const [formData, setFormData] = useState({
 		role: "",
 		can_view_dashboard: true,
@@ -404,10 +409,14 @@ const AddRoleModal = ({ isOpen, onClose, onSuccess }) => {
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={roleNameInputId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Role Name
 						</label>
 						<input
+							id={roleNameInputId}
 							type="text"
 							name="role"
 							required
@@ -439,13 +448,17 @@ const AddRoleModal = ({ isOpen, onClose, onSuccess }) => {
 						].map((permission) => (
 							<div key={permission.key} className="flex items-center">
 								<input
+									id={`add-role-${permission.key}`}
 									type="checkbox"
 									name={permission.key}
 									checked={formData[permission.key]}
 									onChange={handleInputChange}
 									className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
 								/>
-								<label className="ml-2 block text-sm text-secondary-700 dark:text-secondary-200">
+								<label
+									htmlFor={`add-role-${permission.key}`}
+									className="ml-2 block text-sm text-secondary-700 dark:text-secondary-200"
+								>
 									{permission.label}
 								</label>
 							</div>

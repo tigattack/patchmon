@@ -8,7 +8,7 @@ import {
 	Trash2,
 	Users,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 import { hostGroupsAPI } from "../utils/api";
 
 const HostGroups = () => {
@@ -252,6 +252,9 @@ const HostGroups = () => {
 
 // Create Host Group Modal
 const CreateHostGroupModal = ({ onClose, onSubmit, isLoading }) => {
+	const nameId = useId();
+	const descriptionId = useId();
+	const colorId = useId();
 	const [formData, setFormData] = useState({
 		name: "",
 		description: "",
@@ -279,11 +282,15 @@ const CreateHostGroupModal = ({ onClose, onSubmit, isLoading }) => {
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={nameId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Name *
 						</label>
 						<input
 							type="text"
+							id={nameId}
 							name="name"
 							value={formData.name}
 							onChange={handleChange}
@@ -294,10 +301,14 @@ const CreateHostGroupModal = ({ onClose, onSubmit, isLoading }) => {
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={descriptionId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Description
 						</label>
 						<textarea
+							id={descriptionId}
 							name="description"
 							value={formData.description}
 							onChange={handleChange}
@@ -308,12 +319,16 @@ const CreateHostGroupModal = ({ onClose, onSubmit, isLoading }) => {
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={colorId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Color
 						</label>
 						<div className="flex items-center gap-3">
 							<input
 								type="color"
+								id={colorId}
 								name="color"
 								value={formData.color}
 								onChange={handleChange}
@@ -350,6 +365,9 @@ const CreateHostGroupModal = ({ onClose, onSubmit, isLoading }) => {
 
 // Edit Host Group Modal
 const EditHostGroupModal = ({ group, onClose, onSubmit, isLoading }) => {
+	const editNameId = useId();
+	const editDescriptionId = useId();
+	const editColorId = useId();
 	const [formData, setFormData] = useState({
 		name: group.name,
 		description: group.description || "",
@@ -377,11 +395,15 @@ const EditHostGroupModal = ({ group, onClose, onSubmit, isLoading }) => {
 
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={editNameId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Name *
 						</label>
 						<input
 							type="text"
+							id={editNameId}
 							name="name"
 							value={formData.name}
 							onChange={handleChange}
@@ -392,10 +414,14 @@ const EditHostGroupModal = ({ group, onClose, onSubmit, isLoading }) => {
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={editDescriptionId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Description
 						</label>
 						<textarea
+							id={editDescriptionId}
 							name="description"
 							value={formData.description}
 							onChange={handleChange}
@@ -406,12 +432,16 @@ const EditHostGroupModal = ({ group, onClose, onSubmit, isLoading }) => {
 					</div>
 
 					<div>
-						<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+						<label
+							htmlFor={editColorId}
+							className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+						>
 							Color
 						</label>
 						<div className="flex items-center gap-3">
 							<input
 								type="color"
+								id={editColorId}
 								name="color"
 								value={formData.color}
 								onChange={handleChange}

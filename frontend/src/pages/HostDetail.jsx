@@ -31,7 +31,7 @@ import {
 	Wifi,
 	X,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import InlineEdit from "../components/InlineEdit";
 import {
@@ -1001,6 +1001,8 @@ const HostDetail = () => {
 const CredentialsModal = ({ host, isOpen, onClose }) => {
 	const [showApiKey, setShowApiKey] = useState(false);
 	const [activeTab, setActiveTab] = useState("quick-install");
+	const apiIdInputId = useId();
+	const apiKeyInputId = useId();
 
 	const { data: serverUrlData } = useQuery({
 		queryKey: ["serverUrl"],
@@ -1342,11 +1344,15 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 							</h4>
 							<div className="space-y-4">
 								<div>
-									<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+									<label
+										htmlFor={apiIdInputId}
+										className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+									>
 										API ID
 									</label>
 									<div className="flex items-center gap-2">
 										<input
+											id={apiIdInputId}
 											type="text"
 											value={host.api_id}
 											readOnly
@@ -1364,11 +1370,15 @@ echo "   - View logs: tail -f /var/log/patchmon-agent.log"`;
 								</div>
 
 								<div>
-									<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+									<label
+										htmlFor={apiKeyInputId}
+										className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+									>
 										API Key
 									</label>
 									<div className="flex items-center gap-2">
 										<input
+											id={apiKeyInputId}
 											type={showApiKey ? "text" : "password"}
 											value={host.api_key}
 											readOnly

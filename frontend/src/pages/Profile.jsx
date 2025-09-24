@@ -34,6 +34,8 @@ const Profile = () => {
 	const currentPasswordId = useId();
 	const newPasswordId = useId();
 	const confirmPasswordId = useId();
+	const verificationTokenId = useId();
+	const disablePasswordId = useId();
 	const { user, updateProfile, changePassword } = useAuth();
 	const { theme, toggleTheme, isDark } = useTheme();
 	const [activeTab, setActiveTab] = useState("profile");
@@ -924,10 +926,14 @@ const TfaTab = () => {
 						</p>
 						<form onSubmit={handleVerify} className="space-y-4">
 							<div>
-								<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+								<label
+									htmlFor={verificationTokenId}
+									className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+								>
 									Verification Code
 								</label>
 								<input
+									id={verificationTokenId}
 									type="text"
 									value={verificationToken}
 									onChange={(e) =>
@@ -1030,10 +1036,14 @@ const TfaTab = () => {
 						</p>
 						<form onSubmit={handleDisable} className="space-y-4">
 							<div>
-								<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1">
+								<label
+									htmlFor={disablePasswordId}
+									className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-1"
+								>
 									Password
 								</label>
 								<input
+									id={disablePasswordId}
 									type="password"
 									value={password}
 									onChange={(e) => setPassword(e.target.value)}

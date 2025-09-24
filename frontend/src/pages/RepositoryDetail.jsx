@@ -21,6 +21,9 @@ import { repositoryAPI } from "../utils/api";
 
 const RepositoryDetail = () => {
 	const isActiveId = useId();
+	const repositoryNameId = useId();
+	const priorityId = useId();
+	const descriptionId = useId();
 	const { repositoryId } = useParams();
 	const queryClient = useQueryClient();
 	const [editMode, setEditMode] = useState(false);
@@ -201,11 +204,15 @@ const RepositoryDetail = () => {
 					{editMode ? (
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 							<div>
-								<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
+								<label
+									htmlFor={repositoryNameId}
+									className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1"
+								>
 									Repository Name
 								</label>
 								<input
 									type="text"
+									id={repositoryNameId}
 									value={formData.name}
 									onChange={(e) =>
 										setFormData({ ...formData, name: e.target.value })
@@ -214,11 +221,15 @@ const RepositoryDetail = () => {
 								/>
 							</div>
 							<div>
-								<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
+								<label
+									htmlFor={priorityId}
+									className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1"
+								>
 									Priority
 								</label>
 								<input
 									type="number"
+									id={priorityId}
 									value={formData.priority}
 									onChange={(e) =>
 										setFormData({ ...formData, priority: e.target.value })
@@ -228,10 +239,14 @@ const RepositoryDetail = () => {
 								/>
 							</div>
 							<div className="md:col-span-2">
-								<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
+								<label
+									htmlFor={descriptionId}
+									className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1"
+								>
 									Description
 								</label>
 								<textarea
+									id={descriptionId}
 									value={formData.description}
 									onChange={(e) =>
 										setFormData({ ...formData, description: e.target.value })
@@ -263,9 +278,9 @@ const RepositoryDetail = () => {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 							<div className="space-y-4">
 								<div>
-									<label className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
+									<span className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
 										URL
-									</label>
+									</span>
 									<div className="flex items-center mt-1">
 										<Globe className="h-4 w-4 text-secondary-400 mr-2" />
 										<span className="text-secondary-900 dark:text-white">
@@ -274,25 +289,25 @@ const RepositoryDetail = () => {
 									</div>
 								</div>
 								<div>
-									<label className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
+									<span className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
 										Distribution
-									</label>
+									</span>
 									<p className="text-secondary-900 dark:text-white mt-1">
 										{repository.distribution}
 									</p>
 								</div>
 								<div>
-									<label className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
+									<span className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
 										Components
-									</label>
+									</span>
 									<p className="text-secondary-900 dark:text-white mt-1">
 										{repository.components}
 									</p>
 								</div>
 								<div>
-									<label className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
+									<span className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
 										Repository Type
-									</label>
+									</span>
 									<p className="text-secondary-900 dark:text-white mt-1">
 										{repository.repoType}
 									</p>
@@ -300,9 +315,9 @@ const RepositoryDetail = () => {
 							</div>
 							<div className="space-y-4">
 								<div>
-									<label className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
+									<span className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
 										Security
-									</label>
+									</span>
 									<div className="flex items-center mt-1">
 										{repository.isSecure ? (
 											<>
@@ -319,9 +334,9 @@ const RepositoryDetail = () => {
 								</div>
 								{repository.priority && (
 									<div>
-										<label className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
+										<span className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
 											Priority
-										</label>
+										</span>
 										<p className="text-secondary-900 dark:text-white mt-1">
 											{repository.priority}
 										</p>
@@ -329,18 +344,18 @@ const RepositoryDetail = () => {
 								)}
 								{repository.description && (
 									<div>
-										<label className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
+										<span className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
 											Description
-										</label>
+										</span>
 										<p className="text-secondary-900 dark:text-white mt-1">
 											{repository.description}
 										</p>
 									</div>
 								)}
 								<div>
-									<label className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
+									<span className="text-sm font-medium text-secondary-500 dark:text-secondary-400">
 										Created
-									</label>
+									</span>
 									<div className="flex items-center mt-1">
 										<Calendar className="h-4 w-4 text-secondary-400 mr-2" />
 										<span className="text-secondary-900 dark:text-white">
