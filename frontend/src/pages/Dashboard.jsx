@@ -1,928 +1,1082 @@
-import React, { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import { 
-  Server, 
-  Package, 
-  AlertTriangle, 
-  Shield, 
-  TrendingUp,
-  RefreshCw,
-  Clock,
-  WifiOff,
-  Settings,
-  Users,
-  Folder,
-  GitBranch
-} from 'lucide-react'
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js'
-import { Pie, Bar } from 'react-chartjs-2'
-import { dashboardAPI, dashboardPreferencesAPI, settingsAPI, formatRelativeTime } from '../utils/api'
-import DashboardSettingsModal from '../components/DashboardSettingsModal'
-import { useTheme } from '../contexts/ThemeContext'
-import { useAuth } from '../contexts/AuthContext'
+import { useQuery } from "@tanstack/react-query";
+import {
+	ArcElement,
+	BarElement,
+	CategoryScale,
+	Chart as ChartJS,
+	Legend,
+	LinearScale,
+	Title,
+	Tooltip,
+} from "chart.js";
+import {
+	AlertTriangle,
+	Clock,
+	Folder,
+	GitBranch,
+	Package,
+	RefreshCw,
+	Server,
+	Settings,
+	Shield,
+	TrendingUp,
+	Users,
+	WifiOff,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Bar, Pie } from "react-chartjs-2";
+import { useNavigate } from "react-router-dom";
+import DashboardSettingsModal from "../components/DashboardSettingsModal";
+import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
+import {
+	dashboardAPI,
+	dashboardPreferencesAPI,
+	formatRelativeTime,
+	settingsAPI,
+} from "../utils/api";
 
 // Register Chart.js components
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title)
+ChartJS.register(
+	ArcElement,
+	Tooltip,
+	Legend,
+	CategoryScale,
+	LinearScale,
+	BarElement,
+	Title,
+);
 
 const Dashboard = () => {
-  const [showSettingsModal, setShowSettingsModal] = useState(false)
-  const [cardPreferences, setCardPreferences] = useState([])
-  const navigate = useNavigate()
-  const { isDark } = useTheme()
-  const { user } = useAuth()
+	const [showSettingsModal, setShowSettingsModal] = useState(false);
+	const [cardPreferences, setCardPreferences] = useState([]);
+	const navigate = useNavigate();
+	const { isDark } = useTheme();
+	const { user } = useAuth();
 
-  // Navigation handlers
-  const handleTotalHostsClick = () => {
-    navigate('/hosts', { replace: true })
-  }
+	// Navigation handlers
+	const handleTotalHostsClick = () => {
+		navigate("/hosts", { replace: true });
+	};
 
-  const handleHostsNeedingUpdatesClick = () => {
-    navigate('/hosts?filter=needsUpdates')
-  }
+	const handleHostsNeedingUpdatesClick = () => {
+		navigate("/hosts?filter=needsUpdates");
+	};
 
-  const handleOutdatedPackagesClick = () => {
-    navigate('/packages?filter=outdated')
-  }
+	const handleOutdatedPackagesClick = () => {
+		navigate("/packages?filter=outdated");
+	};
 
-  const handleSecurityUpdatesClick = () => {
-    navigate('/packages?filter=security')
-  }
+	const handleSecurityUpdatesClick = () => {
+		navigate("/packages?filter=security");
+	};
 
-  const handleErroredHostsClick = () => {
-    navigate('/hosts?filter=inactive')
-  }
+	const handleErroredHostsClick = () => {
+		navigate("/hosts?filter=inactive");
+	};
 
-  const handleOfflineHostsClick = () => {
-    navigate('/hosts?filter=offline')
-  }
+	const handleOfflineHostsClick = () => {
+		navigate("/hosts?filter=offline");
+	};
 
-  // New navigation handlers for top cards
-  const handleUsersClick = () => {
-    navigate('/users')
-  }
+	// New navigation handlers for top cards
+	const handleUsersClick = () => {
+		navigate("/users");
+	};
 
-  const handleHostGroupsClick = () => {
-    navigate('/options')
-  }
+	const handleHostGroupsClick = () => {
+		navigate("/options");
+	};
 
-  const handleRepositoriesClick = () => {
-    navigate('/repositories')
-  }
+	const handleRepositoriesClick = () => {
+		navigate("/repositories");
+	};
 
-  const handleOSDistributionClick = () => {
-    navigate('/hosts?showFilters=true', { replace: true })
-  }
+	const handleOSDistributionClick = () => {
+		navigate("/hosts?showFilters=true", { replace: true });
+	};
 
-  const handleUpdateStatusClick = () => {
-    navigate('/hosts?filter=needsUpdates', { replace: true })
-  }
+	const handleUpdateStatusClick = () => {
+		navigate("/hosts?filter=needsUpdates", { replace: true });
+	};
 
-  const handlePackagePriorityClick = () => {
-    navigate('/packages?filter=security')
-  }
+	const handlePackagePriorityClick = () => {
+		navigate("/packages?filter=security");
+	};
 
-  // Chart click handlers
-  const handleOSChartClick = (event, elements) => {
-    if (elements.length > 0) {
-      const elementIndex = elements[0].index
-      const osName = stats.charts.osDistribution[elementIndex].name.toLowerCase()
-      navigate(`/hosts?osFilter=${osName}&showFilters=true`, { replace: true })
-    }
-  }
+	// Chart click handlers
+	const handleOSChartClick = (event, elements) => {
+		if (elements.length > 0) {
+			const elementIndex = elements[0].index;
+			const osName =
+				stats.charts.osDistribution[elementIndex].name.toLowerCase();
+			navigate(`/hosts?osFilter=${osName}&showFilters=true`, { replace: true });
+		}
+	};
 
-  const handleUpdateStatusChartClick = (event, elements) => {
-    if (elements.length > 0) {
-      const elementIndex = elements[0].index
-      const statusName = stats.charts.updateStatusDistribution[elementIndex].name
-      
-      // Map status names to filter parameters
-      let filter = ''
-      if (statusName.toLowerCase().includes('needs updates')) {
-        filter = 'needsUpdates'
-      } else if (statusName.toLowerCase().includes('up to date')) {
-        filter = 'upToDate'
-      } else if (statusName.toLowerCase().includes('stale')) {
-        filter = 'stale'
-      }
-      
-      if (filter) {
-        navigate(`/hosts?filter=${filter}`, { replace: true })
-      }
-    }
-  }
+	const handleUpdateStatusChartClick = (event, elements) => {
+		if (elements.length > 0) {
+			const elementIndex = elements[0].index;
+			const statusName =
+				stats.charts.updateStatusDistribution[elementIndex].name;
 
-  const handlePackagePriorityChartClick = (event, elements) => {
-    if (elements.length > 0) {
-      const elementIndex = elements[0].index
-      const priorityName = stats.charts.packageUpdateDistribution[elementIndex].name
-      
-      // Map priority names to filter parameters
-      if (priorityName.toLowerCase().includes('security')) {
-        navigate('/packages?filter=security', { replace: true })
-      } else if (priorityName.toLowerCase().includes('outdated')) {
-        navigate('/packages?filter=outdated', { replace: true })
-      }
-    }
-  }
+			// Map status names to filter parameters
+			let filter = "";
+			if (statusName.toLowerCase().includes("needs updates")) {
+				filter = "needsUpdates";
+			} else if (statusName.toLowerCase().includes("up to date")) {
+				filter = "upToDate";
+			} else if (statusName.toLowerCase().includes("stale")) {
+				filter = "stale";
+			}
 
-  // Helper function to format the update interval threshold
-  const formatUpdateIntervalThreshold = () => {
-    if (!settings?.updateInterval) return '24 hours'
-    
-    const intervalMinutes = settings.updateInterval
-    const thresholdMinutes = intervalMinutes * 2 // 2x the update interval
-    
-    if (thresholdMinutes < 60) {
-      return `${thresholdMinutes} minutes`
-    } else if (thresholdMinutes < 1440) {
-      const hours = Math.floor(thresholdMinutes / 60)
-      const minutes = thresholdMinutes % 60
-      if (minutes === 0) {
-        return `${hours} hour${hours > 1 ? 's' : ''}`
-      }
-      return `${hours}h ${minutes}m`
-    } else {
-      const days = Math.floor(thresholdMinutes / 1440)
-      const hours = Math.floor((thresholdMinutes % 1440) / 60)
-      if (hours === 0) {
-        return `${days} day${days > 1 ? 's' : ''}`
-      }
-      return `${days}d ${hours}h`
-    }
-  }
+			if (filter) {
+				navigate(`/hosts?filter=${filter}`, { replace: true });
+			}
+		}
+	};
 
-  const { data: stats, isLoading, error, refetch, isFetching } = useQuery({
-    queryKey: ['dashboardStats'],
-    queryFn: () => dashboardAPI.getStats().then(res => res.data),
-    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
-    refetchOnWindowFocus: false, // Don't refetch when window regains focus
-  })
+	const handlePackagePriorityChartClick = (event, elements) => {
+		if (elements.length > 0) {
+			const elementIndex = elements[0].index;
+			const priorityName =
+				stats.charts.packageUpdateDistribution[elementIndex].name;
 
-  // Fetch recent users (permission protected server-side)
-  const { data: recentUsers } = useQuery({
-    queryKey: ['dashboardRecentUsers'],
-    queryFn: () => dashboardAPI.getRecentUsers().then(res => res.data),
-    staleTime: 60 * 1000,
-  })
+			// Map priority names to filter parameters
+			if (priorityName.toLowerCase().includes("security")) {
+				navigate("/packages?filter=security", { replace: true });
+			} else if (priorityName.toLowerCase().includes("outdated")) {
+				navigate("/packages?filter=outdated", { replace: true });
+			}
+		}
+	};
 
-  // Fetch recent collection (permission protected server-side)
-  const { data: recentCollection } = useQuery({
-    queryKey: ['dashboardRecentCollection'],
-    queryFn: () => dashboardAPI.getRecentCollection().then(res => res.data),
-    staleTime: 60 * 1000,
-  })
+	// Helper function to format the update interval threshold
+	const formatUpdateIntervalThreshold = () => {
+		if (!settings?.updateInterval) return "24 hours";
 
-  // Fetch settings to get the agent update interval
-  const { data: settings } = useQuery({
-    queryKey: ['settings'],
-    queryFn: () => settingsAPI.get().then(res => res.data),
-  })
+		const intervalMinutes = settings.updateInterval;
+		const thresholdMinutes = intervalMinutes * 2; // 2x the update interval
 
-  // Fetch user's dashboard preferences
-  const { data: preferences, refetch: refetchPreferences } = useQuery({
-    queryKey: ['dashboardPreferences'],
-    queryFn: () => dashboardPreferencesAPI.get().then(res => res.data),
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-  })
+		if (thresholdMinutes < 60) {
+			return `${thresholdMinutes} minutes`;
+		} else if (thresholdMinutes < 1440) {
+			const hours = Math.floor(thresholdMinutes / 60);
+			const minutes = thresholdMinutes % 60;
+			if (minutes === 0) {
+				return `${hours} hour${hours > 1 ? "s" : ""}`;
+			}
+			return `${hours}h ${minutes}m`;
+		} else {
+			const days = Math.floor(thresholdMinutes / 1440);
+			const hours = Math.floor((thresholdMinutes % 1440) / 60);
+			if (hours === 0) {
+				return `${days} day${days > 1 ? "s" : ""}`;
+			}
+			return `${days}d ${hours}h`;
+		}
+	};
 
-  // Fetch default card configuration
-  const { data: defaultCards } = useQuery({
-    queryKey: ['dashboardDefaultCards'],
-    queryFn: () => dashboardPreferencesAPI.getDefaults().then(res => res.data),
-  })
+	const {
+		data: stats,
+		isLoading,
+		error,
+		refetch,
+		isFetching,
+	} = useQuery({
+		queryKey: ["dashboardStats"],
+		queryFn: () => dashboardAPI.getStats().then((res) => res.data),
+		staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+		refetchOnWindowFocus: false, // Don't refetch when window regains focus
+	});
 
-  // Merge preferences with default cards (normalize snake_case from API)
-  useEffect(() => {
-    if (preferences && defaultCards) {
-      const normalizedPreferences = preferences.map((p) => ({
-        cardId: p.cardId ?? p.card_id,
-        enabled: p.enabled,
-        order: p.order,
-      }))
+	// Fetch recent users (permission protected server-side)
+	const { data: recentUsers } = useQuery({
+		queryKey: ["dashboardRecentUsers"],
+		queryFn: () => dashboardAPI.getRecentUsers().then((res) => res.data),
+		staleTime: 60 * 1000,
+	});
 
-      const mergedCards = defaultCards
-        .map((defaultCard) => {
-          const userPreference = normalizedPreferences.find(
-            (p) => p.cardId === defaultCard.cardId
-          )
-          return {
-            ...defaultCard,
-            enabled: userPreference ? userPreference.enabled : defaultCard.enabled,
-            order: userPreference ? userPreference.order : defaultCard.order,
-          }
-        })
-        .sort((a, b) => a.order - b.order)
+	// Fetch recent collection (permission protected server-side)
+	const { data: recentCollection } = useQuery({
+		queryKey: ["dashboardRecentCollection"],
+		queryFn: () => dashboardAPI.getRecentCollection().then((res) => res.data),
+		staleTime: 60 * 1000,
+	});
 
-      setCardPreferences(mergedCards)
-    } else if (defaultCards) {
-      // If no preferences exist, use defaults
-      setCardPreferences(defaultCards.sort((a, b) => a.order - b.order))
-    }
-  }, [preferences, defaultCards])
+	// Fetch settings to get the agent update interval
+	const { data: settings } = useQuery({
+		queryKey: ["settings"],
+		queryFn: () => settingsAPI.get().then((res) => res.data),
+	});
 
-  // Listen for custom event from Layout component
-  useEffect(() => {
-    const handleOpenSettings = () => {
-      setShowSettingsModal(true);
-    };
+	// Fetch user's dashboard preferences
+	const { data: preferences, refetch: refetchPreferences } = useQuery({
+		queryKey: ["dashboardPreferences"],
+		queryFn: () => dashboardPreferencesAPI.get().then((res) => res.data),
+		staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+	});
 
-    window.addEventListener('openDashboardSettings', handleOpenSettings);
-    return () => {
-      window.removeEventListener('openDashboardSettings', handleOpenSettings);
-    };
-  }, [])
+	// Fetch default card configuration
+	const { data: defaultCards } = useQuery({
+		queryKey: ["dashboardDefaultCards"],
+		queryFn: () =>
+			dashboardPreferencesAPI.getDefaults().then((res) => res.data),
+	});
 
-  // Helper function to check if a card should be displayed
-  const isCardEnabled = (cardId) => {
-    const card = cardPreferences.find(c => c.cardId === cardId);
-    return card ? card.enabled : true; // Default to enabled if not found
-  }
+	// Merge preferences with default cards (normalize snake_case from API)
+	useEffect(() => {
+		if (preferences && defaultCards) {
+			const normalizedPreferences = preferences.map((p) => ({
+				cardId: p.cardId ?? p.card_id,
+				enabled: p.enabled,
+				order: p.order,
+			}));
 
-  // Helper function to get card type for layout grouping
-  const getCardType = (cardId) => {
-    if (['totalHosts', 'hostsNeedingUpdates', 'totalOutdatedPackages', 'securityUpdates', 'upToDateHosts', 'totalHostGroups', 'totalUsers', 'totalRepos'].includes(cardId)) {
-      return 'stats';
-    } else if (['osDistribution', 'osDistributionBar', 'updateStatus', 'packagePriority', 'recentUsers', 'recentCollection'].includes(cardId)) {
-      return 'charts';
-    } else if (['erroredHosts', 'quickStats'].includes(cardId)) {
-      return 'fullwidth';
-    }
-    return 'fullwidth'; // Default to full width
-  }
+			const mergedCards = defaultCards
+				.map((defaultCard) => {
+					const userPreference = normalizedPreferences.find(
+						(p) => p.cardId === defaultCard.cardId,
+					);
+					return {
+						...defaultCard,
+						enabled: userPreference
+							? userPreference.enabled
+							: defaultCard.enabled,
+						order: userPreference ? userPreference.order : defaultCard.order,
+					};
+				})
+				.sort((a, b) => a.order - b.order);
 
-  // Helper function to get CSS class for card group
-  const getGroupClassName = (cardType) => {
-    switch (cardType) {
-      case 'stats':
-        return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4';
-      case 'charts':
-        return 'grid grid-cols-1 lg:grid-cols-3 gap-6';
-      case 'fullwidth':
-        return 'space-y-6';
-      default:
-        return 'space-y-6';
-    }
-  }
+			setCardPreferences(mergedCards);
+		} else if (defaultCards) {
+			// If no preferences exist, use defaults
+			setCardPreferences(defaultCards.sort((a, b) => a.order - b.order));
+		}
+	}, [preferences, defaultCards]);
 
-  // Helper function to render a card by ID
-  const renderCard = (cardId) => {
-    switch (cardId) {
-      case 'upToDateHosts':
-        return (
-          <div 
-            className="card p-4"
-          >
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <TrendingUp className="h-5 w-5 text-success-600 mr-2" />
-              </div>
-              <div className="w-0 flex-1">
-                <p className="text-sm text-secondary-500 dark:text-white">Up to date</p>
-                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
-                  {stats.cards.upToDateHosts}/{stats.cards.totalHosts}
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-      case 'totalHosts':
-        return (
-          <div 
-            className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
-            onClick={handleTotalHostsClick}
-          >
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Server className="h-5 w-5 text-primary-600 mr-2" />
-              </div>
-              <div className="w-0 flex-1">
-                <p className="text-sm text-secondary-500 dark:text-white">Total Hosts</p>
-                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
-                  {stats.cards.totalHosts}
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'hostsNeedingUpdates':
-        return (
-          <div 
-            className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
-            onClick={handleHostsNeedingUpdatesClick}
-          >
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <AlertTriangle className="h-5 w-5 text-warning-600 mr-2" />
-              </div>
-              <div className="w-0 flex-1">
-                <p className="text-sm text-secondary-500 dark:text-white">Needs Updating</p>
-                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
-                  {stats.cards.hostsNeedingUpdates}
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'totalOutdatedPackages':
-        return (
-          <div 
-            className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
-            onClick={handleOutdatedPackagesClick}
-          >
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Package className="h-5 w-5 text-secondary-600 mr-2" />
-              </div>
-              <div className="w-0 flex-1">
-                <p className="text-sm text-secondary-500 dark:text-white">Outdated Packages</p>
-                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
-                  {stats.cards.totalOutdatedPackages}
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'securityUpdates':
-        return (
-          <div 
-            className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
-            onClick={handleSecurityUpdatesClick}
-          >
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Shield className="h-5 w-5 text-danger-600 mr-2" />
-              </div>
-              <div className="w-0 flex-1">
-                <p className="text-sm text-secondary-500 dark:text-white">Security Updates</p>
-                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
-                  {stats.cards.securityUpdates}
-                </p>
-              </div>
-            </div>
-          </div>
-        );
+	// Listen for custom event from Layout component
+	useEffect(() => {
+		const handleOpenSettings = () => {
+			setShowSettingsModal(true);
+		};
 
-      case 'totalHostGroups':
-        return (
-          <div className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200" onClick={handleHostGroupsClick}>
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Folder className="h-5 w-5 text-primary-600 mr-2" />
-              </div>
-              <div className="w-0 flex-1">
-                <p className="text-sm text-secondary-500 dark:text-white">Host Groups</p>
-                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
-                  {stats.cards.totalHostGroups}
-                </p>
-              </div>
-            </div>
-          </div>
-        );
+		window.addEventListener("openDashboardSettings", handleOpenSettings);
+		return () => {
+			window.removeEventListener("openDashboardSettings", handleOpenSettings);
+		};
+	}, []);
 
-      case 'totalUsers':
-        return (
-          <div className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200" onClick={handleUsersClick}>
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-5 w-5 text-success-600 mr-2" />
-              </div>
-              <div className="w-0 flex-1">
-                <p className="text-sm text-secondary-500 dark:text-white">Users</p>
-                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
-                  {stats.cards.totalUsers}
-                </p>
-              </div>
-            </div>
-          </div>
-        );
+	// Helper function to check if a card should be displayed
+	const isCardEnabled = (cardId) => {
+		const card = cardPreferences.find((c) => c.cardId === cardId);
+		return card ? card.enabled : true; // Default to enabled if not found
+	};
 
-      case 'totalRepos':
-        return (
-          <div className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200" onClick={handleRepositoriesClick}>
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <GitBranch className="h-5 w-5 text-warning-600 mr-2" />
-              </div>
-              <div className="w-0 flex-1">
-                <p className="text-sm text-secondary-500 dark:text-white">Repositories</p>
-                <p className="text-xl font-semibold text-secondary-900 dark:text-white">
-                  {stats.cards.totalRepos}
-                </p>
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'erroredHosts':
-        return (
-          <div 
-            className={`border rounded-lg p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 ${
-              stats.cards.erroredHosts > 0 
-                ? 'bg-danger-50 border-danger-200' 
-                : 'bg-success-50 border-success-200'
-            }`}
-            onClick={handleErroredHostsClick}
-          >
-            <div className="flex">
-              <AlertTriangle className={`h-5 w-5 ${
-                stats.cards.erroredHosts > 0 ? 'text-danger-400' : 'text-success-400'
-              }`} />
-              <div className="ml-3">
-                {stats.cards.erroredHosts > 0 ? (
-                  <>
-                    <h3 className="text-sm font-medium text-danger-800">
-                      {stats.cards.erroredHosts} host{stats.cards.erroredHosts > 1 ? 's' : ''} haven't reported in {formatUpdateIntervalThreshold()}+
-                    </h3>
-                    <p className="text-sm text-danger-700 mt-1">
-                      These hosts may be offline or experiencing connectivity issues.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-sm font-medium text-success-800">
-                      All hosts are reporting normally
-                    </h3>
-                    <p className="text-sm text-success-700 mt-1">
-                      No hosts have failed to report in the last {formatUpdateIntervalThreshold()}.
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'offlineHosts':
-        return (
-          <div 
-            className={`border rounded-lg p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 ${
-              stats.cards.offlineHosts > 0 
-                ? 'bg-warning-50 border-warning-200' 
-                : 'bg-success-50 border-success-200'
-            }`}
-            onClick={handleOfflineHostsClick}
-          >
-            <div className="flex">
-              <WifiOff className={`h-5 w-5 ${
-                stats.cards.offlineHosts > 0 ? 'text-warning-400' : 'text-success-400'
-              }`} />
-              <div className="ml-3">
-                {stats.cards.offlineHosts > 0 ? (
-                  <>
-                    <h3 className="text-sm font-medium text-warning-800">
-                      {stats.cards.offlineHosts} host{stats.cards.offlineHosts > 1 ? 's' : ''} offline/stale
-                    </h3>
-                    <p className="text-sm text-warning-700 mt-1">
-                      These hosts haven't reported in {formatUpdateIntervalThreshold() * 3}+ minutes.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-sm font-medium text-success-800">
-                      All hosts are online
-                    </h3>
-                    <p className="text-sm text-success-700 mt-1">
-                      No hosts are offline or stale.
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'osDistribution':
-        return (
-          <div 
-            className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
-            onClick={handleOSDistributionClick}
-          >
-            <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">OS Distribution</h3>
-            <div className="h-64">
-              <Pie data={osChartData} options={chartOptions} />
-            </div>
-          </div>
-        );
-      
-      case 'osDistributionBar':
-        return (
-          <div 
-            className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
-            onClick={handleOSDistributionClick}
-          >
-            <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">OS Distribution</h3>
-            <div className="h-64">
-              <Bar data={osBarChartData} options={barChartOptions} />
-            </div>
-          </div>
-        );
-      
-      case 'updateStatus':
-        return (
-          <div 
-            className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
-            onClick={handleUpdateStatusClick}
-          >
-            <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Update Status</h3>
-            <div className="h-64">
-              <Pie data={updateStatusChartData} options={updateStatusChartOptions} />
-            </div>
-          </div>
-        );
-      
-      case 'packagePriority':
-        return (
-          <div 
-            className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
-            onClick={handlePackagePriorityClick}
-          >
-            <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Package Priority</h3>
-            <div className="h-64">
-              <Pie data={packagePriorityChartData} options={packagePriorityChartOptions} />
-            </div>
-          </div>
-        );
-      
-      case 'quickStats':
-        // Calculate dynamic stats
-        const updatePercentage = stats.cards.totalHosts > 0 ? ((stats.cards.hostsNeedingUpdates / stats.cards.totalHosts) * 100).toFixed(1) : 0;
-        const onlineHosts = stats.cards.totalHosts - stats.cards.erroredHosts;
-        const onlinePercentage = stats.cards.totalHosts > 0 ? ((onlineHosts / stats.cards.totalHosts) * 100).toFixed(0) : 0;
-        const securityPercentage = stats.cards.totalOutdatedPackages > 0 ? ((stats.cards.securityUpdates / stats.cards.totalOutdatedPackages) * 100).toFixed(0) : 0;
-        const avgPackagesPerHost = stats.cards.totalHosts > 0 ? Math.round(stats.cards.totalOutdatedPackages / stats.cards.totalHosts) : 0;
-        
-        return (
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-secondary-900 dark:text-white">System Overview</h3>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary-600">
-                  {updatePercentage}%
-                </div>
-                <div className="text-sm text-secondary-500 dark:text-secondary-300">Need Updates</div>
-                <div className="text-xs text-secondary-400 dark:text-secondary-500">
-                  {stats.cards.hostsNeedingUpdates}/{stats.cards.totalHosts} hosts
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-danger-600">
-                  {stats.cards.securityUpdates}
-                </div>
-                <div className="text-sm text-secondary-500 dark:text-secondary-300">Security Issues</div>
-                <div className="text-xs text-secondary-400 dark:text-secondary-500">
-                  {securityPercentage}% of updates
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-success-600">
-                  {onlinePercentage}%
-                </div>
-                <div className="text-sm text-secondary-500 dark:text-secondary-300">Online</div>
-                <div className="text-xs text-secondary-400 dark:text-secondary-500">
-                  {onlineHosts}/{stats.cards.totalHosts} hosts
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-secondary-600">
-                  {avgPackagesPerHost}
-                </div>
-                <div className="text-sm text-secondary-500 dark:text-secondary-300">Avg per Host</div>
-                <div className="text-xs text-secondary-400 dark:text-secondary-500">
-                  outdated packages
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'recentUsers':
-        return (
-          <div className="card p-6">
-            <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Recent Users Logged in</h3>
-            <div className="h-64 overflow-y-auto">
-              <div className="space-y-3">
-                {(recentUsers || []).slice(0, 5).map(u => (
-                  <div key={u.id} className="flex items-center justify-between py-2 border-b border-secondary-100 dark:border-secondary-700 last:border-b-0">
-                    <div className="text-sm font-medium text-secondary-900 dark:text-white">
-                      {u.username}
-                    </div>
-                    <div className="text-sm text-secondary-500 dark:text-secondary-400">
-                      {u.last_login ? formatRelativeTime(u.last_login) : 'Never'}
-                    </div>
-                  </div>
-                ))}
-                {(!recentUsers || recentUsers.length === 0) && (
-                  <div className="text-center text-secondary-500 dark:text-secondary-400 py-4">
-                    No users found
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      
-      case 'recentCollection':
-        return (
-          <div className="card p-6">
-            <h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">Recent Collection</h3>
-            <div className="h-64 overflow-y-auto">
-              <div className="space-y-3">
-                {(recentCollection || []).slice(0, 5).map(host => (
-                  <div key={host.id} className="flex items-center justify-between py-2 border-b border-secondary-100 dark:border-secondary-700 last:border-b-0">
-                    <div className="text-sm font-medium text-secondary-900 dark:text-white">
-                      {host.friendly_name || host.hostname}
-                    </div>
-                    <div className="text-sm text-secondary-500 dark:text-secondary-400">
-                      {host.last_update ? formatRelativeTime(host.last_update) : 'Never'}
-                    </div>
-                  </div>
-                ))}
-                {(!recentCollection || recentCollection.length === 0) && (
-                  <div className="text-center text-secondary-500 dark:text-secondary-400 py-4">
-                    No hosts found
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      
-      default:
-        return null;
-    }
-  }
+	// Helper function to get card type for layout grouping
+	const getCardType = (cardId) => {
+		if (
+			[
+				"totalHosts",
+				"hostsNeedingUpdates",
+				"totalOutdatedPackages",
+				"securityUpdates",
+				"upToDateHosts",
+				"totalHostGroups",
+				"totalUsers",
+				"totalRepos",
+			].includes(cardId)
+		) {
+			return "stats";
+		} else if (
+			[
+				"osDistribution",
+				"osDistributionBar",
+				"updateStatus",
+				"packagePriority",
+				"recentUsers",
+				"recentCollection",
+			].includes(cardId)
+		) {
+			return "charts";
+		} else if (["erroredHosts", "quickStats"].includes(cardId)) {
+			return "fullwidth";
+		}
+		return "fullwidth"; // Default to full width
+	};
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
-    )
-  }
+	// Helper function to get CSS class for card group
+	const getGroupClassName = (cardType) => {
+		switch (cardType) {
+			case "stats":
+				return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
+			case "charts":
+				return "grid grid-cols-1 lg:grid-cols-3 gap-6";
+			case "fullwidth":
+				return "space-y-6";
+			default:
+				return "space-y-6";
+		}
+	};
 
-  if (error) {
-    return (
-      <div className="bg-danger-50 border border-danger-200 rounded-md p-4">
-        <div className="flex">
-          <AlertTriangle className="h-5 w-5 text-danger-400" />
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-danger-800">Error loading dashboard</h3>
-            <p className="text-sm text-danger-700 mt-1">
-              {error.message || 'Failed to load dashboard statistics'}
-            </p>
-            <button
-              onClick={() => refetch()}
-              className="mt-2 btn-danger text-xs"
-            >
-              Try again
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+	// Helper function to render a card by ID
+	const renderCard = (cardId) => {
+		switch (cardId) {
+			case "upToDateHosts":
+				return (
+					<div className="card p-4">
+						<div className="flex items-center">
+							<div className="flex-shrink-0">
+								<TrendingUp className="h-5 w-5 text-success-600 mr-2" />
+							</div>
+							<div className="w-0 flex-1">
+								<p className="text-sm text-secondary-500 dark:text-white">
+									Up to date
+								</p>
+								<p className="text-xl font-semibold text-secondary-900 dark:text-white">
+									{stats.cards.upToDateHosts}/{stats.cards.totalHosts}
+								</p>
+							</div>
+						</div>
+					</div>
+				);
+			case "totalHosts":
+				return (
+					<div
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+						onClick={handleTotalHostsClick}
+					>
+						<div className="flex items-center">
+							<div className="flex-shrink-0">
+								<Server className="h-5 w-5 text-primary-600 mr-2" />
+							</div>
+							<div className="w-0 flex-1">
+								<p className="text-sm text-secondary-500 dark:text-white">
+									Total Hosts
+								</p>
+								<p className="text-xl font-semibold text-secondary-900 dark:text-white">
+									{stats.cards.totalHosts}
+								</p>
+							</div>
+						</div>
+					</div>
+				);
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          color: isDark ? '#ffffff' : '#374151',
-          font: {
-            size: 12
-          }
-        }
-      },
-    },
-    onClick: handleOSChartClick,
-  }
+			case "hostsNeedingUpdates":
+				return (
+					<div
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+						onClick={handleHostsNeedingUpdatesClick}
+					>
+						<div className="flex items-center">
+							<div className="flex-shrink-0">
+								<AlertTriangle className="h-5 w-5 text-warning-600 mr-2" />
+							</div>
+							<div className="w-0 flex-1">
+								<p className="text-sm text-secondary-500 dark:text-white">
+									Needs Updating
+								</p>
+								<p className="text-xl font-semibold text-secondary-900 dark:text-white">
+									{stats.cards.hostsNeedingUpdates}
+								</p>
+							</div>
+						</div>
+					</div>
+				);
 
-  const updateStatusChartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          color: isDark ? '#ffffff' : '#374151',
-          font: {
-            size: 12
-          }
-        }
-      },
-    },
-    onClick: handleUpdateStatusChartClick,
-  }
+			case "totalOutdatedPackages":
+				return (
+					<div
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+						onClick={handleOutdatedPackagesClick}
+					>
+						<div className="flex items-center">
+							<div className="flex-shrink-0">
+								<Package className="h-5 w-5 text-secondary-600 mr-2" />
+							</div>
+							<div className="w-0 flex-1">
+								<p className="text-sm text-secondary-500 dark:text-white">
+									Outdated Packages
+								</p>
+								<p className="text-xl font-semibold text-secondary-900 dark:text-white">
+									{stats.cards.totalOutdatedPackages}
+								</p>
+							</div>
+						</div>
+					</div>
+				);
 
-  const packagePriorityChartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          color: isDark ? '#ffffff' : '#374151',
-          font: {
-            size: 12
-          }
-        }
-      },
-    },
-    onClick: handlePackagePriorityChartClick,
-  }
+			case "securityUpdates":
+				return (
+					<div
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+						onClick={handleSecurityUpdatesClick}
+					>
+						<div className="flex items-center">
+							<div className="flex-shrink-0">
+								<Shield className="h-5 w-5 text-danger-600 mr-2" />
+							</div>
+							<div className="w-0 flex-1">
+								<p className="text-sm text-secondary-500 dark:text-white">
+									Security Updates
+								</p>
+								<p className="text-xl font-semibold text-secondary-900 dark:text-white">
+									{stats.cards.securityUpdates}
+								</p>
+							</div>
+						</div>
+					</div>
+				);
 
-  const barChartOptions = {
-    responsive: true,
-    indexAxis: 'y', // Make the chart horizontal
-    plugins: {
-      legend: {
-        display: false
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: isDark ? '#ffffff' : '#374151',
-          font: {
-            size: 12
-          }
-        },
-        grid: {
-          color: isDark ? '#374151' : '#e5e7eb'
-        }
-      },
-      y: {
-        ticks: {
-          color: isDark ? '#ffffff' : '#374151',
-          font: {
-            size: 12
-          }
-        },
-        grid: {
-          color: isDark ? '#374151' : '#e5e7eb'
-        }
-      }
-    }
-  }
+			case "totalHostGroups":
+				return (
+					<div
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+						onClick={handleHostGroupsClick}
+					>
+						<div className="flex items-center">
+							<div className="flex-shrink-0">
+								<Folder className="h-5 w-5 text-primary-600 mr-2" />
+							</div>
+							<div className="w-0 flex-1">
+								<p className="text-sm text-secondary-500 dark:text-white">
+									Host Groups
+								</p>
+								<p className="text-xl font-semibold text-secondary-900 dark:text-white">
+									{stats.cards.totalHostGroups}
+								</p>
+							</div>
+						</div>
+					</div>
+				);
 
-  const osChartData = {
-    labels: stats.charts.osDistribution.map(item => item.name),
-    datasets: [
-      {
-        data: stats.charts.osDistribution.map(item => item.count),
-        backgroundColor: [
-          '#3B82F6', // Blue
-          '#10B981', // Green
-          '#F59E0B', // Yellow
-          '#EF4444', // Red
-          '#8B5CF6', // Purple
-          '#06B6D4', // Cyan
-        ],
-        borderWidth: 2,
-        borderColor: '#ffffff',
-      },
-    ],
-  }
+			case "totalUsers":
+				return (
+					<div
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+						onClick={handleUsersClick}
+					>
+						<div className="flex items-center">
+							<div className="flex-shrink-0">
+								<Users className="h-5 w-5 text-success-600 mr-2" />
+							</div>
+							<div className="w-0 flex-1">
+								<p className="text-sm text-secondary-500 dark:text-white">
+									Users
+								</p>
+								<p className="text-xl font-semibold text-secondary-900 dark:text-white">
+									{stats.cards.totalUsers}
+								</p>
+							</div>
+						</div>
+					</div>
+				);
 
-  const osBarChartData = {
-    labels: stats.charts.osDistribution.map(item => item.name),
-    datasets: [
-      {
-        label: 'Hosts',
-        data: stats.charts.osDistribution.map(item => item.count),
-        backgroundColor: [
-          '#3B82F6', // Blue
-          '#10B981', // Green
-          '#F59E0B', // Yellow
-          '#EF4444', // Red
-          '#8B5CF6', // Purple
-          '#06B6D4', // Cyan
-        ],
-        borderWidth: 1,
-        borderColor: isDark ? '#374151' : '#ffffff',
-        borderRadius: 4,
-        borderSkipped: false,
-      },
-    ],
-  }
+			case "totalRepos":
+				return (
+					<div
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+						onClick={handleRepositoriesClick}
+					>
+						<div className="flex items-center">
+							<div className="flex-shrink-0">
+								<GitBranch className="h-5 w-5 text-warning-600 mr-2" />
+							</div>
+							<div className="w-0 flex-1">
+								<p className="text-sm text-secondary-500 dark:text-white">
+									Repositories
+								</p>
+								<p className="text-xl font-semibold text-secondary-900 dark:text-white">
+									{stats.cards.totalRepos}
+								</p>
+							</div>
+						</div>
+					</div>
+				);
 
-  const updateStatusChartData = {
-    labels: stats.charts.updateStatusDistribution.map(item => item.name),
-    datasets: [
-      {
-        data: stats.charts.updateStatusDistribution.map(item => item.count),
-        backgroundColor: [
-          '#10B981', // Green - Up to date
-          '#F59E0B', // Yellow - Needs updates
-          '#EF4444', // Red - Errored
-        ],
-        borderWidth: 2,
-        borderColor: '#ffffff',
-      },
-    ],
-  }
+			case "erroredHosts":
+				return (
+					<div
+						className={`border rounded-lg p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 ${
+							stats.cards.erroredHosts > 0
+								? "bg-danger-50 border-danger-200"
+								: "bg-success-50 border-success-200"
+						}`}
+						onClick={handleErroredHostsClick}
+					>
+						<div className="flex">
+							<AlertTriangle
+								className={`h-5 w-5 ${
+									stats.cards.erroredHosts > 0
+										? "text-danger-400"
+										: "text-success-400"
+								}`}
+							/>
+							<div className="ml-3">
+								{stats.cards.erroredHosts > 0 ? (
+									<>
+										<h3 className="text-sm font-medium text-danger-800">
+											{stats.cards.erroredHosts} host
+											{stats.cards.erroredHosts > 1 ? "s" : ""} haven't reported
+											in {formatUpdateIntervalThreshold()}+
+										</h3>
+										<p className="text-sm text-danger-700 mt-1">
+											These hosts may be offline or experiencing connectivity
+											issues.
+										</p>
+									</>
+								) : (
+									<>
+										<h3 className="text-sm font-medium text-success-800">
+											All hosts are reporting normally
+										</h3>
+										<p className="text-sm text-success-700 mt-1">
+											No hosts have failed to report in the last{" "}
+											{formatUpdateIntervalThreshold()}.
+										</p>
+									</>
+								)}
+							</div>
+						</div>
+					</div>
+				);
 
-  const packagePriorityChartData = {
-    labels: stats.charts.packageUpdateDistribution.map(item => item.name),
-    datasets: [
-      {
-        data: stats.charts.packageUpdateDistribution.map(item => item.count),
-        backgroundColor: [
-          '#EF4444', // Red - Security
-          '#3B82F6', // Blue - Regular
-        ],
-        borderWidth: 2,
-        borderColor: '#ffffff',
-      },
-    ],
-  }
+			case "offlineHosts":
+				return (
+					<div
+						className={`border rounded-lg p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 ${
+							stats.cards.offlineHosts > 0
+								? "bg-warning-50 border-warning-200"
+								: "bg-success-50 border-success-200"
+						}`}
+						onClick={handleOfflineHostsClick}
+					>
+						<div className="flex">
+							<WifiOff
+								className={`h-5 w-5 ${
+									stats.cards.offlineHosts > 0
+										? "text-warning-400"
+										: "text-success-400"
+								}`}
+							/>
+							<div className="ml-3">
+								{stats.cards.offlineHosts > 0 ? (
+									<>
+										<h3 className="text-sm font-medium text-warning-800">
+											{stats.cards.offlineHosts} host
+											{stats.cards.offlineHosts > 1 ? "s" : ""} offline/stale
+										</h3>
+										<p className="text-sm text-warning-700 mt-1">
+											These hosts haven't reported in{" "}
+											{formatUpdateIntervalThreshold() * 3}+ minutes.
+										</p>
+									</>
+								) : (
+									<>
+										<h3 className="text-sm font-medium text-success-800">
+											All hosts are online
+										</h3>
+										<p className="text-sm text-success-700 mt-1">
+											No hosts are offline or stale.
+										</p>
+									</>
+								)}
+							</div>
+						</div>
+					</div>
+				);
 
-  return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-secondary-900 dark:text-white">
-            Welcome back, {user?.first_name || user?.username || 'User'} 👋
-          </h1>
-          <p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
-            Overview of your PatchMon infrastructure
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowSettingsModal(true)}
-            className="btn-outline flex items-center gap-2"
-            title="Customize dashboard layout"
-          >
-            <Settings className="h-4 w-4" />
-            Customize Dashboard
-          </button>
-          <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="btn-outline flex items-center gap-2"
-            title="Refresh dashboard data"
-          >
-            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-            {isFetching ? 'Refreshing...' : 'Refresh'}
-          </button>
-        </div>
-      </div>
+			case "osDistribution":
+				return (
+					<div
+						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+						onClick={handleOSDistributionClick}
+					>
+						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
+							OS Distribution
+						</h3>
+						<div className="h-64">
+							<Pie data={osChartData} options={chartOptions} />
+						</div>
+					</div>
+				);
 
-      {/* Dynamically Rendered Cards - Unified Order */}
-      {(() => {
-        const enabledCards = cardPreferences
-          .filter(card => isCardEnabled(card.cardId))
-          .sort((a, b) => a.order - b.order);
-        
-        // Group consecutive cards of the same type for proper layout
-        const cardGroups = [];
-        let currentGroup = null;
-        
-        enabledCards.forEach(card => {
-          const cardType = getCardType(card.cardId);
-          
-          if (!currentGroup || currentGroup.type !== cardType) {
-            // Start a new group
-            currentGroup = {
-              type: cardType,
-              cards: [card]
-            };
-            cardGroups.push(currentGroup);
-          } else {
-            // Add to existing group
-            currentGroup.cards.push(card);
-          }
-        });
-        
-        return (
-          <>
-            {cardGroups.map((group, groupIndex) => (
-              <div key={groupIndex} className={getGroupClassName(group.type)}>
-                {group.cards.map(card => (
-                  <div key={card.cardId}>
-                    {renderCard(card.cardId)}
-            </div>
-                ))}
-          </div>
-            ))}
-          </>
-        );
-      })()}
+			case "osDistributionBar":
+				return (
+					<div
+						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+						onClick={handleOSDistributionClick}
+					>
+						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
+							OS Distribution
+						</h3>
+						<div className="h-64">
+							<Bar data={osBarChartData} options={barChartOptions} />
+						</div>
+					</div>
+				);
 
-      {/* Dashboard Settings Modal */}
-      <DashboardSettingsModal 
-        isOpen={showSettingsModal} 
-        onClose={() => setShowSettingsModal(false)} 
-      />
-    </div>
-  )
-}
+			case "updateStatus":
+				return (
+					<div
+						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+						onClick={handleUpdateStatusClick}
+					>
+						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
+							Update Status
+						</h3>
+						<div className="h-64">
+							<Pie
+								data={updateStatusChartData}
+								options={updateStatusChartOptions}
+							/>
+						</div>
+					</div>
+				);
 
-export default Dashboard 
+			case "packagePriority":
+				return (
+					<div
+						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+						onClick={handlePackagePriorityClick}
+					>
+						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
+							Package Priority
+						</h3>
+						<div className="h-64">
+							<Pie
+								data={packagePriorityChartData}
+								options={packagePriorityChartOptions}
+							/>
+						</div>
+					</div>
+				);
+
+			case "quickStats": {
+				// Calculate dynamic stats
+				const updatePercentage =
+					stats.cards.totalHosts > 0
+						? (
+								(stats.cards.hostsNeedingUpdates / stats.cards.totalHosts) *
+								100
+							).toFixed(1)
+						: 0;
+				const onlineHosts = stats.cards.totalHosts - stats.cards.erroredHosts;
+				const onlinePercentage =
+					stats.cards.totalHosts > 0
+						? ((onlineHosts / stats.cards.totalHosts) * 100).toFixed(0)
+						: 0;
+				const securityPercentage =
+					stats.cards.totalOutdatedPackages > 0
+						? (
+								(stats.cards.securityUpdates /
+									stats.cards.totalOutdatedPackages) *
+								100
+							).toFixed(0)
+						: 0;
+				const avgPackagesPerHost =
+					stats.cards.totalHosts > 0
+						? Math.round(
+								stats.cards.totalOutdatedPackages / stats.cards.totalHosts,
+							)
+						: 0;
+
+				return (
+					<div className="card p-6">
+						<div className="flex items-center justify-between mb-4">
+							<h3 className="text-lg font-medium text-secondary-900 dark:text-white">
+								System Overview
+							</h3>
+						</div>
+						<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+							<div className="text-center">
+								<div className="text-2xl font-bold text-primary-600">
+									{updatePercentage}%
+								</div>
+								<div className="text-sm text-secondary-500 dark:text-secondary-300">
+									Need Updates
+								</div>
+								<div className="text-xs text-secondary-400 dark:text-secondary-500">
+									{stats.cards.hostsNeedingUpdates}/{stats.cards.totalHosts}{" "}
+									hosts
+								</div>
+							</div>
+							<div className="text-center">
+								<div className="text-2xl font-bold text-danger-600">
+									{stats.cards.securityUpdates}
+								</div>
+								<div className="text-sm text-secondary-500 dark:text-secondary-300">
+									Security Issues
+								</div>
+								<div className="text-xs text-secondary-400 dark:text-secondary-500">
+									{securityPercentage}% of updates
+								</div>
+							</div>
+							<div className="text-center">
+								<div className="text-2xl font-bold text-success-600">
+									{onlinePercentage}%
+								</div>
+								<div className="text-sm text-secondary-500 dark:text-secondary-300">
+									Online
+								</div>
+								<div className="text-xs text-secondary-400 dark:text-secondary-500">
+									{onlineHosts}/{stats.cards.totalHosts} hosts
+								</div>
+							</div>
+							<div className="text-center">
+								<div className="text-2xl font-bold text-secondary-600">
+									{avgPackagesPerHost}
+								</div>
+								<div className="text-sm text-secondary-500 dark:text-secondary-300">
+									Avg per Host
+								</div>
+								<div className="text-xs text-secondary-400 dark:text-secondary-500">
+									outdated packages
+								</div>
+							</div>
+						</div>
+					</div>
+				);
+			}
+
+			case "recentUsers":
+				return (
+					<div className="card p-6">
+						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
+							Recent Users Logged in
+						</h3>
+						<div className="h-64 overflow-y-auto">
+							<div className="space-y-3">
+								{(recentUsers || []).slice(0, 5).map((u) => (
+									<div
+										key={u.id}
+										className="flex items-center justify-between py-2 border-b border-secondary-100 dark:border-secondary-700 last:border-b-0"
+									>
+										<div className="text-sm font-medium text-secondary-900 dark:text-white">
+											{u.username}
+										</div>
+										<div className="text-sm text-secondary-500 dark:text-secondary-400">
+											{u.last_login
+												? formatRelativeTime(u.last_login)
+												: "Never"}
+										</div>
+									</div>
+								))}
+								{(!recentUsers || recentUsers.length === 0) && (
+									<div className="text-center text-secondary-500 dark:text-secondary-400 py-4">
+										No users found
+									</div>
+								)}
+							</div>
+						</div>
+					</div>
+				);
+
+			case "recentCollection":
+				return (
+					<div className="card p-6">
+						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
+							Recent Collection
+						</h3>
+						<div className="h-64 overflow-y-auto">
+							<div className="space-y-3">
+								{(recentCollection || []).slice(0, 5).map((host) => (
+									<div
+										key={host.id}
+										className="flex items-center justify-between py-2 border-b border-secondary-100 dark:border-secondary-700 last:border-b-0"
+									>
+										<div className="text-sm font-medium text-secondary-900 dark:text-white">
+											{host.friendly_name || host.hostname}
+										</div>
+										<div className="text-sm text-secondary-500 dark:text-secondary-400">
+											{host.last_update
+												? formatRelativeTime(host.last_update)
+												: "Never"}
+										</div>
+									</div>
+								))}
+								{(!recentCollection || recentCollection.length === 0) && (
+									<div className="text-center text-secondary-500 dark:text-secondary-400 py-4">
+										No hosts found
+									</div>
+								)}
+							</div>
+						</div>
+					</div>
+				);
+
+			default:
+				return null;
+		}
+	};
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center h-64">
+				<RefreshCw className="h-8 w-8 animate-spin text-primary-600" />
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="bg-danger-50 border border-danger-200 rounded-md p-4">
+				<div className="flex">
+					<AlertTriangle className="h-5 w-5 text-danger-400" />
+					<div className="ml-3">
+						<h3 className="text-sm font-medium text-danger-800">
+							Error loading dashboard
+						</h3>
+						<p className="text-sm text-danger-700 mt-1">
+							{error.message || "Failed to load dashboard statistics"}
+						</p>
+						<button
+							onClick={() => refetch()}
+							className="mt-2 btn-danger text-xs"
+						>
+							Try again
+						</button>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	const chartOptions = {
+		responsive: true,
+		plugins: {
+			legend: {
+				position: "bottom",
+				labels: {
+					color: isDark ? "#ffffff" : "#374151",
+					font: {
+						size: 12,
+					},
+				},
+			},
+		},
+		onClick: handleOSChartClick,
+	};
+
+	const updateStatusChartOptions = {
+		responsive: true,
+		plugins: {
+			legend: {
+				position: "bottom",
+				labels: {
+					color: isDark ? "#ffffff" : "#374151",
+					font: {
+						size: 12,
+					},
+				},
+			},
+		},
+		onClick: handleUpdateStatusChartClick,
+	};
+
+	const packagePriorityChartOptions = {
+		responsive: true,
+		plugins: {
+			legend: {
+				position: "bottom",
+				labels: {
+					color: isDark ? "#ffffff" : "#374151",
+					font: {
+						size: 12,
+					},
+				},
+			},
+		},
+		onClick: handlePackagePriorityChartClick,
+	};
+
+	const barChartOptions = {
+		responsive: true,
+		indexAxis: "y", // Make the chart horizontal
+		plugins: {
+			legend: {
+				display: false,
+			},
+		},
+		scales: {
+			x: {
+				ticks: {
+					color: isDark ? "#ffffff" : "#374151",
+					font: {
+						size: 12,
+					},
+				},
+				grid: {
+					color: isDark ? "#374151" : "#e5e7eb",
+				},
+			},
+			y: {
+				ticks: {
+					color: isDark ? "#ffffff" : "#374151",
+					font: {
+						size: 12,
+					},
+				},
+				grid: {
+					color: isDark ? "#374151" : "#e5e7eb",
+				},
+			},
+		},
+	};
+
+	const osChartData = {
+		labels: stats.charts.osDistribution.map((item) => item.name),
+		datasets: [
+			{
+				data: stats.charts.osDistribution.map((item) => item.count),
+				backgroundColor: [
+					"#3B82F6", // Blue
+					"#10B981", // Green
+					"#F59E0B", // Yellow
+					"#EF4444", // Red
+					"#8B5CF6", // Purple
+					"#06B6D4", // Cyan
+				],
+				borderWidth: 2,
+				borderColor: "#ffffff",
+			},
+		],
+	};
+
+	const osBarChartData = {
+		labels: stats.charts.osDistribution.map((item) => item.name),
+		datasets: [
+			{
+				label: "Hosts",
+				data: stats.charts.osDistribution.map((item) => item.count),
+				backgroundColor: [
+					"#3B82F6", // Blue
+					"#10B981", // Green
+					"#F59E0B", // Yellow
+					"#EF4444", // Red
+					"#8B5CF6", // Purple
+					"#06B6D4", // Cyan
+				],
+				borderWidth: 1,
+				borderColor: isDark ? "#374151" : "#ffffff",
+				borderRadius: 4,
+				borderSkipped: false,
+			},
+		],
+	};
+
+	const updateStatusChartData = {
+		labels: stats.charts.updateStatusDistribution.map((item) => item.name),
+		datasets: [
+			{
+				data: stats.charts.updateStatusDistribution.map((item) => item.count),
+				backgroundColor: [
+					"#10B981", // Green - Up to date
+					"#F59E0B", // Yellow - Needs updates
+					"#EF4444", // Red - Errored
+				],
+				borderWidth: 2,
+				borderColor: "#ffffff",
+			},
+		],
+	};
+
+	const packagePriorityChartData = {
+		labels: stats.charts.packageUpdateDistribution.map((item) => item.name),
+		datasets: [
+			{
+				data: stats.charts.packageUpdateDistribution.map((item) => item.count),
+				backgroundColor: [
+					"#EF4444", // Red - Security
+					"#3B82F6", // Blue - Regular
+				],
+				borderWidth: 2,
+				borderColor: "#ffffff",
+			},
+		],
+	};
+
+	return (
+		<div className="space-y-6">
+			{/* Page Header */}
+			<div className="flex items-center justify-between">
+				<div>
+					<h1 className="text-2xl font-semibold text-secondary-900 dark:text-white">
+						Welcome back, {user?.first_name || user?.username || "User"} 👋
+					</h1>
+					<p className="text-sm text-secondary-600 dark:text-secondary-400 mt-1">
+						Overview of your PatchMon infrastructure
+					</p>
+				</div>
+				<div className="flex items-center gap-3">
+					<button
+						onClick={() => setShowSettingsModal(true)}
+						className="btn-outline flex items-center gap-2"
+						title="Customize dashboard layout"
+					>
+						<Settings className="h-4 w-4" />
+						Customize Dashboard
+					</button>
+					<button
+						onClick={() => refetch()}
+						disabled={isFetching}
+						className="btn-outline flex items-center gap-2"
+						title="Refresh dashboard data"
+					>
+						<RefreshCw
+							className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+						/>
+						{isFetching ? "Refreshing..." : "Refresh"}
+					</button>
+				</div>
+			</div>
+
+			{/* Dynamically Rendered Cards - Unified Order */}
+			{(() => {
+				const enabledCards = cardPreferences
+					.filter((card) => isCardEnabled(card.cardId))
+					.sort((a, b) => a.order - b.order);
+
+				// Group consecutive cards of the same type for proper layout
+				const cardGroups = [];
+				let currentGroup = null;
+
+				enabledCards.forEach((card) => {
+					const cardType = getCardType(card.cardId);
+
+					if (!currentGroup || currentGroup.type !== cardType) {
+						// Start a new group
+						currentGroup = {
+							type: cardType,
+							cards: [card],
+						};
+						cardGroups.push(currentGroup);
+					} else {
+						// Add to existing group
+						currentGroup.cards.push(card);
+					}
+				});
+
+				return (
+					<>
+						{cardGroups.map((group, groupIndex) => (
+							<div key={groupIndex} className={getGroupClassName(group.type)}>
+								{group.cards.map((card) => (
+									<div key={card.cardId}>{renderCard(card.cardId)}</div>
+								))}
+							</div>
+						))}
+					</>
+				);
+			})()}
+
+			{/* Dashboard Settings Modal */}
+			<DashboardSettingsModal
+				isOpen={showSettingsModal}
+				onClose={() => setShowSettingsModal(false)}
+			/>
+		</div>
+	);
+};
+
+export default Dashboard;

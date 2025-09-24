@@ -1,15 +1,15 @@
-import React from 'react'
-import { ArrowUpCircle } from 'lucide-react'
+import { ArrowUpCircle } from "lucide-react";
+import React from "react";
 
 const UpgradeNotificationIcon = ({ className = "h-4 w-4", show = true }) => {
-  if (!show) return null
+	if (!show) return null;
 
-  return (
-    <ArrowUpCircle 
-      className={`${className} text-red-500 animate-pulse`}
-      title="Update available"
-    />
-  )
-}
+	return (
+		<ArrowUpCircle
+			className={`${className} text-red-500 animate-pulse`}
+			title="Update available"
+		/>
+	);
+};
 
-export default UpgradeNotificationIcon
+export default UpgradeNotificationIcon;
