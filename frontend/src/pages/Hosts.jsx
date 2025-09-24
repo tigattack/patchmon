@@ -2139,7 +2139,7 @@ const BulkAssignModal = ({
 					</p>
 					<div className="max-h-32 overflow-y-auto bg-secondary-50 rounded-md p-3">
 						{selectedHostNames.map((friendlyName, index) => (
-							<div key={index} className="text-sm text-secondary-700">
+							<div key={friendlyName} className="text-sm text-secondary-700">
 								• {friendlyName}
 							</div>
 						))}
@@ -2250,7 +2250,7 @@ const BulkDeleteModal = ({
 						<div className="max-h-32 overflow-y-auto bg-secondary-50 dark:bg-secondary-700 rounded-md p-3">
 							{selectedHostNames.map((friendlyName, index) => (
 								<div
-									key={index}
+									key={friendlyName}
 									className="text-sm text-secondary-700 dark:text-secondary-300"
 								>
 									• {friendlyName}

@@ -987,7 +987,7 @@ const TfaTab = () => {
 							<div className="grid grid-cols-2 gap-2 font-mono text-sm">
 								{backupCodes.map((code, index) => (
 									<div
-										key={index}
+										key={code}
 										className="flex items-center justify-between py-1"
 									>
 										<span className="text-secondary-600 dark:text-secondary-400">

@@ -490,7 +490,7 @@ const HostDetail = () => {
 														<div className="space-y-1">
 															{host.dns_servers.map((dns, index) => (
 																<p
-																	key={index}
+																	key={dns}
 																	className="font-medium text-secondary-900 dark:text-white font-mono text-sm"
 																>
 																	{dns}
@@ -510,7 +510,7 @@ const HostDetail = () => {
 														<div className="space-y-1">
 															{host.network_interfaces.map((iface, index) => (
 																<p
-																	key={index}
+																	key={iface.name}
 																	className="font-medium text-secondary-900 dark:text-white text-sm"
 																>
 																	{iface.name}
@@ -699,7 +699,7 @@ const HostDetail = () => {
 														{host.load_average
 															.filter((load) => load != null)
 															.map((load, index) => (
-																<span key={index}>
+																<span key={`load-${index}-${load}`}>
 																	{typeof load === "number"
 																		? load.toFixed(2)
 																		: String(load)}
@@ -727,7 +727,7 @@ const HostDetail = () => {
 												<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
 													{host.disk_details.map((disk, index) => (
 														<div
-															key={index}
+															key={disk.name || `disk-${index}`}
 															className="bg-secondary-50 dark:bg-secondary-700 p-3 rounded-lg"
 														>
 															<div className="flex items-center gap-2 mb-2">
