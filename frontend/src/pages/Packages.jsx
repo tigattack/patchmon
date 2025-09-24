@@ -660,13 +660,14 @@ const ColumnSettingsModal = ({
 
 				<div className="space-y-2">
 					{columnConfig.map((column, index) => (
-						<div
+						<button
+							type="button"
 							key={column.id}
 							draggable
 							onDragStart={(e) => handleDragStart(e, index)}
 							onDragOver={handleDragOver}
 							onDrop={(e) => handleDrop(e, index)}
-							className={`flex items-center justify-between p-3 border rounded-lg cursor-move ${
+							className={`flex items-center justify-between p-3 border rounded-lg cursor-move w-full text-left ${
 								draggedIndex === index
 									? "opacity-50"
 									: "hover:bg-secondary-50 dark:hover:bg-secondary-700"
@@ -693,7 +694,7 @@ const ColumnSettingsModal = ({
 									<EyeOffIcon className="h-4 w-4" />
 								)}
 							</button>
-						</div>
+						</button>
 					))}
 				</div>
 

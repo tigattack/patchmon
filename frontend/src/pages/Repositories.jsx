@@ -580,13 +580,14 @@ const ColumnSettingsModal = ({
 
 				<div className="space-y-3">
 					{columnConfig.map((column, index) => (
-						<div
+						<button
+							type="button"
 							key={column.id}
 							draggable
 							onDragStart={(e) => handleDragStart(e, index)}
 							onDragOver={handleDragOver}
 							onDrop={(e) => handleDrop(e, index)}
-							className="flex items-center justify-between p-3 bg-secondary-50 dark:bg-secondary-700 rounded-lg cursor-move hover:bg-secondary-100 dark:hover:bg-secondary-600 transition-colors"
+							className="flex items-center justify-between p-3 bg-secondary-50 dark:bg-secondary-700 rounded-lg cursor-move hover:bg-secondary-100 dark:hover:bg-secondary-600 transition-colors w-full text-left"
 						>
 							<div className="flex items-center gap-3">
 								<GripVertical className="h-4 w-4 text-secondary-400" />
@@ -605,7 +606,7 @@ const ColumnSettingsModal = ({
 							>
 								{column.visible && <Check className="h-3 w-3 text-white" />}
 							</button>
-						</div>
+						</button>
 					))}
 				</div>
 
