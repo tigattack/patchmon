@@ -6,6 +6,7 @@ const { body, validationResult } = require('express-validator');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { requireViewUsers, requireManageUsers } = require('../middleware/permissions');
 const { v4: uuidv4 } = require('uuid');
+const { createDefaultDashboardPreferences } = require('./dashboardPreferencesRoutes');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -32,6 +33,8 @@ router.get('/check-admin-users', async (req, res) => {
 
 // Create first admin user (for first-time setup)
 router.post('/setup-admin', [
+  body('firstName').isLength({ min: 1 }).withMessage('First name is required'),
+  body('lastName').isLength({ min: 1 }).withMessage('Last name is required'),
   body('username').isLength({ min: 1 }).withMessage('Username is required'),
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters for security')
@@ -45,7 +48,7 @@ router.post('/setup-admin', [
       });
     }
 
-    const { username, email, password } = req.body;
+    const { firstName, lastName, username, email, password } = req.body;
 
     // Check if any admin users already exist
     const adminCount = await prisma.users.count({
@@ -84,6 +87,8 @@ router.post('/setup-admin', [
         username: username.trim(),
         email: email.trim(),
         password_hash: passwordHash,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
         role: 'admin',
         is_active: true,
         created_at: new Date(),
@@ -97,6 +102,9 @@ router.post('/setup-admin', [
         created_at: true
       }
     });
+
+    // Create default dashboard preferences for the new admin user
+    await createDefaultDashboardPreferences(user.id, 'admin');
 
     res.status(201).json({
       message: 'Admin user created successfully',
@@ -173,7 +181,14 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { username, email, password, first_name, last_name, role = 'user' } = req.body;
+    const { username, email, password, first_name, last_name, role } = req.body;
+    
+    // Get default user role from settings if no role specified
+    let userRole = role;
+    if (!userRole) {
+      const settings = await prisma.settings.findFirst();
+      userRole = settings?.default_user_role || 'user';
+    }
 
     // Check if user already exists
     const existingUser = await prisma.users.findFirst({
@@ -201,7 +216,7 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
         password_hash: passwordHash,
         first_name: first_name || null,
         last_name: last_name || null,
-        role,
+        role: userRole,
         updated_at: new Date()
       },
       select: {
@@ -215,6 +230,9 @@ router.post('/admin/users', authenticateToken, requireManageUsers, [
         created_at: true
       }
     });
+
+    // Create default dashboard preferences for the new user
+    await createDefaultDashboardPreferences(user.id, userRole);
 
     res.status(201).json({
       message: 'User created successfully',
@@ -449,6 +467,8 @@ router.get('/signup-enabled', async (req, res) => {
 
 // Public signup endpoint
 router.post('/signup', [
+  body('firstName').isLength({ min: 1 }).withMessage('First name is required'),
+  body('lastName').isLength({ min: 1 }).withMessage('Last name is required'),
   body('username').isLength({ min: 3 }).withMessage('Username must be at least 3 characters'),
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
@@ -465,7 +485,7 @@ router.post('/signup', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { username, email, password } = req.body;
+    const { firstName, lastName, username, email, password } = req.body;
 
     // Check if user already exists
     const existingUser = await prisma.users.findFirst({
@@ -484,14 +504,19 @@ router.post('/signup', [
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Create user with default 'user' role
+    // Get default user role from settings or environment variable
+    const defaultRole = settings?.default_user_role || process.env.DEFAULT_USER_ROLE || 'user';
+
+    // Create user with default role from settings
     const user = await prisma.users.create({
       data: {
         id: uuidv4(),
         username,
         email,
         password_hash: passwordHash,
-        role: 'user',
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        role: defaultRole,
         updated_at: new Date()
       },
       select: {
@@ -503,6 +528,9 @@ router.post('/signup', [
         created_at: true
       }
     });
+
+    // Create default dashboard preferences for the new user
+    await createDefaultDashboardPreferences(user.id, defaultRole);
 
     console.log(`New user registered: ${user.username} (${user.email})`);
 

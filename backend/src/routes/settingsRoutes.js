@@ -111,6 +111,7 @@ router.put('/', authenticateToken, requireManageSettings, [
   body('updateInterval').isInt({ min: 5, max: 1440 }).withMessage('Update interval must be between 5 and 1440 minutes'),
   body('autoUpdate').isBoolean().withMessage('Auto update must be a boolean'),
   body('signupEnabled').isBoolean().withMessage('Signup enabled must be a boolean'),
+  body('defaultUserRole').optional().isLength({ min: 1 }).withMessage('Default user role must be a non-empty string'),
   body('githubRepoUrl').optional().isLength({ min: 1 }).withMessage('GitHub repo URL must be a non-empty string'),
   body('repositoryType').optional().isIn(['public', 'private']).withMessage('Repository type must be public or private'),
   body('sshKeyPath').optional().custom((value) => {
@@ -130,7 +131,7 @@ router.put('/', authenticateToken, requireManageSettings, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { serverProtocol, serverHost, serverPort, updateInterval, autoUpdate, signupEnabled, githubRepoUrl, repositoryType, sshKeyPath } = req.body;
+    const { serverProtocol, serverHost, serverPort, updateInterval, autoUpdate, signupEnabled, defaultUserRole, githubRepoUrl, repositoryType, sshKeyPath } = req.body;
 
     // Get current settings to check for update interval changes
     const currentSettings = await getSettings();
@@ -144,6 +145,7 @@ router.put('/', authenticateToken, requireManageSettings, [
       update_interval: updateInterval || 60,
       auto_update: autoUpdate || false,
       signup_enabled: signupEnabled || false,
+      default_user_role: defaultUserRole || process.env.DEFAULT_USER_ROLE || 'user',
       github_repo_url: githubRepoUrl !== undefined ? githubRepoUrl : 'git@github.com:9technologygroup/patchmon.net.git',
       repository_type: repositoryType || 'public',
       ssh_key_path: sshKeyPath || null,

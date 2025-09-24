@@ -14,7 +14,7 @@ const packageRoutes = require('./routes/packageRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const permissionsRoutes = require('./routes/permissionsRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
-const dashboardPreferencesRoutes = require('./routes/dashboardPreferencesRoutes');
+const { router: dashboardPreferencesRoutes, createDefaultDashboardPreferences } = require('./routes/dashboardPreferencesRoutes');
 const repositoryRoutes = require('./routes/repositoryRoutes');
 const versionRoutes = require('./routes/versionRoutes');
 const tfaRoutes = require('./routes/tfaRoutes');
@@ -184,6 +184,111 @@ async function checkAndImportAgentVersion() {
     console.error('❌ Failed to check/import agent version on startup:', error.message);
     if (process.env.ENABLE_LOGGING === 'true') {
       logger.error('Failed to check/import agent version on startup:', error.message);
+    }
+  }
+}
+
+// Function to check and create default role permissions on startup
+async function checkAndCreateRolePermissions() {
+  console.log('🔐 Starting role permissions auto-creation check...');
+  
+  // Skip if auto-creation is disabled
+  if (process.env.AUTO_CREATE_ROLE_PERMISSIONS === 'false') {
+    console.log('❌ Auto-creation of role permissions is disabled');
+    if (process.env.ENABLE_LOGGING === 'true') {
+      logger.info('Auto-creation of role permissions is disabled');
+    }
+    return;
+  }
+  
+  try {
+    const crypto = require('crypto');
+    
+    // Define default roles and permissions
+    const defaultRoles = [
+      {
+        id: crypto.randomUUID(),
+        role: 'admin',
+        can_view_dashboard: true,
+        can_view_hosts: true,
+        can_manage_hosts: true,
+        can_view_packages: true,
+        can_manage_packages: true,
+        can_view_users: true,
+        can_manage_users: true,
+        can_view_reports: true,
+        can_export_data: true,
+        can_manage_settings: true,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        id: crypto.randomUUID(),
+        role: 'user',
+        can_view_dashboard: true,
+        can_view_hosts: true,
+        can_manage_hosts: false,
+        can_view_packages: true,
+        can_manage_packages: false,
+        can_view_users: false,
+        can_manage_users: false,
+        can_view_reports: true,
+        can_export_data: false,
+        can_manage_settings: false,
+        created_at: new Date(),
+        updated_at: new Date()
+      }
+    ];
+    
+    const createdRoles = [];
+    const existingRoles = [];
+    
+    for (const roleData of defaultRoles) {
+      // Check if role already exists
+      const existingRole = await prisma.role_permissions.findUnique({
+        where: { role: roleData.role }
+      });
+      
+      if (existingRole) {
+        console.log(`✅ Role '${roleData.role}' already exists in database`);
+        existingRoles.push(existingRole);
+        if (process.env.ENABLE_LOGGING === 'true') {
+          logger.info(`Role '${roleData.role}' already exists in database`);
+        }
+      } else {
+        // Create new role permission
+        const permission = await prisma.role_permissions.create({
+          data: roleData
+        });
+        createdRoles.push(permission);
+        console.log(`🆕 Created role '${roleData.role}' with permissions`);
+        if (process.env.ENABLE_LOGGING === 'true') {
+          logger.info(`Created role '${roleData.role}' with permissions`);
+        }
+      }
+    }
+    
+    if (createdRoles.length > 0) {
+      console.log(`🎉 Successfully auto-created ${createdRoles.length} role permissions on startup`);
+      console.log('📋 Created roles:');
+      createdRoles.forEach(role => {
+        console.log(`   • ${role.role}: dashboard=${role.can_view_dashboard}, hosts=${role.can_manage_hosts}, packages=${role.can_manage_packages}, users=${role.can_manage_users}, settings=${role.can_manage_settings}`);
+      });
+      
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.info(`✅ Auto-created ${createdRoles.length} role permissions on startup`);
+      }
+    } else {
+      console.log(`✅ All default role permissions already exist (${existingRoles.length} roles verified)`);
+      if (process.env.ENABLE_LOGGING === 'true') {
+        logger.info(`All default role permissions already exist (${existingRoles.length} roles verified)`);
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Failed to check/create role permissions on startup:', error.message);
+    if (process.env.ENABLE_LOGGING === 'true') {
+      logger.error('Failed to check/create role permissions on startup:', error.message);
     }
   }
 }
@@ -405,6 +510,201 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
+// Initialize dashboard preferences for all users
+async function initializeDashboardPreferences() {
+  try {
+    console.log('🔧 Initializing dashboard preferences for all users...');
+    
+    // Get all users
+    const users = await prisma.users.findMany({
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        dashboard_preferences: {
+          select: {
+            card_id: true
+          }
+        }
+      }
+    });
+
+    if (users.length === 0) {
+      console.log('ℹ️  No users found in database');
+      return;
+    }
+
+    console.log(`📊 Found ${users.length} users to initialize`);
+
+    let initializedCount = 0;
+    let updatedCount = 0;
+
+    for (const user of users) {
+      const hasPreferences = user.dashboard_preferences.length > 0;
+      
+      // Get permission-based preferences for this user's role
+      const expectedPreferences = await getPermissionBasedPreferences(user.role);
+      const expectedCardCount = expectedPreferences.length;
+      
+      if (!hasPreferences) {
+        // User has no preferences - create them
+        console.log(`⚙️  Creating preferences for ${user.username} (${user.role})`);
+        
+        const preferencesData = expectedPreferences.map(pref => ({
+          id: require('uuid').v4(),
+          user_id: user.id,
+          card_id: pref.cardId,
+          enabled: pref.enabled,
+          order: pref.order,
+          created_at: new Date(),
+          updated_at: new Date()
+        }));
+
+        await prisma.dashboard_preferences.createMany({
+          data: preferencesData
+        });
+
+        initializedCount++;
+        console.log(`   ✅ Created ${expectedCardCount} cards based on permissions`);
+      } else {
+        // User already has preferences - check if they need updating
+        const currentCardCount = user.dashboard_preferences.length;
+        
+        if (currentCardCount !== expectedCardCount) {
+          console.log(`🔄 Updating preferences for ${user.username} (${user.role}) - ${currentCardCount} → ${expectedCardCount} cards`);
+          
+          // Delete existing preferences
+          await prisma.dashboard_preferences.deleteMany({
+            where: { user_id: user.id }
+          });
+
+          // Create new preferences based on permissions
+          const preferencesData = expectedPreferences.map(pref => ({
+            id: require('uuid').v4(),
+            user_id: user.id,
+            card_id: pref.cardId,
+            enabled: pref.enabled,
+            order: pref.order,
+            created_at: new Date(),
+            updated_at: new Date()
+          }));
+
+          await prisma.dashboard_preferences.createMany({
+            data: preferencesData
+          });
+
+          updatedCount++;
+          console.log(`   ✅ Updated to ${expectedCardCount} cards based on permissions`);
+        } else {
+          console.log(`✅ ${user.username} already has correct preferences (${currentCardCount} cards)`);
+        }
+      }
+    }
+
+    console.log(`\n📋 Dashboard Preferences Initialization Complete:`);
+    console.log(`   - New users initialized: ${initializedCount}`);
+    console.log(`   - Existing users updated: ${updatedCount}`);
+    console.log(`   - Users with correct preferences: ${users.length - initializedCount - updatedCount}`);
+    console.log(`\n🎯 Permission-based preferences:`);
+    console.log(`   - Cards are now assigned based on actual user permissions`);
+    console.log(`   - Each card requires specific permissions (can_view_hosts, can_view_users, etc.)`);
+    console.log(`   - Users only see cards they have permission to access`);
+
+  } catch (error) {
+    console.error('❌ Error initializing dashboard preferences:', error);
+    throw error;
+  }
+}
+
+// Helper function to get user permissions based on role
+async function getUserPermissions(userRole) {
+  try {
+    const permissions = await prisma.role_permissions.findUnique({
+      where: { role: userRole }
+    });
+
+    // If no specific permissions found, return default admin permissions (for backward compatibility)
+    if (!permissions) {
+      console.warn(`No permissions found for role: ${userRole}, defaulting to admin access`);
+      return {
+        can_view_dashboard: true,
+        can_view_hosts: true,
+        can_manage_hosts: true,
+        can_view_packages: true,
+        can_manage_packages: true,
+        can_view_users: true,
+        can_manage_users: true,
+        can_view_reports: true,
+        can_export_data: true,
+        can_manage_settings: true
+      };
+    }
+
+    return permissions;
+  } catch (error) {
+    console.error('Error fetching user permissions:', error);
+    // Return admin permissions as fallback
+    return {
+      can_view_dashboard: true,
+      can_view_hosts: true,
+      can_manage_hosts: true,
+      can_view_packages: true,
+      can_manage_packages: true,
+      can_view_users: true,
+      can_manage_users: true,
+      can_view_reports: true,
+      can_export_data: true,
+      can_manage_settings: true
+    };
+  }
+}
+
+// Helper function to get permission-based dashboard preferences for a role
+async function getPermissionBasedPreferences(userRole) {
+  // Get user's actual permissions
+  const permissions = await getUserPermissions(userRole);
+  
+  // Define all possible dashboard cards with their required permissions
+  const allCards = [
+    // Host-related cards
+    { cardId: 'totalHosts', requiredPermission: 'can_view_hosts', order: 0 },
+    { cardId: 'hostsNeedingUpdates', requiredPermission: 'can_view_hosts', order: 1 },
+    { cardId: 'upToDateHosts', requiredPermission: 'can_view_hosts', order: 2 },
+    { cardId: 'totalHostGroups', requiredPermission: 'can_view_hosts', order: 3 },
+    
+    // Package-related cards
+    { cardId: 'totalOutdatedPackages', requiredPermission: 'can_view_packages', order: 4 },
+    { cardId: 'securityUpdates', requiredPermission: 'can_view_packages', order: 5 },
+    { cardId: 'packagePriority', requiredPermission: 'can_view_packages', order: 6 },
+    
+    // Repository-related cards
+    { cardId: 'totalRepos', requiredPermission: 'can_view_hosts', order: 7 }, // Repos are host-related
+    
+    // User management cards (admin only)
+    { cardId: 'totalUsers', requiredPermission: 'can_view_users', order: 8 },
+    { cardId: 'recentUsers', requiredPermission: 'can_view_users', order: 9 },
+    
+    // System/Report cards
+    { cardId: 'osDistribution', requiredPermission: 'can_view_reports', order: 10 },
+    { cardId: 'osDistributionBar', requiredPermission: 'can_view_reports', order: 11 },
+    { cardId: 'updateStatus', requiredPermission: 'can_view_reports', order: 12 },
+    { cardId: 'recentCollection', requiredPermission: 'can_view_hosts', order: 13 }, // Collection is host-related
+    { cardId: 'quickStats', requiredPermission: 'can_view_dashboard', order: 14 }
+  ];
+
+  // Filter cards based on user's permissions
+  const allowedCards = allCards.filter(card => {
+    return permissions[card.requiredPermission] === true;
+  });
+
+  return allowedCards.map((card) => ({
+    cardId: card.cardId,
+    enabled: true,
+    order: card.order // Preserve original order from allCards
+  }));
+}
+
 // Start server with database health check
 async function startServer() {
   try {
@@ -430,7 +730,12 @@ async function startServer() {
 
     // Check and import agent version on startup
     await checkAndImportAgentVersion();
-
+    
+    // Check and create default role permissions on startup
+    await checkAndCreateRolePermissions();
+    
+    // Initialize dashboard preferences for all users
+    await initializeDashboardPreferences();
     app.listen(PORT, () => {
       if (process.env.ENABLE_LOGGING === 'true') {
         logger.info(`Server running on port ${PORT}`);

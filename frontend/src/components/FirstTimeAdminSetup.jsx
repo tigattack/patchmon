@@ -8,7 +8,9 @@ const FirstTimeAdminSetup = () => {
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    firstName: '',
+    lastName: ''
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -25,6 +27,14 @@ const FirstTimeAdminSetup = () => {
   }
 
   const validateForm = () => {
+    if (!formData.firstName.trim()) {
+      setError('First name is required')
+      return false
+    }
+    if (!formData.lastName.trim()) {
+      setError('Last name is required')
+      return false
+    }
     if (!formData.username.trim()) {
       setError('Username is required')
       return false
@@ -69,7 +79,9 @@ const FirstTimeAdminSetup = () => {
         body: JSON.stringify({
           username: formData.username.trim(),
           email: formData.email.trim(),
-          password: formData.password
+          password: formData.password,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim()
         })
       })
 
@@ -145,6 +157,41 @@ const FirstTimeAdminSetup = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  className="input w-full"
+                  placeholder="Enter your first name"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  className="input w-full"
+                  placeholder="Enter your last name"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
                 Username

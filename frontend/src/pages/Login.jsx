@@ -9,7 +9,9 @@ const Login = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
-    password: ''
+    password: '',
+    firstName: '',
+    lastName: ''
   })
   const [tfaData, setTfaData] = useState({
     token: ''
@@ -76,8 +78,7 @@ const Login = () => {
     setError('')
 
     try {
-      const response = await authAPI.signup(formData.username, formData.email, formData.password)
-
+      const response = await authAPI.signup(formData.username, formData.email, formData.password, formData.firstName, formData.lastName)
       if (response.data && response.data.token) {
         // Store token and user data
         localStorage.setItem('token', response.data.token)
@@ -162,7 +163,9 @@ const Login = () => {
     setFormData({
       username: '',
       email: '',
-      password: ''
+      password: '',
+      firstName: '',
+      lastName: ''
     })
     setError('')
   }
@@ -211,10 +214,53 @@ const Login = () => {
             </div>
 
             {isSignupMode && (
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-secondary-700">
-                  Email
-                </label>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="firstName" className="block text-sm font-medium text-secondary-700">
+                      First Name
+                    </label>
+                    <div className="mt-1 relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <User className="h-5 w-5 text-secondary-400" />
+                      </div>
+                      <input
+                        id="firstName"
+                        name="firstName"
+                        type="text"
+                        required
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-2 border border-secondary-300 placeholder-secondary-500 text-secondary-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                        placeholder="Enter your first name"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-medium text-secondary-700">
+                      Last Name
+                    </label>
+                    <div className="mt-1 relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <User className="h-5 w-5 text-secondary-400" />
+                      </div>
+                      <input
+                        id="lastName"
+                        name="lastName"
+                        type="text"
+                        required
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-2 border border-secondary-300 placeholder-secondary-500 text-secondary-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                        placeholder="Enter your last name"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-secondary-700">
+                    Email
+                  </label>
                 <div className="mt-1 relative">
                   <input
                     id="email"
@@ -235,6 +281,7 @@ const Login = () => {
                   </div>
                 </div>
               </div>
+              </>
             )}
 
             <div>

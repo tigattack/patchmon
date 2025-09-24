@@ -59,9 +59,9 @@ router.put('/roles/:role', authenticateToken, requireManageSettings, async (req,
       can_manage_settings
     } = req.body;
 
-    // Prevent modifying admin role permissions (admin should always have full access)
-    if (role === 'admin') {
-      return res.status(400).json({ error: 'Cannot modify admin role permissions' });
+    // Prevent modifying admin and user role permissions (built-in roles)
+    if (role === 'admin' || role === 'user') {
+      return res.status(400).json({ error: `Cannot modify ${role} role permissions - this is a built-in role` });
     }
 
     const permissions = await prisma.role_permissions.upsert({
@@ -111,9 +111,9 @@ router.delete('/roles/:role', authenticateToken, requireManageSettings, async (r
   try {
     const { role } = req.params;
 
-    // Prevent deleting admin role
-    if (role === 'admin') {
-      return res.status(400).json({ error: 'Cannot delete admin role' });
+    // Prevent deleting admin and user roles (built-in roles)
+    if (role === 'admin' || role === 'user') {
+      return res.status(400).json({ error: `Cannot delete ${role} role - this is a built-in role` });
     }
 
     // Check if any users are using this role

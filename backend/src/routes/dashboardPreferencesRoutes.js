@@ -2,9 +2,114 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken } = require('../middleware/auth');
+const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 const prisma = new PrismaClient();
+
+// Helper function to get user permissions based on role
+async function getUserPermissions(userRole) {
+  try {
+    const permissions = await prisma.role_permissions.findUnique({
+      where: { role: userRole }
+    });
+
+    // If no specific permissions found, return default admin permissions (for backward compatibility)
+    if (!permissions) {
+      console.warn(`No permissions found for role: ${userRole}, defaulting to admin access`);
+      return {
+        can_view_dashboard: true,
+        can_view_hosts: true,
+        can_manage_hosts: true,
+        can_view_packages: true,
+        can_manage_packages: true,
+        can_view_users: true,
+        can_manage_users: true,
+        can_view_reports: true,
+        can_export_data: true,
+        can_manage_settings: true
+      };
+    }
+
+    return permissions;
+  } catch (error) {
+    console.error('Error fetching user permissions:', error);
+    // Return admin permissions as fallback
+    return {
+      can_view_dashboard: true,
+      can_view_hosts: true,
+      can_manage_hosts: true,
+      can_view_packages: true,
+      can_manage_packages: true,
+      can_view_users: true,
+      can_manage_users: true,
+      can_view_reports: true,
+      can_export_data: true,
+      can_manage_settings: true
+    };
+  }
+}
+
+// Helper function to create permission-based dashboard preferences for a new user
+async function createDefaultDashboardPreferences(userId, userRole = 'user') {
+  try {
+    // Get user's actual permissions
+    const permissions = await getUserPermissions(userRole);
+    
+    // Define all possible dashboard cards with their required permissions
+    const allCards = [
+      // Host-related cards
+      { cardId: 'totalHosts', requiredPermission: 'can_view_hosts', order: 0 },
+      { cardId: 'hostsNeedingUpdates', requiredPermission: 'can_view_hosts', order: 1 },
+      { cardId: 'upToDateHosts', requiredPermission: 'can_view_hosts', order: 2 },
+      { cardId: 'totalHostGroups', requiredPermission: 'can_view_hosts', order: 3 },
+      
+      // Package-related cards
+      { cardId: 'totalOutdatedPackages', requiredPermission: 'can_view_packages', order: 4 },
+      { cardId: 'securityUpdates', requiredPermission: 'can_view_packages', order: 5 },
+      { cardId: 'packagePriority', requiredPermission: 'can_view_packages', order: 6 },
+      
+      // Repository-related cards
+      { cardId: 'totalRepos', requiredPermission: 'can_view_hosts', order: 7 }, // Repos are host-related
+      
+      // User management cards (admin only)
+      { cardId: 'totalUsers', requiredPermission: 'can_view_users', order: 8 },
+      { cardId: 'recentUsers', requiredPermission: 'can_view_users', order: 9 },
+      
+      // System/Report cards
+      { cardId: 'osDistribution', requiredPermission: 'can_view_reports', order: 10 },
+      { cardId: 'osDistributionBar', requiredPermission: 'can_view_reports', order: 11 },
+      { cardId: 'updateStatus', requiredPermission: 'can_view_reports', order: 12 },
+      { cardId: 'recentCollection', requiredPermission: 'can_view_hosts', order: 13 }, // Collection is host-related
+      { cardId: 'quickStats', requiredPermission: 'can_view_dashboard', order: 14 }
+    ];
+
+    // Filter cards based on user's permissions
+    const allowedCards = allCards.filter(card => {
+      return permissions[card.requiredPermission] === true;
+    });
+
+    // Create preferences data
+    const preferencesData = allowedCards.map((card) => ({
+      id: uuidv4(),
+      user_id: userId,
+      card_id: card.cardId,
+      enabled: true,
+      order: card.order, // Preserve original order from allCards
+      created_at: new Date(),
+      updated_at: new Date()
+    }));
+
+    await prisma.dashboard_preferences.createMany({
+      data: preferencesData
+    });
+
+    console.log(`Permission-based dashboard preferences created for user ${userId} with role ${userRole}: ${allowedCards.length} cards`);
+  } catch (error) {
+    console.error('Error creating default dashboard preferences:', error);
+    // Don't throw error - this shouldn't break user creation
+  }
+}
 
 // Get user's dashboard preferences
 router.get('/', authenticateToken, async (req, res) => {
@@ -69,22 +174,24 @@ router.put('/', authenticateToken, [
 // Get default dashboard card configuration
 router.get('/defaults', authenticateToken, async (req, res) => {
   try {
+    // Default configuration based on iby's (Muhammad Ibrahim) preferred layout
+    // This provides a comprehensive dashboard view for all new users
     const defaultCards = [
       { cardId: 'totalHosts', title: 'Total Hosts', icon: 'Server', enabled: true, order: 0 },
       { cardId: 'hostsNeedingUpdates', title: 'Needs Updating', icon: 'AlertTriangle', enabled: true, order: 1 },
       { cardId: 'totalOutdatedPackages', title: 'Outdated Packages', icon: 'Package', enabled: true, order: 2 },
       { cardId: 'securityUpdates', title: 'Security Updates', icon: 'Shield', enabled: true, order: 3 },
-      { cardId: 'upToDateHosts', title: 'Up to date', icon: 'CheckCircle', enabled: true, order: 4 },
-      { cardId: 'totalHostGroups', title: 'Host Groups', icon: 'Folder', enabled: false, order: 5 },
-      { cardId: 'totalUsers', title: 'Users', icon: 'Users', enabled: false, order: 6 },
-      { cardId: 'totalRepos', title: 'Repositories', icon: 'GitBranch', enabled: false, order: 7 },
+      { cardId: 'totalHostGroups', title: 'Host Groups', icon: 'Folder', enabled: true, order: 4 },
+      { cardId: 'upToDateHosts', title: 'Up to date', icon: 'CheckCircle', enabled: true, order: 5 },
+      { cardId: 'totalRepos', title: 'Repositories', icon: 'GitBranch', enabled: true, order: 6 },
+      { cardId: 'totalUsers', title: 'Users', icon: 'Users', enabled: true, order: 7 },
       { cardId: 'osDistribution', title: 'OS Distribution', icon: 'BarChart3', enabled: true, order: 8 },
-      { cardId: 'osDistributionBar', title: 'OS Distribution (Bar)', icon: 'BarChart3', enabled: false, order: 9 },
-      { cardId: 'updateStatus', title: 'Update Status', icon: 'BarChart3', enabled: true, order: 10 },
-      { cardId: 'packagePriority', title: 'Package Priority', icon: 'BarChart3', enabled: true, order: 11 },
-      { cardId: 'quickStats', title: 'Quick Stats', icon: 'TrendingUp', enabled: true, order: 12 },
+      { cardId: 'osDistributionBar', title: 'OS Distribution (Bar)', icon: 'BarChart3', enabled: true, order: 9 },
+      { cardId: 'recentCollection', title: 'Recent Collection', icon: 'Server', enabled: true, order: 10 },
+      { cardId: 'updateStatus', title: 'Update Status', icon: 'BarChart3', enabled: true, order: 11 },
+      { cardId: 'packagePriority', title: 'Package Priority', icon: 'BarChart3', enabled: true, order: 12 },
       { cardId: 'recentUsers', title: 'Recent Users Logged in', icon: 'Users', enabled: true, order: 13 },
-      { cardId: 'recentCollection', title: 'Recent Collection', icon: 'Server', enabled: true, order: 14 }
+      { cardId: 'quickStats', title: 'Quick Stats', icon: 'TrendingUp', enabled: true, order: 14 }
     ];
 
     res.json(defaultCards);
@@ -94,4 +201,4 @@ router.get('/defaults', authenticateToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = { router, createDefaultDashboardPreferences };

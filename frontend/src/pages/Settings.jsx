@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save, Server, Shield, AlertCircle, CheckCircle, Code, Plus, Trash2, Star, Download, X, Settings as SettingsIcon, Clock } from 'lucide-react';
-import { settingsAPI, agentVersionAPI, versionAPI } from '../utils/api';
+import { settingsAPI, agentVersionAPI, versionAPI, permissionsAPI } from '../utils/api';
 import { useUpdateNotification } from '../contexts/UpdateNotificationContext';
 import UpgradeNotificationIcon from '../components/UpgradeNotificationIcon';
 
@@ -13,6 +13,7 @@ const Settings = () => {
     updateInterval: 60,
     autoUpdate: false,
     signupEnabled: false,
+    defaultUserRole: 'user',
     githubRepoUrl: 'git@github.com:9technologygroup/patchmon.net.git',
     repositoryType: 'public',
     sshKeyPath: '',
@@ -68,6 +69,12 @@ const Settings = () => {
     queryFn: () => settingsAPI.get().then(res => res.data)
   });
 
+  // Fetch available roles for default user role dropdown
+  const { data: roles, isLoading: rolesLoading } = useQuery({
+    queryKey: ['rolePermissions'],
+    queryFn: () => permissionsAPI.getRoles().then(res => res.data)
+  });
+
   // Update form data when settings are loaded
   useEffect(() => {
     if (settings) {
@@ -78,6 +85,7 @@ const Settings = () => {
         updateInterval: settings.update_interval || 60,
         autoUpdate: settings.auto_update || false,
         signupEnabled: settings.signup_enabled === true ? true : false, // Explicit boolean conversion
+        defaultUserRole: settings.default_user_role || 'user',
         githubRepoUrl: settings.github_repo_url || 'git@github.com:9technologygroup/patchmon.net.git',
         repositoryType: settings.repository_type || 'public',
         sshKeyPath: settings.ssh_key_path || '',
@@ -560,6 +568,37 @@ const Settings = () => {
                     Enable User Self-Registration
                   </div>
                 </label>
+                
+                {/* Default User Role Dropdown */}
+                {formData.signupEnabled && (
+                  <div className="mt-3 ml-6">
+                    <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+                      Default Role for New Users
+                    </label>
+                    <select
+                      value={formData.defaultUserRole}
+                      onChange={(e) => handleInputChange('defaultUserRole', e.target.value)}
+                      className="w-full max-w-xs border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
+                      disabled={rolesLoading}
+                    >
+                      {rolesLoading ? (
+                        <option>Loading roles...</option>
+                      ) : roles && Array.isArray(roles) ? (
+                        roles.map((role) => (
+                          <option key={role.role} value={role.role}>
+                            {role.role.charAt(0).toUpperCase() + role.role.slice(1)}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="user">User</option>
+                      )}
+                    </select>
+                    <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
+                      New users will be assigned this role when they register.
+                    </p>
+                  </div>
+                )}
+                
                 <p className="mt-1 text-sm text-secondary-500 dark:text-secondary-400">
                   When enabled, users can create their own accounts through the signup page. When disabled, only administrators can create user accounts.
                 </p>

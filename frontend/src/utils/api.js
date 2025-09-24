@@ -201,7 +201,7 @@ export const versionAPI = {
 export const authAPI = {
   login: (username, password) => api.post('/auth/login', { username, password }),
   verifyTfa: (username, token) => api.post('/auth/verify-tfa', { username, token }),
-  signup: (username, email, password) => api.post('/auth/signup', { username, email, password }),
+  signup: (username, email, password, firstName, lastName) => api.post('/auth/signup', { username, email, password, firstName, lastName }),
 }
 
 // TFA API

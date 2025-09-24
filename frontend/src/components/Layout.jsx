@@ -47,7 +47,7 @@ const Layout = ({ children }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [githubStars, setGithubStars] = useState(null)
   const location = useLocation()
-  const { user, logout, canViewHosts, canManageHosts, canViewPackages, canViewUsers, canManageUsers, canManageSettings } = useAuth()
+  const { user, logout, canViewDashboard, canViewHosts, canManageHosts, canViewPackages, canViewUsers, canManageUsers, canViewReports, canExportData, canManageSettings } = useAuth()
   const { updateAvailable } = useUpdateNotification()
   const userMenuRef = useRef(null)
 
@@ -66,44 +66,103 @@ const Layout = ({ children }) => {
     staleTime: 300000, // Consider data stale after 5 minutes
   })
 
-  const navigation = [
-    { name: 'Dashboard', href: '/', icon: Home },
-    {
-      section: 'Inventory',
-      items: [
-        ...(canViewHosts() ? [{ name: 'Hosts', href: '/hosts', icon: Server }] : []),
-        ...(canViewPackages() ? [{ name: 'Packages', href: '/packages', icon: Package }] : []),
-        ...(canViewHosts() ? [{ name: 'Repos', href: '/repositories', icon: GitBranch }] : []),
-        { name: 'Services', href: '/services', icon: Activity, comingSoon: true },
-        { name: 'Docker', href: '/docker', icon: Container, comingSoon: true },
-        { name: 'Reporting', href: '/reporting', icon: BarChart3, comingSoon: true },
-      ]
-    },
-    ...(canViewUsers() || canManageUsers() ? [{
-      section: 'PatchMon Users',
-      items: [
-        ...(canViewUsers() ? [{ name: 'Users', href: '/users', icon: Users }] : []),
-        ...(canManageSettings() ? [{ name: 'Permissions', href: '/permissions', icon: Shield }] : []),
-      ]
-    }] : []),
-    {
-      section: 'Settings',
-      items: [
-        ...(canManageHosts() ? [{ 
+  // Build navigation based on permissions
+  const buildNavigation = () => {
+    const nav = []
+    
+    // Dashboard - only show if user can view dashboard
+    if (canViewDashboard()) {
+      nav.push({ name: 'Dashboard', href: '/', icon: Home })
+    }
+    
+    // Inventory section - only show if user has any inventory permissions
+    if (canViewHosts() || canViewPackages() || canViewReports()) {
+      const inventoryItems = []
+      
+      if (canViewHosts()) {
+        inventoryItems.push({ name: 'Hosts', href: '/hosts', icon: Server })
+        inventoryItems.push({ name: 'Repos', href: '/repositories', icon: GitBranch })
+      }
+      
+      if (canViewPackages()) {
+        inventoryItems.push({ name: 'Packages', href: '/packages', icon: Package })
+      }
+      
+      if (canViewReports()) {
+        inventoryItems.push(
+          { name: 'Services', href: '/services', icon: Activity, comingSoon: true },
+          { name: 'Docker', href: '/docker', icon: Container, comingSoon: true },
+          { name: 'Reporting', href: '/reporting', icon: BarChart3, comingSoon: true }
+        )
+      }
+      
+      if (inventoryItems.length > 0) {
+        nav.push({
+          section: 'Inventory',
+          items: inventoryItems
+        })
+      }
+    }
+    
+    // PatchMon Users section - only show if user can view/manage users
+    if (canViewUsers() || canManageUsers()) {
+      const userItems = []
+      
+      if (canViewUsers()) {
+        userItems.push({ name: 'Users', href: '/users', icon: Users })
+      }
+      
+      if (canManageSettings()) {
+        userItems.push({ name: 'Permissions', href: '/permissions', icon: Shield })
+      }
+      
+      if (userItems.length > 0) {
+        nav.push({
+          section: 'PatchMon Users',
+          items: userItems
+        })
+      }
+    }
+    
+    // Settings section - only show if user has any settings permissions
+    if (canManageSettings() || canViewReports() || canExportData()) {
+      const settingsItems = []
+      
+      if (canManageSettings()) {
+        settingsItems.push({ 
           name: 'PatchMon Options', 
           href: '/options', 
           icon: Settings
-        }] : []),
-        { name: 'Audit Log', href: '/audit-log', icon: FileText, comingSoon: true },
-        ...(canManageSettings() ? [{ 
+        })
+        settingsItems.push({ 
           name: 'Server Config', 
           href: '/settings', 
           icon: Wrench,
           showUpgradeIcon: updateAvailable
-        }] : []),
-      ]
+        })
+      }
+      
+      if (canViewReports() || canExportData()) {
+        settingsItems.push({ 
+          name: 'Audit Log', 
+          href: '/audit-log', 
+          icon: FileText, 
+          comingSoon: true 
+        })
+      }
+      
+      if (settingsItems.length > 0) {
+        nav.push({
+          section: 'Settings',
+          items: settingsItems
+        })
+      }
     }
-  ]
+    
+    return nav
+  }
+
+  const navigation = buildNavigation()
 
   const isActive = (path) => location.pathname === path
 
@@ -221,6 +280,15 @@ const Layout = ({ children }) => {
             </div>
           </div>
           <nav className="mt-8 flex-1 space-y-6 px-2">
+            {/* Show message for users with very limited permissions */}
+            {navigation.length === 0 && (
+              <div className="px-2 py-4 text-center">
+                <div className="text-sm text-secondary-500 dark:text-secondary-400">
+                  <p className="mb-2">Limited access</p>
+                  <p className="text-xs">Contact your administrator for additional permissions</p>
+                </div>
+              </div>
+            )}
             {navigation.map((item, index) => {
               if (item.name) {
                 // Single item (Dashboard)
@@ -346,6 +414,15 @@ const Layout = ({ children }) => {
           </div>
           <nav className="flex flex-1 flex-col">
             <ul className="flex flex-1 flex-col gap-y-6">
+              {/* Show message for users with very limited permissions */}
+              {navigation.length === 0 && (
+                <li className="px-2 py-4 text-center">
+                  <div className="text-sm text-secondary-500 dark:text-secondary-400">
+                    <p className="mb-2">Limited access</p>
+                    <p className="text-xs">Contact your administrator for additional permissions</p>
+                  </div>
+                </li>
+              )}
               {navigation.map((item, index) => {
                 if (item.name) {
                   // Single item (Dashboard)

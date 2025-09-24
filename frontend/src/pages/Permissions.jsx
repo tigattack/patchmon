@@ -174,7 +174,7 @@ const RolePermissionsCard = ({ role, isEditing, onEdit, onCancel, onSave, onDele
     onSave(role.role, permissions)
   }
 
-  const isAdminRole = role.role === 'admin'
+  const isBuiltInRole = role.role === 'admin' || role.role === 'user'
 
   return (
     <div className="bg-white dark:bg-secondary-800 shadow rounded-lg">
@@ -183,9 +183,9 @@ const RolePermissionsCard = ({ role, isEditing, onEdit, onCancel, onSave, onDele
           <div className="flex items-center">
             <Shield className="h-5 w-5 text-primary-600 mr-3" />
             <h3 className="text-lg font-medium text-secondary-900 dark:text-white capitalize">{role.role}</h3>
-            {isAdminRole && (
+            {isBuiltInRole && (
               <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
-                System Role
+                Built-in Role
               </span>
             )}
           </div>
@@ -211,13 +211,13 @@ const RolePermissionsCard = ({ role, isEditing, onEdit, onCancel, onSave, onDele
               <>
                 <button
                   onClick={onEdit}
-                  disabled={isAdminRole}
+                  disabled={isBuiltInRole}
                   className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Edit className="h-4 w-4 mr-1" />
                   Edit
                 </button>
-                {!isAdminRole && (
+                {!isBuiltInRole && (
                   <button
                     onClick={() => onDelete(role.role)}
                     className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
@@ -245,7 +245,7 @@ const RolePermissionsCard = ({ role, isEditing, onEdit, onCancel, onSave, onDele
                     type="checkbox"
                     checked={isChecked}
                     onChange={(e) => handlePermissionChange(field.key, e.target.checked)}
-                    disabled={!isEditing || (isAdminRole && field.key === 'can_manage_users')}
+                    disabled={!isEditing || (isBuiltInRole && field.key === 'can_manage_users')}
                     className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded disabled:opacity-50"
                   />
                 </div>
