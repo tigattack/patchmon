@@ -206,24 +206,49 @@ run_as_user() {
     sudo -u "$user" bash -c "$command"
 }
 
+# Detect and use the best available package manager
+detect_package_manager() {
+    # Prefer apt over apt-get for modern Debian/Ubuntu systems
+    if command -v apt >/dev/null 2>&1; then
+        PKG_MANAGER="apt"
+        PKG_UPDATE="apt update"
+        PKG_UPGRADE="apt upgrade -y"
+        PKG_INSTALL="apt install -y"
+    elif command -v apt-get >/dev/null 2>&1; then
+        PKG_MANAGER="apt-get"
+        PKG_UPDATE="apt-get update"
+        PKG_UPGRADE="apt-get upgrade -y"
+        PKG_INSTALL="apt-get install -y"
+    else
+        print_error "No supported package manager found (apt or apt-get required)"
+        print_info "This script requires a Debian/Ubuntu-based system"
+        exit 1
+    fi
+    
+    print_info "Using package manager: $PKG_MANAGER"
+}
+
 check_prerequisites() {
     print_info "Running and checking prerequisites..."
     
     # Check if running as root
     check_root
     
+    # Detect package manager
+    detect_package_manager
+    
     print_info "Installing updates..."
-    apt-get update -y
-    apt-get upgrade -y
+    $PKG_UPDATE -y
+    $PKG_UPGRADE
     
     print_info "Installing prerequisite applications..."
     # Install sudo if not present (needed for user switching)
     if ! command -v sudo >/dev/null 2>&1; then
         print_info "Installing sudo (required for user switching)..."
-        apt-get install -y sudo
+        $PKG_INSTALL sudo
     fi
     
-    apt-get install -y wget curl jq git netcat-openbsd
+    $PKG_INSTALL wget curl jq git netcat-openbsd
     
     print_status "Prerequisites installed successfully"
 }
@@ -478,14 +503,14 @@ init_instance_vars() {
 # Update system packages
 update_system() {
     print_info "Updating system packages..."
-    apt-get update -y
-    apt-get upgrade -y
+    $PKG_UPDATE -y
+    $PKG_UPGRADE
 }
 
 # Install essential tools
 install_essential_tools() {
     print_info "Installing essential tools..."
-    apt-get install -y curl netcat-openbsd git jq
+    $PKG_INSTALL curl netcat-openbsd git jq
 }
 
 # Install Node.js (if not already installed)
@@ -512,7 +537,7 @@ install_nodejs() {
     
     print_info "Installing Node.js 20.x..."
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-    apt-get install -y nodejs
+    $PKG_INSTALL nodejs
     
     # Verify installation
     NODE_VERSION=$(node --version | sed 's/v//')
@@ -531,7 +556,7 @@ install_postgresql() {
     if systemctl is-active --quiet postgresql; then
         print_status "PostgreSQL already running"
     else
-        apt-get install -y postgresql postgresql-contrib
+        $PKG_INSTALL postgresql postgresql-contrib
         systemctl start postgresql
         systemctl enable postgresql
         print_status "PostgreSQL installed and started"
@@ -545,7 +570,7 @@ install_nginx() {
     if systemctl is-active --quiet nginx; then
         print_status "nginx already running"
     else
-        apt-get install -y nginx
+        $PKG_INSTALL nginx
         systemctl start nginx
         systemctl enable nginx
         print_status "nginx installed and started"
@@ -559,7 +584,7 @@ install_certbot() {
     if command -v certbot >/dev/null 2>&1; then
         print_status "certbot already installed"
     else
-        apt-get install -y certbot python3-certbot-nginx
+        $PKG_INSTALL certbot python3-certbot-nginx
         print_status "certbot installed"
     fi
 }
