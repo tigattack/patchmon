@@ -342,9 +342,16 @@ const Dashboard = () => {
 				);
 			case "totalHosts":
 				return (
-					<div
-						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+					<button
+						type="button"
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
 						onClick={handleTotalHostsClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleTotalHostsClick();
+							}
+						}}
 					>
 						<div className="flex items-center">
 							<div className="flex-shrink-0">
@@ -359,14 +366,21 @@ const Dashboard = () => {
 								</p>
 							</div>
 						</div>
-					</div>
+					</button>
 				);
 
 			case "hostsNeedingUpdates":
 				return (
-					<div
-						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+					<button
+						type="button"
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
 						onClick={handleHostsNeedingUpdatesClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleHostsNeedingUpdatesClick();
+							}
+						}}
 					>
 						<div className="flex items-center">
 							<div className="flex-shrink-0">
@@ -381,14 +395,21 @@ const Dashboard = () => {
 								</p>
 							</div>
 						</div>
-					</div>
+					</button>
 				);
 
 			case "totalOutdatedPackages":
 				return (
-					<div
-						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+					<button
+						type="button"
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
 						onClick={handleOutdatedPackagesClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleOutdatedPackagesClick();
+							}
+						}}
 					>
 						<div className="flex items-center">
 							<div className="flex-shrink-0">
@@ -403,14 +424,21 @@ const Dashboard = () => {
 								</p>
 							</div>
 						</div>
-					</div>
+					</button>
 				);
 
 			case "securityUpdates":
 				return (
-					<div
-						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+					<button
+						type="button"
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
 						onClick={handleSecurityUpdatesClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleSecurityUpdatesClick();
+							}
+						}}
 					>
 						<div className="flex items-center">
 							<div className="flex-shrink-0">
@@ -425,14 +453,21 @@ const Dashboard = () => {
 								</p>
 							</div>
 						</div>
-					</div>
+					</button>
 				);
 
 			case "totalHostGroups":
 				return (
-					<div
-						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+					<button
+						type="button"
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
 						onClick={handleHostGroupsClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleHostGroupsClick();
+							}
+						}}
 					>
 						<div className="flex items-center">
 							<div className="flex-shrink-0">
@@ -447,14 +482,21 @@ const Dashboard = () => {
 								</p>
 							</div>
 						</div>
-					</div>
+					</button>
 				);
 
 			case "totalUsers":
 				return (
-					<div
-						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+					<button
+						type="button"
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
 						onClick={handleUsersClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleUsersClick();
+							}
+						}}
 					>
 						<div className="flex items-center">
 							<div className="flex-shrink-0">
@@ -469,14 +511,21 @@ const Dashboard = () => {
 								</p>
 							</div>
 						</div>
-					</div>
+					</button>
 				);
 
 			case "totalRepos":
 				return (
-					<div
-						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+					<button
+						type="button"
+						className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
 						onClick={handleRepositoriesClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleRepositoriesClick();
+							}
+						}}
 					>
 						<div className="flex items-center">
 							<div className="flex-shrink-0">
@@ -491,18 +540,25 @@ const Dashboard = () => {
 								</p>
 							</div>
 						</div>
-					</div>
+					</button>
 				);
 
 			case "erroredHosts":
 				return (
-					<div
-						className={`border rounded-lg p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 ${
+					<button
+						type="button"
+						className={`border rounded-lg p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left ${
 							stats.cards.erroredHosts > 0
 								? "bg-danger-50 border-danger-200"
 								: "bg-success-50 border-success-200"
 						}`}
 						onClick={handleErroredHostsClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleErroredHostsClick();
+							}
+						}}
 					>
 						<div className="flex">
 							<AlertTriangle
@@ -538,18 +594,25 @@ const Dashboard = () => {
 								)}
 							</div>
 						</div>
-					</div>
+					</button>
 				);
 
 			case "offlineHosts":
 				return (
-					<div
-						className={`border rounded-lg p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 ${
+					<button
+						type="button"
+						className={`border rounded-lg p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left ${
 							stats.cards.offlineHosts > 0
 								? "bg-warning-50 border-warning-200"
 								: "bg-success-50 border-success-200"
 						}`}
 						onClick={handleOfflineHostsClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleOfflineHostsClick();
+							}
+						}}
 					>
 						<div className="flex">
 							<WifiOff
@@ -583,14 +646,21 @@ const Dashboard = () => {
 								)}
 							</div>
 						</div>
-					</div>
+					</button>
 				);
 
 			case "osDistribution":
 				return (
-					<div
-						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+					<button
+						type="button"
+						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
 						onClick={handleOSDistributionClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleOSDistributionClick();
+							}
+						}}
 					>
 						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
 							OS Distribution
@@ -598,14 +668,21 @@ const Dashboard = () => {
 						<div className="h-64">
 							<Pie data={osChartData} options={chartOptions} />
 						</div>
-					</div>
+					</button>
 				);
 
 			case "osDistributionBar":
 				return (
-					<div
-						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+					<button
+						type="button"
+						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
 						onClick={handleOSDistributionClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleOSDistributionClick();
+							}
+						}}
 					>
 						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
 							OS Distribution
@@ -613,14 +690,21 @@ const Dashboard = () => {
 						<div className="h-64">
 							<Bar data={osBarChartData} options={barChartOptions} />
 						</div>
-					</div>
+					</button>
 				);
 
 			case "updateStatus":
 				return (
-					<div
-						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+					<button
+						type="button"
+						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
 						onClick={handleUpdateStatusClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleUpdateStatusClick();
+							}
+						}}
 					>
 						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
 							Update Status
@@ -631,14 +715,21 @@ const Dashboard = () => {
 								options={updateStatusChartOptions}
 							/>
 						</div>
-					</div>
+					</button>
 				);
 
 			case "packagePriority":
 				return (
-					<div
-						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+					<button
+						type="button"
+						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
 						onClick={handlePackagePriorityClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handlePackagePriorityClick();
+							}
+						}}
 					>
 						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
 							Package Priority
@@ -649,7 +740,7 @@ const Dashboard = () => {
 								options={packagePriorityChartOptions}
 							/>
 						</div>
-					</div>
+					</button>
 				);
 
 			case "quickStats": {

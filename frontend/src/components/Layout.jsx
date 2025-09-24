@@ -308,9 +308,11 @@ const Layout = ({ children }) => {
 			<div
 				className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? "block" : "hidden"}`}
 			>
-				<div
-					className="fixed inset-0 bg-secondary-600 bg-opacity-75"
+				<button
+					type="button"
+					className="fixed inset-0 bg-secondary-600 bg-opacity-75 cursor-default"
 					onClick={() => setSidebarOpen(false)}
+					aria-label="Close sidebar"
 				/>
 				<div className="relative flex w-full max-w-xs flex-col bg-white pb-4 pt-5 shadow-xl">
 					<div className="absolute right-0 top-0 -mr-12 pt-2">

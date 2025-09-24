@@ -1559,8 +1559,9 @@ const Hosts = () => {
 
 			{/* Stats Summary */}
 			<div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-				<div
-					className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+				<button
+					type="button"
+					className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 text-left w-full"
 					onClick={handleTotalHostsClick}
 				>
 					<div className="flex items-center">
@@ -1574,9 +1575,10 @@ const Hosts = () => {
 							</p>
 						</div>
 					</div>
-				</div>
-				<div
-					className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+				</button>
+				<button
+					type="button"
+					className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 text-left w-full"
 					onClick={handleUpToDateClick}
 				>
 					<div className="flex items-center">
@@ -1591,9 +1593,10 @@ const Hosts = () => {
 							</p>
 						</div>
 					</div>
-				</div>
-				<div
-					className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+				</button>
+				<button
+					type="button"
+					className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 text-left w-full"
 					onClick={handleNeedsUpdatesClick}
 				>
 					<div className="flex items-center">
@@ -1607,9 +1610,10 @@ const Hosts = () => {
 							</p>
 						</div>
 					</div>
-				</div>
-				<div
-					className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200"
+				</button>
+				<button
+					type="button"
+					className="card p-4 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 text-left w-full"
 					onClick={handleStaleClick}
 				>
 					<div className="flex items-center">
@@ -1623,7 +1627,7 @@ const Hosts = () => {
 							</p>
 						</div>
 					</div>
-				</div>
+				</button>
 			</div>
 
 			{/* Hosts List */}
@@ -2298,9 +2302,18 @@ const ColumnSettingsModal = ({
 							<div
 								key={column.id}
 								draggable
+								tabIndex={0}
+								role="button"
+								aria-label={`Drag to reorder ${column.label} column`}
 								onDragStart={(e) => handleDragStart(e, index)}
 								onDragOver={handleDragOver}
 								onDrop={(e) => handleDrop(e, index)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter' || e.key === ' ') {
+										e.preventDefault();
+										// Focus handling for keyboard users
+									}
+								}}
 								className={`flex items-center justify-between p-3 border rounded-lg cursor-move ${
 									draggedIndex === index
 										? "opacity-50"
