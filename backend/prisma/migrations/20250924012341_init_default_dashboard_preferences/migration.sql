@@ -1,24 +1,65 @@
--- Create dashboard_preferences table
--- This migration only creates the table structure without populating preferences
--- Dashboard preferences will be initialized dynamically by server.js when users first access the dashboard
+-- Initialize default dashboard preferences for all existing users
+-- This migration ensures that all users have proper role-based dashboard preferences
 
--- Create the dashboard_preferences table
-CREATE TABLE IF NOT EXISTS "dashboard_preferences" (
-    "id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "card_id" TEXT NOT NULL,
-    "enabled" BOOLEAN NOT NULL DEFAULT true,
-    "order" INTEGER NOT NULL DEFAULT 0,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+-- Function to create default dashboard preferences for a user
+CREATE OR REPLACE FUNCTION init_user_dashboard_preferences(user_id TEXT, user_role TEXT)
+RETURNS VOID AS $$
+DECLARE
+    pref_record RECORD;
+BEGIN
+    -- Delete any existing preferences for this user
+    DELETE FROM dashboard_preferences WHERE dashboard_preferences.user_id = init_user_dashboard_preferences.user_id;
+    
+    -- Insert role-based preferences
+    IF user_role = 'admin' THEN
+        -- Admin gets full access to all cards (iby's preferred layout)
+        INSERT INTO dashboard_preferences (id, user_id, card_id, enabled, "order", created_at, updated_at)
+        VALUES 
+            (gen_random_uuid(), user_id, 'totalHosts', true, 0, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'hostsNeedingUpdates', true, 1, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'totalOutdatedPackages', true, 2, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'securityUpdates', true, 3, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'totalHostGroups', true, 4, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'upToDateHosts', true, 5, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'totalRepos', true, 6, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'totalUsers', true, 7, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'osDistribution', true, 8, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'osDistributionBar', true, 9, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'recentCollection', true, 10, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'updateStatus', true, 11, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'packagePriority', true, 12, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'recentUsers', true, 13, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'quickStats', true, 14, NOW(), NOW());
+    ELSE
+        -- Regular users get comprehensive layout but without user management cards
+        INSERT INTO dashboard_preferences (id, user_id, card_id, enabled, "order", created_at, updated_at)
+        VALUES 
+            (gen_random_uuid(), user_id, 'totalHosts', true, 0, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'hostsNeedingUpdates', true, 1, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'totalOutdatedPackages', true, 2, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'securityUpdates', true, 3, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'totalHostGroups', true, 4, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'upToDateHosts', true, 5, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'totalRepos', true, 6, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'osDistribution', true, 7, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'osDistributionBar', true, 8, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'recentCollection', true, 9, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'updateStatus', true, 10, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'packagePriority', true, 11, NOW(), NOW()),
+            (gen_random_uuid(), user_id, 'quickStats', true, 12, NOW(), NOW());
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
 
-    CONSTRAINT "dashboard_preferences_pkey" PRIMARY KEY ("id")
-);
+-- Apply default preferences to all existing users
+DO $$
+DECLARE
+    user_record RECORD;
+BEGIN
+    FOR user_record IN SELECT id, role FROM users LOOP
+        PERFORM init_user_dashboard_preferences(user_record.id, user_record.role);
+    END LOOP;
+END $$;
 
--- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS "dashboard_preferences_user_id_idx" ON "dashboard_preferences"("user_id");
-CREATE INDEX IF NOT EXISTS "dashboard_preferences_card_id_idx" ON "dashboard_preferences"("card_id");
-CREATE INDEX IF NOT EXISTS "dashboard_preferences_user_card_idx" ON "dashboard_preferences"("user_id", "card_id");
-
--- Add foreign key constraint
-ALTER TABLE "dashboard_preferences" ADD CONSTRAINT "dashboard_preferences_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- Drop the temporary function
+DROP FUNCTION init_user_dashboard_preferences(TEXT, TEXT);
