@@ -29,7 +29,7 @@ services:
       RATE_LIMIT_WINDOW_MS: 900000
       RATE_LIMIT_MAX: 100
     volumes:
-      - ./agents:/app/agents
+      - agent_files:/app/agents
     depends_on:
       database:
         condition: service_healthy
@@ -45,3 +45,4 @@ services:
 
 volumes:
   postgres_data:
+  agent_files:
