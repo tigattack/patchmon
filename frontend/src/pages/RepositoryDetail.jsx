@@ -18,6 +18,7 @@ import { Link, useParams } from "react-router-dom";
 import { repositoryAPI } from "../utils/api";
 
 const RepositoryDetail = () => {
+	const isActiveId = useId();
 	const { repositoryId } = useParams();
 	const queryClient = useQueryClient();
 	const [editMode, setEditMode] = useState(false);
@@ -241,7 +242,7 @@ const RepositoryDetail = () => {
 							<div className="flex items-center">
 								<input
 									type="checkbox"
-									id="is_active"
+									id={isActiveId}
 									checked={formData.is_active}
 									onChange={(e) =>
 										setFormData({ ...formData, is_active: e.target.checked })
@@ -249,7 +250,7 @@ const RepositoryDetail = () => {
 									className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 rounded"
 								/>
 								<label
-									htmlFor="is_active"
+									htmlFor={isActiveId}
 									className="ml-2 block text-sm text-secondary-900 dark:text-white"
 								>
 									Repository is active

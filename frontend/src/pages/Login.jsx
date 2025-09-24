@@ -14,6 +14,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { authAPI } from "../utils/api";
 
 const Login = () => {
+	const usernameId = useId();
+	const firstNameId = useId();
+	const lastNameId = useId();
+	const emailId = useId();
+	const passwordId = useId();
+	const tokenId = useId();
 	const [isSignupMode, setIsSignupMode] = useState(false);
 	const [formData, setFormData] = useState({
 		username: "",
@@ -212,14 +218,14 @@ const Login = () => {
 						<div className="space-y-4">
 							<div>
 								<label
-									htmlFor="username"
+									htmlFor={usernameId}
 									className="block text-sm font-medium text-secondary-700"
 								>
 									{isSignupMode ? "Username" : "Username or Email"}
 								</label>
 								<div className="mt-1 relative">
 									<input
-										id="username"
+										id={usernameId}
 										name="username"
 										type="text"
 										required
@@ -243,7 +249,7 @@ const Login = () => {
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 										<div>
 											<label
-												htmlFor="firstName"
+												htmlFor={firstNameId}
 												className="block text-sm font-medium text-secondary-700"
 											>
 												First Name
@@ -253,7 +259,7 @@ const Login = () => {
 													<User className="h-5 w-5 text-secondary-400" />
 												</div>
 												<input
-													id="firstName"
+													id={firstNameId}
 													name="firstName"
 													type="text"
 													required
@@ -266,7 +272,7 @@ const Login = () => {
 										</div>
 										<div>
 											<label
-												htmlFor="lastName"
+												htmlFor={lastNameId}
 												className="block text-sm font-medium text-secondary-700"
 											>
 												Last Name
@@ -276,7 +282,7 @@ const Login = () => {
 													<User className="h-5 w-5 text-secondary-400" />
 												</div>
 												<input
-													id="lastName"
+													id={lastNameId}
 													name="lastName"
 													type="text"
 													required
@@ -290,14 +296,14 @@ const Login = () => {
 									</div>
 									<div>
 										<label
-											htmlFor="email"
+											htmlFor={emailId}
 											className="block text-sm font-medium text-secondary-700"
 										>
 											Email
 										</label>
 										<div className="mt-1 relative">
 											<input
-												id="email"
+												id={emailId}
 												name="email"
 												type="email"
 												required
@@ -316,14 +322,14 @@ const Login = () => {
 
 							<div>
 								<label
-									htmlFor="password"
+									htmlFor={passwordId}
 									className="block text-sm font-medium text-secondary-700"
 								>
 									Password
 								</label>
 								<div className="mt-1 relative">
 									<input
-										id="password"
+										id={passwordId}
 										name="password"
 										type={showPassword ? "text" : "password"}
 										required
@@ -415,14 +421,14 @@ const Login = () => {
 
 						<div>
 							<label
-								htmlFor="token"
+								htmlFor={tokenId}
 								className="block text-sm font-medium text-secondary-700"
 							>
 								Verification Code
 							</label>
 							<div className="mt-1">
 								<input
-									id="token"
+									id={tokenId}
 									name="token"
 									type="text"
 									required

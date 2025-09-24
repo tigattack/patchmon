@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import {
 	AlertCircle,
 	CheckCircle,
@@ -14,6 +15,7 @@ import {
 	Trash2,
 	X,
 } from "lucide-react";
+
 import React, { useEffect, useState } from "react";
 import UpgradeNotificationIcon from "../components/UpgradeNotificationIcon";
 import { useUpdateNotification } from "../contexts/UpdateNotificationContext";
@@ -25,6 +27,10 @@ import {
 } from "../utils/api";
 
 const Settings = () => {
+	const repoPublicId = useId();
+	const repoPrivateId = useId();
+	const useCustomSshKeyId = useId();
+	const isDefaultId = useId();
 	const [formData, setFormData] = useState({
 		serverProtocol: "http",
 		serverHost: "localhost",
@@ -992,7 +998,7 @@ const Settings = () => {
 											<div className="flex items-center">
 												<input
 													type="radio"
-													id="repo-public"
+													id={repoPublicId}
 													name="repositoryType"
 													value="public"
 													checked={formData.repositoryType === "public"}
@@ -1002,7 +1008,7 @@ const Settings = () => {
 													className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
 												/>
 												<label
-													htmlFor="repo-public"
+													htmlFor={repoPublicId}
 													className="ml-2 text-sm text-secondary-700 dark:text-secondary-200"
 												>
 													Public Repository (uses GitHub API - no authentication
@@ -1012,7 +1018,7 @@ const Settings = () => {
 											<div className="flex items-center">
 												<input
 													type="radio"
-													id="repo-private"
+													id={repoPrivateId}
 													name="repositoryType"
 													value="private"
 													checked={formData.repositoryType === "private"}
@@ -1022,7 +1028,7 @@ const Settings = () => {
 													className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
 												/>
 												<label
-													htmlFor="repo-private"
+													htmlFor={repoPrivateId}
 													className="ml-2 text-sm text-secondary-700 dark:text-secondary-200"
 												>
 													Private Repository (uses SSH with deploy key)
@@ -1058,7 +1064,7 @@ const Settings = () => {
 											<div className="flex items-center gap-3 mb-3">
 												<input
 													type="checkbox"
-													id="useCustomSshKey"
+													id={useCustomSshKeyId}
 													checked={formData.useCustomSshKey}
 													onChange={(e) => {
 														const checked = e.target.checked;
@@ -1070,7 +1076,7 @@ const Settings = () => {
 													className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
 												/>
 												<label
-													htmlFor="useCustomSshKey"
+													htmlFor={useCustomSshKeyId}
 													className="text-sm font-medium text-secondary-700 dark:text-secondary-200"
 												>
 													Set custom SSH key path
@@ -1458,7 +1464,7 @@ const AgentVersionModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 						<div className="flex items-center">
 							<input
 								type="checkbox"
-								id="isDefault"
+								id={isDefaultId}
 								checked={formData.isDefault}
 								onChange={(e) =>
 									setFormData((prev) => ({
@@ -1469,7 +1475,7 @@ const AgentVersionModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 								className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 dark:border-secondary-600 rounded"
 							/>
 							<label
-								htmlFor="isDefault"
+								htmlFor={isDefaultId}
 								className="ml-2 block text-sm text-secondary-700 dark:text-secondary-200"
 							>
 								Set as default version for new installations

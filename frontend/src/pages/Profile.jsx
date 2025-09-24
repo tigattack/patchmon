@@ -25,6 +25,13 @@ import { useTheme } from "../contexts/ThemeContext";
 import { tfaAPI } from "../utils/api";
 
 const Profile = () => {
+	const usernameId = useId();
+	const emailId = useId();
+	const firstNameId = useId();
+	const lastNameId = useId();
+	const currentPasswordId = useId();
+	const newPasswordId = useId();
+	const confirmPasswordId = useId();
 	const { user, updateProfile, changePassword } = useAuth();
 	const { theme, toggleTheme, isDark } = useTheme();
 	const [activeTab, setActiveTab] = useState("profile");
@@ -250,7 +257,7 @@ const Profile = () => {
 								<div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
 									<div>
 										<label
-											htmlFor="username"
+											htmlFor={usernameId}
 											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200"
 										>
 											Username
@@ -259,7 +266,7 @@ const Profile = () => {
 											<input
 												type="text"
 												name="username"
-												id="username"
+												id={usernameId}
 												value={profileData.username}
 												onChange={handleInputChange}
 												className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 pl-10 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
@@ -271,7 +278,7 @@ const Profile = () => {
 
 									<div>
 										<label
-											htmlFor="email"
+											htmlFor={emailId}
 											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200"
 										>
 											Email Address
@@ -280,7 +287,7 @@ const Profile = () => {
 											<input
 												type="email"
 												name="email"
-												id="email"
+												id={emailId}
 												value={profileData.email}
 												onChange={handleInputChange}
 												className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 pl-10 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
@@ -292,7 +299,7 @@ const Profile = () => {
 
 									<div>
 										<label
-											htmlFor="first_name"
+											htmlFor={firstNameId}
 											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200"
 										>
 											First Name
@@ -301,7 +308,7 @@ const Profile = () => {
 											<input
 												type="text"
 												name="first_name"
-												id="first_name"
+												id={firstNameId}
 												value={profileData.first_name}
 												onChange={handleInputChange}
 												className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
@@ -311,7 +318,7 @@ const Profile = () => {
 
 									<div>
 										<label
-											htmlFor="last_name"
+											htmlFor={lastNameId}
 											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200"
 										>
 											Last Name
@@ -320,7 +327,7 @@ const Profile = () => {
 											<input
 												type="text"
 												name="last_name"
-												id="last_name"
+												id={lastNameId}
 												value={profileData.last_name}
 												onChange={handleInputChange}
 												className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
@@ -353,7 +360,7 @@ const Profile = () => {
 								<div className="space-y-4">
 									<div>
 										<label
-											htmlFor="currentPassword"
+											htmlFor={currentPasswordId}
 											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200"
 										>
 											Current Password
@@ -362,7 +369,7 @@ const Profile = () => {
 											<input
 												type={showPasswords.current ? "text" : "password"}
 												name="currentPassword"
-												id="currentPassword"
+												id={currentPasswordId}
 												value={passwordData.currentPassword}
 												onChange={handleInputChange}
 												className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 pl-10 pr-10 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
@@ -385,7 +392,7 @@ const Profile = () => {
 
 									<div>
 										<label
-											htmlFor="newPassword"
+											htmlFor={newPasswordId}
 											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200"
 										>
 											New Password
@@ -394,7 +401,7 @@ const Profile = () => {
 											<input
 												type={showPasswords.new ? "text" : "password"}
 												name="newPassword"
-												id="newPassword"
+												id={newPasswordId}
 												value={passwordData.newPassword}
 												onChange={handleInputChange}
 												className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 pl-10 pr-10 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
@@ -421,7 +428,7 @@ const Profile = () => {
 
 									<div>
 										<label
-											htmlFor="confirmPassword"
+											htmlFor={confirmPasswordId}
 											className="block text-sm font-medium text-secondary-700 dark:text-secondary-200"
 										>
 											Confirm New Password
@@ -430,7 +437,7 @@ const Profile = () => {
 											<input
 												type={showPasswords.confirm ? "text" : "password"}
 												name="confirmPassword"
-												id="confirmPassword"
+												id={confirmPasswordId}
 												value={passwordData.confirmPassword}
 												onChange={handleInputChange}
 												className="block w-full border-secondary-300 dark:border-secondary-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 pl-10 pr-10 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white"
@@ -986,7 +993,11 @@ const TfaTab = () => {
 							</div>
 						</div>
 						<div className="flex space-x-3">
-							<button type="button" onClick={downloadBackupCodes} className="btn-outline">
+							<button
+								type="button"
+								onClick={downloadBackupCodes}
+								className="btn-outline"
+							>
 								<Download className="h-4 w-4 mr-2" />
 								Download Codes
 							</button>
