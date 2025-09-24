@@ -1,104 +1,54 @@
-# PatchMon
+# PatchMon - Linux Patch Monitoring made Simple
 
+[![Website](https://img.shields.io/badge/Website-patchmon.net-blue?style=for-the-badge)](https://patchmon.net)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-blue?style=for-the-badge&logo=discord)](https://discord.gg/S7RXUHwg)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/9technologygroup/patchmon.net)
 [![Roadmap](https://img.shields.io/badge/Roadmap-View%20Progress-green?style=for-the-badge&logo=github)](https://github.com/users/9technologygroup/projects/1)
-
 ---
 
 ## Purpose
 
 PatchMon provides centralized patch management across diverse server environments. Agents communicate outbound-only to the PatchMon server, eliminating inbound ports on monitored hosts while delivering comprehensive visibility and safe automation.
 
+![Dashboard Screenshot](https://raw.githubusercontent.com/9technologygroup/patchmon.net/main/dashboard.jpeg)
+
 ## Features
-
-### Users & Authentication
-- Multi-user accounts (admin and standard users)
-- Email/username-based login
-- Optional Two‑Factor Authentication (TFA/MFA) with verification flow
-- First‑time admin bootstrap flow (no default credentials; secure setup)
-- Self‑registration toggle in settings (enable/disable public signup)
-
-### Roles, Permissions & RBAC
-- Built‑in roles: `admin`, `user`
-- Fine‑grained permission flags (e.g., view/manage hosts, packages, users, reports, settings)
-- Server‑side enforcement for protected routes and UI guards per permission
 
 ### Dashboard
 - Customisable dashboard with per‑user card layout and ordering
-- Role/permission‑aware defaults on first login
-- “Reset to Defaults” uses consistent server‑provided defaults
-- Cards include: Total Hosts, Needs Updating, Up‑to‑Date Hosts, Host Groups, Outdated Packages, Security Updates, Package Priority, Repositories, Users, OS Distribution (pie/bar), Update Status, Recent Collection, Recent Users, Quick Stats
+
+### Users & Authentication
+- Multi-user accounts (admin and standard users)
+- Roles, Permissions & RBAC
 
 ### Hosts & Inventory
-- Host inventory with key attributes and OS details
+- Host inventory/groups with key attributes and OS details
 - Host grouping (create and manage host groups)
-- OS distribution summaries and visualisations
-- Recent telemetry collection indicator
 
 ### Packages & Updates
 - Package inventory across hosts
 - Outdated packages overview and counts
-- Security updates highlight
-- Update status breakdown (up‑to‑date vs needs updates)
-
-### Repositories
 - Repositories per host tracking
-- Repository module pages and totals
 
 ### Agent & Data Collection
-- Outbound‑only agent communication (no inbound ports required on hosts)
 - Agent version management and script content stored in DB
-- Version marking (current/default) with update history
 
 ### Settings & Configuration
 - Server URL/protocol/host/port
-- Update interval and auto‑update toggle
-- Public signup toggle and default user role selection
-- Repository settings: GitHub repo URL, repository type, SSH key path
-- Rate‑limit windows and thresholds for API/auth/agent
-
-### Admin & User Management
-- Admin user CRUD (create, list, update, delete)
-- Password reset (admin‑initiated)
-- Role assignment on user create/update
-
-### Reporting & Analytics
-- Dashboard stats and card‑level metrics
-- OS distribution charts (pie/bar)
-- Update status and recent activity summaries
+- Signup toggle and default user role selection
 
 ### API & Integrations
 - REST API under `/api/v1` with JWT auth
-- Consistent JSON responses; errors with appropriate status codes
-- CORS configured per server settings
 
 ### Security
-- JWT‑secured API with short, scoped tokens
-- Permissions enforced server‑side on every route
 - Rate limiting for general, auth, and agent endpoints
 - Outbound‑only agent model reduces attack surface
 
 ### Deployment & Operations
-- One‑line self‑host installer (Ubuntu/Debian)
-- Automated provisioning: Node.js, PostgreSQL, nginx
-- Prisma migrations and client generation
+- Docker installation & One‑line self‑host installer (Ubuntu/Debian)
 - systemd service for backend lifecycle
 - nginx vhost for frontend + API proxy; optional Let’s Encrypt integration
-- Consolidated deployment info file with commands and paths
 
-### UX & Frontend
-- Vite + React single‑page app
-- Protected routes with permission checks
-- Theming and modern components (icons, modals, notifications)
-
-### Observability & Logging
-- Structured server logs
-- Deployment logs copied to instance dir for later review
-
-### Road‑Readiness
-- Works for internal (HTTP) and public (HTTPS) deployments
-- Defaults safe for first‑time setup; admin created interactively
 
 ## Getting Started
 
@@ -108,11 +58,11 @@ Managed, zero-maintenance PatchMon hosting. Stay tuned.
 
 ### Self-hosted Installation
 
-#### Docker
+#### Docker (preferred)
 
 For getting started with Docker, see the [Docker documentation](https://github.com/9technologygroup/patchmon.net/blob/main/docker/README.md)
 
-#### Native Install
+#### Native Install (advanced/non-docker)
 
 Run on a clean Ubuntu/Debian server with internet access:
 
@@ -176,33 +126,14 @@ Operational
 
 ## Roadmap
 
-- PatchMon Cloud (managed offering)
-- Additional dashboards and reporting widgets
-- More OS distributions and agent enhancements
-- Advanced workflow automations and approvals
+- Roadmap board: https://github.com/users/9technologygroup/projects/1
 
-Roadmap board: https://github.com/users/9technologygroup/projects/1
-
-## Security
-
-- Outbound-only agent communications; no inbound ports on monitored hosts
-- JWT-based API auth, rate limiting, role/permission checks
-- Follow least-privilege defaults; sensitive operations audited
-
-## Support Methods
-
-- Community: Discord for quick questions and feedback
-- Email: SLA-backed assistance for incidents and issues
-- GitHub Issues: bug reports and feature requests
 
 ## License
 
-AGPLv3 (More information on this soon)
+- AGPLv3 (More information on this soon)
 
-## Links
 
-- Repository: https://github.com/9technologygroup/patchmon.net/
-- Raw installer: https://raw.githubusercontent.com/9technologygroup/patchmon.net/main/setup.sh
 ---
 
 ## 🤝 Contributing
@@ -262,36 +193,8 @@ We welcome contributions from the community! Here's how you can get involved:
 - **Documentation**: Update README and code comments as needed
 - **Issues**: Check existing issues before creating new ones
 
-### Areas We Need Help With
-- 🐳 **Docker & Containerization** (led by @Adam20054)
-- 🔄 **CI/CD Pipelines** (led by @tigattack)
-- 🔒 **Security Improvements** - Security audits, vulnerability assessments, and security feature enhancements
-- ⚡ **Performance for Large Scale Deployments** - Database optimization, caching strategies, and horizontal scaling
-- 📚 **Documentation** improvements
-- 🧪 **Testing** coverage
-- 🌐 **Internationalization** (i18n)
-- 📱 **Mobile** responsive improvements
-- 
-
 ---
 
-## 🗺️ Roadmap
-
-Check out our [public roadmap](https://github.com/users/9technologygroup/projects/1) to see what we're working on and what's coming next!
-
-**Upcoming Features:**
-- 🐳 Docker Compose deployment
-- 🔄 Automated CI/CD pipelines
-- 📊 Advanced reporting and analytics
-- 🔔 Enhanced notification system
-- 📱 Mobile application
-- 🔄 Patch management workflows and policies
-- 👥 Users inventory management
-- 🔍 Services and ports monitoring
-- 🖥️ Proxmox integration for auto LXC discovery and registration
-- 📧 Notifications via Slack/Email
-
----
 
 ## 🏢 Enterprise & Custom Solutions
 
@@ -321,22 +224,6 @@ Check out our [public roadmap](https://github.com/users/9technologygroup/project
 
 ---
 
-## 📞 Support & Community
-
-### Get Help
-- 💬 **Discord Community**: [Join our Discord](https://discord.gg/S7RXUHwg) for real-time support and discussions
-- 📧 **Email Support**: support@patchmon.net
-- 📚 **Documentation**: Check our wiki and documentation
-- 🐛 **Bug Reports**: Use GitHub Issues
-
-### Community
-- 🌟 **Star the Project**: Show your support by starring this repository
-- 🍴 **Fork & Contribute**: Help improve PatchMon
-- 📢 **Share**: Tell others about PatchMon
-- 💡 **Feature Requests**: Suggest new features via GitHub Issues
-
----
-
 ## 🙏 Acknowledgments
 
 ### Special Thanks
@@ -344,6 +231,9 @@ Check out our [public roadmap](https://github.com/users/9technologygroup/project
 - **@Adam20054** - For working on Docker Compose deployment
 - **@tigattack** - For working on GitHub CI/CD pipelines
 - **Cloud X** and **Crazy Dead** - For moderating our Discord server and keeping the community awesome
+- **Beta Testers** - For keeping me awake at night
+- **My family** - For understanding my passion
+  
 
 ### Contributors
 Thank you to all our contributors who help make PatchMon better every day!
@@ -351,7 +241,7 @@ Thank you to all our contributors who help make PatchMon better every day!
 
 ## 🔗 Links
 
-- **Website**: [patchmon.net](https://patchmon.net)
+- **Website**: [patchmon.net](https://patchmon.net) **(New website ocming soon)**
 - **Discord**: [discord.gg/S7RXUHwg](https://discord.gg/S7RXUHwg)
 - **Roadmap**: [GitHub Projects](https://github.com/users/9technologygroup/projects/1)
 - **Documentation**: [Coming Soon]
