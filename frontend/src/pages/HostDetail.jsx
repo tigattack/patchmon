@@ -213,7 +213,7 @@ const HostDetail = () => {
 		return "Up to Date";
 	};
 
-	const isStale = new Date() - new Date(host.last_update) > 24 * 60 * 60 * 1000;
+	const isStale = Date.now() - new Date(host.last_update) > 24 * 60 * 60 * 1000;
 
 	return (
 		<div className="h-screen flex flex-col">
