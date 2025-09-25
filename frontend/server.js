@@ -1,8 +1,8 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
-import path from "path";
-import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,11 +26,11 @@ app.use(
 		target: BACKEND_URL,
 		changeOrigin: true,
 		logLevel: "info",
-		onError: (err, req, res) => {
+		onError: (err, _req, res) => {
 			console.error("Proxy error:", err.message);
 			res.status(500).json({ error: "Backend service unavailable" });
 		},
-		onProxyReq: (proxyReq, req, res) => {
+		onProxyReq: (_proxyReq, req, _res) => {
 			console.log(`Proxying ${req.method} ${req.path} to ${BACKEND_URL}`);
 		},
 	}),
@@ -40,7 +40,7 @@ app.use(
 app.use(express.static(path.join(__dirname, "dist")));
 
 // Handle SPA routing - serve index.html for all routes
-app.get("*", (req, res) => {
+app.get("*", (_req, res) => {
 	res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 

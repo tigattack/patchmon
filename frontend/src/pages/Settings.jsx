@@ -529,7 +529,10 @@ const Settings = () => {
 										type="number"
 										value={formData.serverPort}
 										onChange={(e) =>
-											handleInputChange("serverPort", parseInt(e.target.value, 10))
+											handleInputChange(
+												"serverPort",
+												parseInt(e.target.value, 10),
+											)
 										}
 										className={`w-full border rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white ${
 											errors.serverPort
