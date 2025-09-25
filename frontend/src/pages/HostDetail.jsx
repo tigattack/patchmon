@@ -25,7 +25,7 @@ import {
 	Wifi,
 	X,
 } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import InlineEdit from "../components/InlineEdit";
 import {
@@ -70,7 +70,7 @@ const HostDetail = () => {
 	};
 
 	// Auto-show credentials modal for new/pending hosts
-	React.useEffect(() => {
+	useEffect(() => {
 		if (host && host.status === "pending") {
 			setShowCredentialsModal(true);
 		}

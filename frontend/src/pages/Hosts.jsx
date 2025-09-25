@@ -23,7 +23,7 @@ import {
 	Users,
 	X,
 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import InlineEdit from "../components/InlineEdit";
 import InlineGroupEdit from "../components/InlineGroupEdit";
@@ -510,7 +510,7 @@ const Hosts = () => {
 	};
 
 	// Table filtering and sorting logic
-	const filteredAndSortedHosts = React.useMemo(() => {
+	const filteredAndSortedHosts = useMemo(() => {
 		if (!hosts) return [];
 
 		const filtered = hosts.filter((host) => {
@@ -629,7 +629,7 @@ const Hosts = () => {
 	]);
 
 	// Group hosts by selected field
-	const groupedHosts = React.useMemo(() => {
+	const groupedHosts = useMemo(() => {
 		if (groupBy === "none") {
 			return { "All Hosts": filteredAndSortedHosts };
 		}

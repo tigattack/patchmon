@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle, Shield, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
 const FirstTimeAdminSetup = () => {
