@@ -177,14 +177,19 @@ We welcome contributions from the community! Here's how you can get involved:
    git checkout -b fix/your-bug-fix
    ```
 
+4. **Install Dependencies and Setup Hooks**
+   ```bash
+   npm install
+   npm run prepare
+   ```
 
-4. **Make Your Changes**
+5. **Make Your Changes**
    - Write clean, well-documented code
    - Follow existing code style and patterns
    - Add tests for new functionality
    - Update documentation as needed
 
-5. **Test Your Changes**
+6. **Test Your Changes**
    ```bash
    # Run backend tests
    cd backend
@@ -195,14 +200,14 @@ We welcome contributions from the community! Here's how you can get involved:
    npm test
    ```
 
-6. **Commit and Push**
+7. **Commit and Push**
    ```bash
    git add .
    git commit -m "Add: descriptive commit message"
    git push origin feature/your-feature-name
    ```
 
-7. **Create a Pull Request**
+8. **Create a Pull Request**
    - Go to your fork on GitHub
    - Click "New Pull Request"
    - Provide a clear description of your changes
