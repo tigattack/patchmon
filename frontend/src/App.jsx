@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import FirstTimeAdminSetup from "./components/FirstTimeAdminSetup";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { isAuthPhase } from "./constants/authPhases";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { UpdateNotificationProvider } from "./contexts/UpdateNotificationContext";
@@ -20,11 +21,14 @@ import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 
 function AppRoutes() {
-	const { needsFirstTimeSetup, checkingSetup, isAuthenticated } = useAuth();
+	const { needsFirstTimeSetup, authPhase, isAuthenticated } = useAuth();
 	const isAuth = isAuthenticated(); // Call the function to get boolean value
 
-	// Show loading while checking if setup is needed
-	if (checkingSetup) {
+	// Show loading while checking setup or initialising
+	if (
+		isAuthPhase.initialising(authPhase) ||
+		isAuthPhase.checkingSetup(authPhase)
+	) {
 		return (
 			<div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-secondary-900 dark:to-secondary-800 flex items-center justify-center">
 				<div className="text-center">

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
+import { isAuthReady } from "../constants/authPhases";
 import { settingsAPI, versionAPI } from "../utils/api";
 import { useAuth } from "./AuthContext";
 
@@ -17,15 +18,25 @@ export const useUpdateNotification = () => {
 
 export const UpdateNotificationProvider = ({ children }) => {
 	const [dismissed, setDismissed] = useState(false);
-	const { user, token } = useAuth();
+	const { authPhase, isAuthenticated } = useAuth();
 
-	// Ensure settings are loaded
+	// Ensure settings are loaded - but only after auth is fully ready
 	const { data: settings, isLoading: settingsLoading } = useQuery({
 		queryKey: ["settings"],
 		queryFn: () => settingsAPI.get().then((res) => res.data),
-		enabled: !!(user && token),
-		retry: 1,
+		staleTime: 5 * 60 * 1000, // Settings stay fresh for 5 minutes
+		refetchOnWindowFocus: false,
+		enabled: isAuthReady(authPhase, isAuthenticated()),
 	});
+
+	// Memoize the enabled condition to prevent unnecessary re-evaluations
+	const isQueryEnabled = useMemo(() => {
+		return (
+			isAuthReady(authPhase, isAuthenticated()) &&
+			!!settings &&
+			!settingsLoading
+		);
+	}, [authPhase, isAuthenticated, settings, settingsLoading]);
 
 	// Query for update information
 	const {
@@ -38,7 +49,7 @@ export const UpdateNotificationProvider = ({ children }) => {
 		staleTime: 10 * 60 * 1000, // Data stays fresh for 10 minutes
 		refetchOnWindowFocus: false, // Don't refetch when window regains focus
 		retry: 1,
-		enabled: !!(user && token && settings && !settingsLoading), // Only run when authenticated and settings are loaded
+		enabled: isQueryEnabled,
 	});
 
 	const updateAvailable = updateData?.isUpdateAvailable && !dismissed;

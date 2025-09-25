@@ -241,6 +241,14 @@ const Layout = ({ children }) => {
 
 	// Fetch GitHub stars count
 	const fetchGitHubStars = useCallback(async () => {
+		// Skip if already fetched recently
+		const lastFetch = localStorage.getItem("githubStarsFetchTime");
+		const now = Date.now();
+		if (lastFetch && now - parseInt(lastFetch, 15) < 600000) {
+			// 15 minute cache
+			return;
+		}
+
 		try {
 			const response = await fetch(
 				"https://api.github.com/repos/9technologygroup/patchmon.net",
@@ -248,6 +256,7 @@ const Layout = ({ children }) => {
 			if (response.ok) {
 				const data = await response.json();
 				setGithubStars(data.stargazers_count);
+				localStorage.setItem("githubStarsFetchTime", now.toString());
 			}
 		} catch (error) {
 			console.error("Failed to fetch GitHub stars:", error);
