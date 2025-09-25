@@ -1,11 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-	Activity,
-	BarChart3,
 	ChevronLeft,
 	ChevronRight,
 	Clock,
-	Container,
 	GitBranch,
 	Github,
 	Globe,
@@ -108,33 +105,60 @@ const Layout = ({ children }) => {
 				});
 			}
 
-			if (canViewReports()) {
-				inventoryItems.push(
-					{
-						name: "Services",
-						href: "/services",
-						icon: Activity,
-						comingSoon: true,
-					},
-					{
-						name: "Docker",
-						href: "/docker",
-						icon: Container,
-						comingSoon: true,
-					},
-					{
-						name: "Reporting",
-						href: "/reporting",
-						icon: BarChart3,
-						comingSoon: true,
-					},
-				);
-			}
-
 			if (inventoryItems.length > 0) {
 				nav.push({
 					section: "Inventory",
 					items: inventoryItems,
+				});
+			}
+		}
+
+		// PatchMon Users section - only show if user can view/manage users
+		if (canViewUsers() || canManageUsers()) {
+			const userItems = [];
+
+			if (canViewUsers()) {
+				userItems.push({ name: "Users", href: "/users", icon: Users });
+			}
+
+			if (canManageSettings()) {
+				userItems.push({
+					name: "Permissions",
+					href: "/permissions",
+					icon: Shield,
+				});
+			}
+
+			if (userItems.length > 0) {
+				nav.push({
+					section: "PatchMon Users",
+					items: userItems,
+				});
+			}
+		}
+
+		// Settings section - only show if user has any settings permissions
+		if (canManageSettings() || canViewReports() || canExportData()) {
+			const settingsItems = [];
+
+			if (canManageSettings()) {
+				settingsItems.push({
+					name: "PatchMon Options",
+					href: "/options",
+					icon: Settings,
+				});
+				settingsItems.push({
+					name: "Server Config",
+					href: "/settings",
+					icon: Wrench,
+					showUpgradeIcon: updateAvailable,
+				});
+			}
+
+			if (settingsItems.length > 0) {
+				nav.push({
+					section: "Settings",
+					items: settingsItems,
 				});
 			}
 		}
@@ -186,13 +210,10 @@ const Layout = ({ children }) => {
 		if (path === "/packages") return "Packages";
 		if (path === "/repositories" || path.startsWith("/repositories/"))
 			return "Repositories";
-		if (path === "/services") return "Services";
-		if (path === "/docker") return "Docker";
 		if (path === "/users") return "Users";
 		if (path === "/permissions") return "Permissions";
 		if (path === "/settings") return "Settings";
 		if (path === "/options") return "PatchMon Options";
-		if (path === "/audit-log") return "Audit Log";
 		if (path === "/settings/profile") return "My Profile";
 		if (path.startsWith("/hosts/")) return "Host Details";
 		if (path.startsWith("/packages/")) return "Package Details";
@@ -393,12 +414,8 @@ const Layout = ({ children }) => {
 																isActive(subItem.href)
 																	? "bg-primary-100 text-primary-900"
 																	: "text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900"
-															} ${subItem.comingSoon ? "opacity-50 cursor-not-allowed" : ""}`}
-															onClick={
-																subItem.comingSoon
-																	? (e) => e.preventDefault()
-																	: () => setSidebarOpen(false)
-															}
+															}`}
+															onClick={() => setSidebarOpen(false)}
 														>
 															<subItem.icon className="mr-3 h-5 w-5" />
 															<span className="flex items-center gap-2">
@@ -409,11 +426,6 @@ const Layout = ({ children }) => {
 																			{stats.cards.totalHosts}
 																		</span>
 																	)}
-																{subItem.comingSoon && (
-																	<span className="text-xs bg-secondary-100 text-secondary-600 px-1.5 py-0.5 rounded">
-																		Soon
-																	</span>
-																)}
 															</span>
 														</Link>
 													)}
@@ -607,17 +619,8 @@ const Layout = ({ children }) => {
 																	isActive(subItem.href)
 																		? "bg-primary-50 dark:bg-primary-600 text-primary-700 dark:text-white"
 																		: "text-secondary-700 dark:text-secondary-200 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700"
-																} ${sidebarCollapsed ? "justify-center p-2 relative" : "p-2"} ${
-																	subItem.comingSoon
-																		? "opacity-50 cursor-not-allowed"
-																		: ""
-																}`}
+																} ${sidebarCollapsed ? "justify-center p-2 relative" : "p-2"}`}
 																title={sidebarCollapsed ? subItem.name : ""}
-																onClick={
-																	subItem.comingSoon
-																		? (e) => e.preventDefault()
-																		: undefined
-																}
 															>
 																<div
 																	className={`flex items-center ${sidebarCollapsed ? "justify-center" : ""}`}
@@ -640,11 +643,6 @@ const Layout = ({ children }) => {
 																					{stats.cards.totalHosts}
 																				</span>
 																			)}
-																		{subItem.comingSoon && (
-																			<span className="text-xs bg-secondary-100 text-secondary-600 px-1.5 py-0.5 rounded">
-																				Soon
-																			</span>
-																		)}
 																		{subItem.showUpgradeIcon && (
 																			<UpgradeNotificationIcon className="h-3 w-3" />
 																		)}

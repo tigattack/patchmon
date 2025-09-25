@@ -150,7 +150,7 @@ Agents (Outbound Only)
 
 ## License
 
-- AGPLv3 (More information on this soon)
+- AGPLv3
 
 
 ---

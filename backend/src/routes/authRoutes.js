@@ -532,7 +532,7 @@ router.post(
 				data: { password_hash: passwordHash },
 			});
 
-			// Log the password reset action (you might want to add an audit log table)
+			// Log the password reset action
 			console.log(
 				`Password reset for user ${user.username} (${user.email}) by admin ${req.user.username}`,
 			);

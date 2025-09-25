@@ -1,13 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-	AlertTriangle,
-	Edit,
-	Plus,
-	Server,
-	Settings,
-	Trash2,
-	Users,
-} from "lucide-react";
+import { AlertTriangle, Edit, Plus, Server, Trash2, Users } from "lucide-react";
 import { useId, useState } from "react";
 import { hostGroupsAPI } from "../utils/api";
 
@@ -22,15 +14,7 @@ const Options = () => {
 	const queryClient = useQueryClient();
 
 	// Tab configuration
-	const tabs = [
-		{ id: "hostgroups", name: "Host Groups", icon: Users },
-		{
-			id: "notifications",
-			name: "Notifications",
-			icon: AlertTriangle,
-			comingSoon: true,
-		},
-	];
+	const tabs = [{ id: "hostgroups", name: "Host Groups", icon: Users }];
 
 	// Fetch host groups
 	const {
@@ -231,19 +215,6 @@ const Options = () => {
 		);
 	};
 
-	const renderComingSoonTab = (tabName) => (
-		<div className="text-center py-12">
-			<Settings className="h-12 w-12 text-secondary-400 mx-auto mb-4" />
-			<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-2">
-				{tabName} Coming Soon
-			</h3>
-			<p className="text-secondary-600 dark:text-secondary-300">
-				This feature is currently under development and will be available in a
-				future update.
-			</p>
-		</div>
-	);
-
 	return (
 		<div className="space-y-6">
 			{/* Page Header */}
@@ -274,11 +245,6 @@ const Options = () => {
 							>
 								<Icon className="h-4 w-4" />
 								{tab.name}
-								{tab.comingSoon && (
-									<span className="text-xs bg-secondary-100 text-secondary-600 px-1.5 py-0.5 rounded">
-										Soon
-									</span>
-								)}
 							</button>
 						);
 					})}
@@ -288,7 +254,6 @@ const Options = () => {
 			{/* Tab Content */}
 			<div className="mt-6">
 				{activeTab === "hostgroups" && renderHostGroupsTab()}
-				{activeTab === "notifications" && renderComingSoonTab("Notifications")}
 			</div>
 
 			{/* Create Modal */}
