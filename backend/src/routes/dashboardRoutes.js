@@ -17,7 +17,7 @@ router.get(
 	"/stats",
 	authenticateToken,
 	requireViewDashboard,
-	async (req, res) => {
+	async (_req, res) => {
 		try {
 			const now = new Date();
 
@@ -179,7 +179,7 @@ router.get(
 );
 
 // Get hosts with their update status
-router.get("/hosts", authenticateToken, requireViewHosts, async (req, res) => {
+router.get("/hosts", authenticateToken, requireViewHosts, async (_req, res) => {
 	try {
 		const hosts = await prisma.hosts.findMany({
 			// Show all hosts regardless of status
@@ -269,7 +269,7 @@ router.get(
 	"/packages",
 	authenticateToken,
 	requireViewPackages,
-	async (req, res) => {
+	async (_req, res) => {
 		try {
 			const packages = await prisma.packages.findMany({
 				where: {
@@ -397,7 +397,7 @@ router.get(
 	"/recent-users",
 	authenticateToken,
 	requireViewUsers,
-	async (req, res) => {
+	async (_req, res) => {
 		try {
 			const users = await prisma.users.findMany({
 				where: {
@@ -430,7 +430,7 @@ router.get(
 	"/recent-collection",
 	authenticateToken,
 	requireViewHosts,
-	async (req, res) => {
+	async (_req, res) => {
 		try {
 			const hosts = await prisma.hosts.findMany({
 				select: {

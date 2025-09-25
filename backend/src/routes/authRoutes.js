@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
 const { body, validationResult } = require("express-validator");
-const { authenticateToken, requireAdmin } = require("../middleware/auth");
+const { authenticateToken, _requireAdmin } = require("../middleware/auth");
 const {
 	requireViewUsers,
 	requireManageUsers,
@@ -17,7 +17,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Check if any admin users exist (for first-time setup)
-router.get("/check-admin-users", async (req, res) => {
+router.get("/check-admin-users", async (_req, res) => {
 	try {
 		const adminCount = await prisma.users.count({
 			where: { role: "admin" },
@@ -143,7 +143,7 @@ router.get(
 	"/admin/users",
 	authenticateToken,
 	requireViewUsers,
-	async (req, res) => {
+	async (_req, res) => {
 		try {
 			const users = await prisma.users.findMany({
 				select: {
@@ -527,7 +527,7 @@ router.post(
 );
 
 // Check if signup is enabled (public endpoint)
-router.get("/signup-enabled", async (req, res) => {
+router.get("/signup-enabled", async (_req, res) => {
 	try {
 		const settings = await prisma.settings.findFirst();
 		res.json({ signupEnabled: settings?.signup_enabled || false });
@@ -990,7 +990,7 @@ router.put(
 );
 
 // Logout (client-side token removal)
-router.post("/logout", authenticateToken, async (req, res) => {
+router.post("/logout", authenticateToken, async (_req, res) => {
 	try {
 		res.json({
 			message: "Logout successful",

@@ -45,8 +45,8 @@ async function triggerCrontabUpdates() {
 
 				// We'll use the existing ping endpoint but add a special parameter
 				// The agent will detect this and run update-crontab command
-				const http = require("http");
-				const https = require("https");
+				const http = require("node:http");
+				const https = require("node:https");
 
 				const url = new URL(`${serverUrl}/api/v1/hosts/ping`);
 				const isHttps = url.protocol === "https:";
@@ -106,7 +106,7 @@ async function triggerCrontabUpdates() {
 }
 
 // Get current settings
-router.get("/", authenticateToken, requireManageSettings, async (req, res) => {
+router.get("/", authenticateToken, requireManageSettings, async (_req, res) => {
 	try {
 		const settings = await getSettings();
 		console.log("Returning settings:", settings);
@@ -228,7 +228,7 @@ router.put(
 );
 
 // Get server URL for public use (used by installation scripts)
-router.get("/server-url", async (req, res) => {
+router.get("/server-url", async (_req, res) => {
 	try {
 		const settings = await getSettings();
 		const serverUrl = settings.server_url;
@@ -240,7 +240,7 @@ router.get("/server-url", async (req, res) => {
 });
 
 // Get update interval policy for agents (public endpoint)
-router.get("/update-interval", async (req, res) => {
+router.get("/update-interval", async (_req, res) => {
 	try {
 		const settings = await getSettings();
 		res.json({
@@ -254,7 +254,7 @@ router.get("/update-interval", async (req, res) => {
 });
 
 // Get auto-update policy for agents (public endpoint)
-router.get("/auto-update", async (req, res) => {
+router.get("/auto-update", async (_req, res) => {
 	try {
 		const settings = await getSettings();
 		res.json({

@@ -150,7 +150,7 @@ router.post(
 				return res.status(400).json({ errors: errors.array() });
 			}
 
-			const { password } = req.body;
+			const { password: _password } = req.body;
 			const userId = req.user.id;
 
 			// Verify password
@@ -165,12 +165,12 @@ router.post(
 				});
 			}
 
-			// Note: In a real implementation, you would verify the password hash here
+			// FIXME: In a real implementation, you would verify the password hash here
 			// For now, we'll skip password verification for simplicity
 
 			// Disable TFA
 			await prisma.users.update({
-				where: { id: id },
+				where: { id: userId },
 				data: {
 					tfa_enabled: false,
 					tfa_secret: null,

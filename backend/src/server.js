@@ -20,7 +20,6 @@ const permissionsRoutes = require("./routes/permissionsRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
 const {
 	router: dashboardPreferencesRoutes,
-	createDefaultDashboardPreferences,
 } = require("./routes/dashboardPreferencesRoutes");
 const repositoryRoutes = require("./routes/repositoryRoutes");
 const versionRoutes = require("./routes/versionRoutes");
@@ -63,9 +62,9 @@ async function checkAndImportAgentVersion() {
 	}
 
 	try {
-		const fs = require("fs");
-		const path = require("path");
-		const crypto = require("crypto");
+		const fs = require("node:fs");
+		const path = require("node:path");
+		const crypto = require("node:crypto");
 
 		// Read and validate agent script
 		const agentScriptPath = path.join(
@@ -239,7 +238,7 @@ async function checkAndCreateRolePermissions() {
 	}
 
 	try {
-		const crypto = require("crypto");
+		const crypto = require("node:crypto");
 
 		// Define default roles and permissions
 		const defaultRoles = [
@@ -437,12 +436,12 @@ app.disable("x-powered-by");
 
 // Rate limiting with monitoring
 const limiter = rateLimit({
-	windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-	max: parseInt(process.env.RATE_LIMIT_MAX) || 100,
+	windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000,
+	max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
 	message: {
 		error: "Too many requests from this IP, please try again later.",
 		retryAfter: Math.ceil(
-			(parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000) / 1000,
+			(parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000) / 1000,
 		),
 	},
 	standardHeaders: true,
@@ -523,7 +522,7 @@ if (process.env.ENABLE_LOGGING === "true") {
 }
 
 // Health check endpoint
-app.get("/health", (req, res) => {
+app.get("/health", (_req, res) => {
 	res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
@@ -532,12 +531,13 @@ const apiVersion = process.env.API_VERSION || "v1";
 
 // Per-route rate limits with monitoring
 const authLimiter = rateLimit({
-	windowMs: parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 10 * 60 * 1000,
-	max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 20,
+	windowMs:
+		parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS, 10) || 10 * 60 * 1000,
+	max: parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) || 20,
 	message: {
 		error: "Too many authentication requests, please try again later.",
 		retryAfter: Math.ceil(
-			(parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 10 * 60 * 1000) /
+			(parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS, 10) || 10 * 60 * 1000) /
 				1000,
 		),
 	},
@@ -546,12 +546,13 @@ const authLimiter = rateLimit({
 	skipSuccessfulRequests: true,
 });
 const agentLimiter = rateLimit({
-	windowMs: parseInt(process.env.AGENT_RATE_LIMIT_WINDOW_MS) || 60 * 1000,
-	max: parseInt(process.env.AGENT_RATE_LIMIT_MAX) || 120,
+	windowMs: parseInt(process.env.AGENT_RATE_LIMIT_WINDOW_MS, 10) || 60 * 1000,
+	max: parseInt(process.env.AGENT_RATE_LIMIT_MAX, 10) || 120,
 	message: {
 		error: "Too many agent requests, please try again later.",
 		retryAfter: Math.ceil(
-			(parseInt(process.env.AGENT_RATE_LIMIT_WINDOW_MS) || 60 * 1000) / 1000,
+			(parseInt(process.env.AGENT_RATE_LIMIT_WINDOW_MS, 10) || 60 * 1000) /
+				1000,
 		),
 	},
 	standardHeaders: true,
@@ -572,7 +573,7 @@ app.use(`/api/${apiVersion}/version`, versionRoutes);
 app.use(`/api/${apiVersion}/tfa`, tfaRoutes);
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, _req, res, _next) => {
 	if (process.env.ENABLE_LOGGING === "true") {
 		logger.error(err.stack);
 	}
@@ -583,7 +584,7 @@ app.use((err, req, res, next) => {
 });
 
 // 404 handler
-app.use("*", (req, res) => {
+app.use("*", (_req, res) => {
 	res.status(404).json({ error: "Route not found" });
 });
 

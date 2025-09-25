@@ -1,6 +1,5 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
-const { body, validationResult } = require("express-validator");
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -17,8 +16,8 @@ router.get("/", async (req, res) => {
 			isSecurityUpdate = "",
 		} = req.query;
 
-		const skip = (parseInt(page) - 1) * parseInt(limit);
-		const take = parseInt(limit);
+		const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+		const take = parseInt(limit, 10);
 
 		// Build where clause
 		const where = {
@@ -139,10 +138,10 @@ router.get("/", async (req, res) => {
 		res.json({
 			packages: packagesWithStats,
 			pagination: {
-				page: parseInt(page),
-				limit: parseInt(limit),
+				page: parseInt(page, 10),
+				limit: parseInt(limit, 10),
 				total: totalCount,
-				pages: Math.ceil(totalCount / parseInt(limit)),
+				pages: Math.ceil(totalCount / parseInt(limit, 10)),
 			},
 		});
 	} catch (error) {

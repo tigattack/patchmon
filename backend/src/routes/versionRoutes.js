@@ -2,8 +2,8 @@ const express = require("express");
 const { authenticateToken } = require("../middleware/auth");
 const { requireManageSettings } = require("../middleware/permissions");
 const { PrismaClient } = require("@prisma/client");
-const { exec } = require("child_process");
-const { promisify } = require("util");
+const { exec } = require("node:child_process");
+const { promisify } = require("node:util");
 
 const prisma = new PrismaClient();
 const execAsync = promisify(exec);
@@ -11,14 +11,14 @@ const execAsync = promisify(exec);
 const router = express.Router();
 
 // Get current version info
-router.get("/current", authenticateToken, async (req, res) => {
+router.get("/current", authenticateToken, async (_req, res) => {
 	try {
 		// Read version from package.json dynamically
 		let currentVersion = "1.2.6"; // fallback
 
 		try {
 			const packageJson = require("../../package.json");
-			if (packageJson && packageJson.version) {
+			if (packageJson?.version) {
 				currentVersion = packageJson.version;
 			}
 		} catch (packageError) {
@@ -78,8 +78,8 @@ router.post(
 
 			// Check if SSH key file exists and is readable
 			try {
-				require("fs").accessSync(sshKeyPath);
-			} catch (e) {
+				require("node:fs").accessSync(sshKeyPath);
+			} catch {
 				return res.status(400).json({
 					error: "SSH key file not found or not accessible",
 					details: `Cannot access: ${sshKeyPath}`,
@@ -165,7 +165,7 @@ router.get(
 	"/check-updates",
 	authenticateToken,
 	requireManageSettings,
-	async (req, res) => {
+	async (_req, res) => {
 		try {
 			// Get cached update information from settings
 			const settings = await prisma.settings.findFirst();
@@ -200,23 +200,5 @@ router.get(
 		}
 	},
 );
-
-// Simple version comparison function
-function compareVersions(version1, version2) {
-	const v1Parts = version1.split(".").map(Number);
-	const v2Parts = version2.split(".").map(Number);
-
-	const maxLength = Math.max(v1Parts.length, v2Parts.length);
-
-	for (let i = 0; i < maxLength; i++) {
-		const v1Part = v1Parts[i] || 0;
-		const v2Part = v2Parts[i] || 0;
-
-		if (v1Part > v2Part) return 1;
-		if (v1Part < v2Part) return -1;
-	}
-
-	return 0;
-}
 
 module.exports = router;

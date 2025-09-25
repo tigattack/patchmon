@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 // Middleware to verify JWT token
 const authenticateToken = async (req, res, next) => {
 	try {
-		const authHeader = req.headers["authorization"];
-		const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
+		const authHeader = req.headers.authorization;
+		const token = authHeader?.split(" ")[1]; // Bearer TOKEN
 
 		if (!token) {
 			return res.status(401).json({ error: "Access token required" });
@@ -70,10 +70,10 @@ const requireAdmin = (req, res, next) => {
 };
 
 // Middleware to check if user is authenticated (optional)
-const optionalAuth = async (req, res, next) => {
+const optionalAuth = async (req, _res, next) => {
 	try {
-		const authHeader = req.headers["authorization"];
-		const token = authHeader && authHeader.split(" ")[1];
+		const authHeader = req.headers.authorization;
+		const token = authHeader?.split(" ")[1];
 
 		if (token) {
 			const decoded = jwt.verify(
@@ -94,12 +94,12 @@ const optionalAuth = async (req, res, next) => {
 				},
 			});
 
-			if (user && user.is_active) {
+			if (user?.is_active) {
 				req.user = user;
 			}
 		}
 		next();
-	} catch (error) {
+	} catch {
 		// Continue without authentication for optional auth
 		next();
 	}

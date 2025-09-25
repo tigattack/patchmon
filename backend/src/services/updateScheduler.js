@@ -1,6 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
-const { exec } = require("child_process");
-const { promisify } = require("util");
+const { exec } = require("node:child_process");
+const { promisify } = require("node:util");
 
 const prisma = new PrismaClient();
 const execAsync = promisify(exec);
@@ -112,7 +112,7 @@ class UpdateScheduler {
 			let currentVersion = "1.2.6"; // fallback
 			try {
 				const packageJson = require("../../package.json");
-				if (packageJson && packageJson.version) {
+				if (packageJson?.version) {
 					currentVersion = packageJson.version;
 				}
 			} catch (packageError) {
@@ -179,10 +179,10 @@ class UpdateScheduler {
 
 				for (const path of possibleKeyPaths) {
 					try {
-						require("fs").accessSync(path);
+						require("node:fs").accessSync(path);
 						sshKeyPath = path;
 						break;
-					} catch (e) {
+					} catch {
 						// Key not found at this path, try next
 					}
 				}
@@ -222,7 +222,7 @@ class UpdateScheduler {
 			let currentVersion = "1.2.6"; // fallback
 			try {
 				const packageJson = require("../../package.json");
-				if (packageJson && packageJson.version) {
+				if (packageJson?.version) {
 					currentVersion = packageJson.version;
 				}
 			} catch (packageError) {

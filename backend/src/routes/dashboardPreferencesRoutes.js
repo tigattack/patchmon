@@ -218,7 +218,7 @@ router.put(
 				updated_at: new Date(),
 			}));
 
-			const createdPreferences = await prisma.dashboard_preferences.createMany({
+			await prisma.dashboard_preferences.createMany({
 				data: newPreferences,
 			});
 
@@ -234,7 +234,7 @@ router.put(
 );
 
 // Get default dashboard card configuration
-router.get("/defaults", authenticateToken, async (req, res) => {
+router.get("/defaults", authenticateToken, async (_req, res) => {
 	try {
 		// This provides a comprehensive dashboard view for all new users
 		const defaultCards = [

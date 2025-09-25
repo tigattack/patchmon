@@ -11,7 +11,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Get all repositories with host count
-router.get("/", authenticateToken, requireViewHosts, async (req, res) => {
+router.get("/", authenticateToken, requireViewHosts, async (_req, res) => {
 	try {
 		const repositories = await prisma.repositories.findMany({
 			include: {
@@ -251,7 +251,7 @@ router.get(
 	"/stats/summary",
 	authenticateToken,
 	requireViewHosts,
-	async (req, res) => {
+	async (_req, res) => {
 		try {
 			const stats = await prisma.repositories.aggregate({
 				_count: true,
@@ -294,7 +294,7 @@ router.delete(
 	"/cleanup/orphaned",
 	authenticateToken,
 	requireManageHosts,
-	async (req, res) => {
+	async (_req, res) => {
 		try {
 			console.log("Cleaning up orphaned repositories...");
 

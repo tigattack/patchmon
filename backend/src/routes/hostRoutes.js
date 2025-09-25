@@ -2,11 +2,10 @@ const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const { body, validationResult } = require("express-validator");
 const { v4: uuidv4 } = require("uuid");
-const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
-const path = require("path");
-const fs = require("fs");
-const { authenticateToken, requireAdmin } = require("../middleware/auth");
+const crypto = require("node:crypto");
+const path = require("node:path");
+const fs = require("node:fs");
+const { authenticateToken, _requireAdmin } = require("../middleware/auth");
 const {
 	requireManageHosts,
 	requireManageSettings,
@@ -48,7 +47,7 @@ router.get("/agent/download", async (req, res) => {
 		}
 
 		// Use script content from database if available, otherwise fallback to file
-		if (agentVersion && agentVersion.script_content) {
+		if (agentVersion?.script_content) {
 			// Convert Windows line endings to Unix line endings
 			const scriptContent = agentVersion.script_content
 				.replace(/\r\n/g, "\n")
@@ -88,7 +87,7 @@ router.get("/agent/download", async (req, res) => {
 });
 
 // Version check endpoint for agents
-router.get("/agent/version", async (req, res) => {
+router.get("/agent/version", async (_req, res) => {
 	try {
 		const currentVersion = await prisma.agent_versions.findFirst({
 			where: { is_current: true },
@@ -235,7 +234,7 @@ router.post(
 );
 
 // Legacy register endpoint (deprecated - returns error message)
-router.post("/register", async (req, res) => {
+router.post("/register", async (_req, res) => {
 	res.status(400).json({
 		error:
 			"Host registration has been disabled. Please contact your administrator to add this host to PatchMon.",
@@ -517,7 +516,7 @@ router.post(
 			try {
 				const settings = await prisma.settings.findFirst();
 				// Check both global auto-update setting AND host-specific auto-update setting
-				if (settings && settings.auto_update && host.auto_update) {
+				if (settings?.auto_update && host.auto_update) {
 					// Get current agent version from the request
 					const currentAgentVersion = req.body.agentVersion;
 
@@ -863,7 +862,7 @@ router.get(
 	"/admin/list",
 	authenticateToken,
 	requireManageHosts,
-	async (req, res) => {
+	async (_req, res) => {
 		try {
 			const hosts = await prisma.hosts.findMany({
 				select: {
@@ -1089,10 +1088,10 @@ router.patch(
 );
 
 // Serve the installation script
-router.get("/install", async (req, res) => {
+router.get("/install", async (_req, res) => {
 	try {
-		const fs = require("fs");
-		const path = require("path");
+		const fs = require("node:fs");
+		const path = require("node:path");
 
 		const scriptPath = path.join(
 			__dirname,
@@ -1144,7 +1143,7 @@ router.get(
 	"/agent/versions",
 	authenticateToken,
 	requireManageSettings,
-	async (req, res) => {
+	async (_req, res) => {
 		try {
 			const versions = await prisma.agent_versions.findMany({
 				orderBy: { created_at: "desc" },
