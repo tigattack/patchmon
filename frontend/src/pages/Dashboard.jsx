@@ -1157,8 +1157,10 @@ const Dashboard = () => {
 								key={`${group.type}-${group.cards[0]?.cardId || groupIndex}`}
 								className={getGroupClassName(group.type)}
 							>
-								{group.cards.map((card) => (
-									<div key={card.cardId}>{renderCard(card.cardId)}</div>
+								{group.cards.map((card, cardIndex) => (
+									<div key={`${groupIndex}-${card.cardId}-${cardIndex}`}>
+										{renderCard(card.cardId)}
+									</div>
 								))}
 							</div>
 						))}
