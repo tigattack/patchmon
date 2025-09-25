@@ -123,8 +123,7 @@ const Packages = () => {
 		const filtered = packages.filter((pkg) => {
 			const matchesSearch =
 				pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				(pkg.description &&
-					pkg.description.toLowerCase().includes(searchTerm.toLowerCase()));
+				pkg.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
 			const matchesCategory =
 				categoryFilter === "all" || pkg.category === categoryFilter;

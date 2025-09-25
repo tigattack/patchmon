@@ -105,7 +105,7 @@ const Login = () => {
 				formData.firstName,
 				formData.lastName,
 			);
-			if (response.data && response.data.token) {
+			if (response.data?.token) {
 				// Update AuthContext state and localStorage
 				setAuthState(response.data.token, response.data.user);
 
@@ -135,7 +135,7 @@ const Login = () => {
 		try {
 			const response = await authAPI.verifyTfa(tfaUsername, tfaData.token);
 
-			if (response.data && response.data.token) {
+			if (response.data?.token) {
 				// Store token and user data
 				localStorage.setItem("token", response.data.token);
 				localStorage.setItem("user", JSON.stringify(response.data.user));
