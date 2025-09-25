@@ -274,7 +274,7 @@ router.get("/defaults", authenticateToken, async (_req, res) => {
 				order: 4,
 			},
 			{
-				cardId: "hostsNeedingUpdates",
+				cardId: "upToDateHosts",
 				title: "Up to date",
 				icon: "CheckCircle",
 				enabled: true,
