@@ -1,14 +1,5 @@
-import {
-	Cpu,
-	Globe,
-	HardDrive,
-	Monitor,
-	Server,
-	Shield,
-	Terminal,
-	Zap,
-} from "lucide-react";
-import { DiDebian, DiLinux, DiUbuntu, DiWindows } from "react-icons/di";
+import { Monitor, Server } from "lucide-react";
+import { DiWindows } from "react-icons/di";
 // Import OS icons from react-icons
 import {
 	SiAlpinelinux,
