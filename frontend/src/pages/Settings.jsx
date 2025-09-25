@@ -116,6 +116,7 @@ const Settings = () => {
 				serverPort: settings.server_port || 3001,
 				updateInterval: settings.update_interval || 60,
 				autoUpdate: settings.auto_update || false,
+				// biome-ignore lint/complexity/noUselessTernary: Seems to be desired given the comment
 				signupEnabled: settings.signup_enabled === true ? true : false, // Explicit boolean conversion
 				defaultUserRole: settings.default_user_role || "user",
 				githubRepoUrl:
@@ -528,7 +529,7 @@ const Settings = () => {
 										type="number"
 										value={formData.serverPort}
 										onChange={(e) =>
-											handleInputChange("serverPort", parseInt(e.target.value))
+											handleInputChange("serverPort", parseInt(e.target.value, 10))
 										}
 										className={`w-full border rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-700 text-secondary-900 dark:text-white ${
 											errors.serverPort
@@ -579,7 +580,7 @@ const Settings = () => {
 										step="5"
 										value={formData.updateInterval}
 										onChange={(e) => {
-											const val = parseInt(e.target.value);
+											const val = parseInt(e.target.value, 10);
 											if (!Number.isNaN(val)) {
 												handleInputChange(
 													"updateInterval",
@@ -628,7 +629,7 @@ const Settings = () => {
 										onChange={(e) =>
 											handleInputChange(
 												"updateInterval",
-												parseInt(e.target.value),
+												parseInt(e.target.value, 10),
 											)
 										}
 										className="w-full accent-primary-600"
@@ -646,7 +647,7 @@ const Settings = () => {
 								<div className="mt-2 text-sm text-secondary-600 dark:text-secondary-300">
 									<span className="font-medium">Effective cadence:</span>{" "}
 									{(() => {
-										const mins = parseInt(formData.updateInterval) || 60;
+										const mins = parseInt(formData.updateInterval, 10) || 60;
 										if (mins < 60)
 											return `${mins} minute${mins === 1 ? "" : "s"}`;
 										const hrs = Math.floor(mins / 60);
