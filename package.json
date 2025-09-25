@@ -1,47 +1,47 @@
 {
-  "name": "patchmon",
-  "version": "1.2.6",
-  "description": "Linux Patch Monitoring System",
-  "private": true,
-  "workspaces": [
-    "backend",
-    "frontend"
-  ],
-  "scripts": {
-    "install:all": "npm install && npm run install:backend && npm run install:frontend",
-    "install:backend": "cd backend && npm install",
-    "install:frontend": "cd frontend && npm install",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "build:backend": "cd backend && npm run build",
-    "build:frontend": "cd frontend && npm run build",
-    "build": "npm run build:backend && npm run build:frontend",
-    "format": "npx @biomejs/biome format --write .",
-    "format:check": "npx @biomejs/biome format .",
-    "lint": "npx @biomejs/biome check .",
-    "lint:fix": "npx @biomejs/biome check --write ."
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.2.4",
-    "@commitlint/cli": "^20.0.0",
-    "@commitlint/config-conventional": "^20.0.0",
-    "concurrently": "^8.2.2",
-    "husky": "^9.1.6",
-    "lint-staged": "^15.2.10",
-    "markdownlint-cli": "^0.41.0",
-    "prettier": "^3.3.3",
-    "prettier-plugin-tailwindcss": "^0.6.8"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,json}": [
-      "npx @biomejs/biome check --write"
-    ],
-    "*.{md,yml,yaml,css,scss}": [
-      "npx @biomejs/biome format --write"
-    ]
-  }
+	"name": "patchmon",
+	"version": "1.2.6",
+	"description": "Linux Patch Monitoring System",
+	"private": true,
+	"workspaces": [
+		"backend",
+		"frontend"
+	],
+	"scripts": {
+		"install:all": "npm install && npm run install:backend && npm run install:frontend",
+		"install:backend": "cd backend && npm install",
+		"install:frontend": "cd frontend && npm install",
+		"dev:backend": "cd backend && npm run dev",
+		"dev:frontend": "cd frontend && npm run dev",
+		"dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+		"build:backend": "cd backend && npm run build",
+		"build:frontend": "cd frontend && npm run build",
+		"build": "npm run build:backend && npm run build:frontend",
+		"format": "npx @biomejs/biome format --write .",
+		"format:check": "npx @biomejs/biome format .",
+		"lint": "npx @biomejs/biome check .",
+		"lint:fix": "npx @biomejs/biome check --write ."
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.2.4",
+		"@commitlint/cli": "^20.0.0",
+		"@commitlint/config-conventional": "^20.0.0",
+		"concurrently": "^8.2.2",
+		"husky": "^9.1.6",
+		"lint-staged": "^15.2.10",
+		"markdownlint-cli": "^0.41.0",
+		"prettier": "^3.3.3",
+		"prettier-plugin-tailwindcss": "^0.6.8"
+	},
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"lint-staged": {
+		"*.{js,jsx,ts,tsx,json}": [
+			"npx @biomejs/biome check --write"
+		],
+		"*.{md,yml,yaml,css,scss}": [
+			"npx @biomejs/biome format --write"
+		]
+	}
 }

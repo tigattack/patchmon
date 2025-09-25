@@ -292,7 +292,9 @@ const Hosts = () => {
 			newSearchParams.delete("action");
 			navigate(
 				`/hosts${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""}`,
-				{ replace: true },
+				{
+					replace: true,
+				},
 			);
 		}
 
@@ -306,7 +308,9 @@ const Hosts = () => {
 			newSearchParams.delete("selected");
 			navigate(
 				`/hosts${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""}`,
-				{ replace: true },
+				{
+					replace: true,
+				},
 			);
 		}
 	}, [searchParams, navigate]);

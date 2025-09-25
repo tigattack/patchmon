@@ -496,8 +496,9 @@ const DeleteHostGroupModal = ({ group, onClose, onConfirm, isLoading }) => {
 						<div className="mt-3 p-3 bg-warning-50 border border-warning-200 rounded-md">
 							<p className="text-sm text-warning-800">
 								<strong>Warning:</strong> This group contains{" "}
-								{group._count.hosts} host{group._count.hosts !== 1 ? "s" : ""}.
-								You must move or remove these hosts before deleting the group.
+								{group._count.hosts} host
+								{group._count.hosts !== 1 ? "s" : ""}. You must move or remove
+								these hosts before deleting the group.
 							</p>
 						</div>
 					)}

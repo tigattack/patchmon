@@ -36,7 +36,9 @@ const SortableCardItem = ({ card, onToggle }) => {
 		transform,
 		transition,
 		isDragging,
-	} = useSortable({ id: card.cardId });
+	} = useSortable({
+		id: card.cardId,
+	});
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
