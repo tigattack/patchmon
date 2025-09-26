@@ -58,11 +58,11 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 		setIsSubmitting(true);
 		setError("");
 
-		console.log("Submitting form data:", formData);
+		console.log("Creating host:", formData.friendly_name);
 
 		try {
 			const response = await adminHostsAPI.create(formData);
-			console.log("Host created successfully:", response.data);
+			console.log("Host created successfully:", formData.friendly_name);
 			onSuccess(response.data);
 			setFormData({ friendly_name: "", hostGroupId: "" });
 			onClose();
