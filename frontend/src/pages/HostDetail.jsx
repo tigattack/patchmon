@@ -84,7 +84,7 @@ const HostDetail = () => {
 		},
 	});
 
-	// Toggle auto-update mutation
+	// Toggle agent auto-update mutation (updates PatchMon agent script, not system packages)
 	const toggleAutoUpdateMutation = useMutation({
 		mutationFn: (auto_update) =>
 			adminHostsAPI
@@ -350,7 +350,7 @@ const HostDetail = () => {
 								<div className="space-y-4">
 									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 										<div>
-											<p className="text-xs text-secondary-500 dark:text-secondary-300 mb-1">
+											<p className="text-xs text-secondary-500 dark:text-secondary-300 mb-1.5">
 												Friendly Name
 											</p>
 											<InlineEdit
@@ -374,7 +374,7 @@ const HostDetail = () => {
 
 										{host.hostname && (
 											<div>
-												<p className="text-xs text-secondary-500 dark:text-secondary-300">
+												<p className="text-xs text-secondary-500 dark:text-secondary-300 mb-1.5">
 													System Hostname
 												</p>
 												<p className="font-medium text-secondary-900 dark:text-white font-mono text-sm">
@@ -384,7 +384,7 @@ const HostDetail = () => {
 										)}
 
 										<div>
-											<p className="text-xs text-secondary-500 dark:text-secondary-300">
+											<p className="text-xs text-secondary-500 dark:text-secondary-300 mb-1.5">
 												Host Group
 											</p>
 											{host.host_groups ? (
@@ -402,7 +402,7 @@ const HostDetail = () => {
 										</div>
 
 										<div>
-											<p className="text-xs text-secondary-500 dark:text-secondary-300">
+											<p className="text-xs text-secondary-500 dark:text-secondary-300 mb-1.5">
 												Operating System
 											</p>
 											<div className="flex items-center gap-2">
@@ -413,43 +413,38 @@ const HostDetail = () => {
 											</div>
 										</div>
 
-										{host.agent_version && (
-											<div className="flex items-center justify-between">
-												<div>
-													<p className="text-xs text-secondary-500 dark:text-secondary-300">
-														Agent Version
-													</p>
-													<p className="font-medium text-secondary-900 dark:text-white text-sm">
-														{host.agent_version}
-													</p>
-												</div>
-												<div className="flex items-center gap-2">
-													<span className="text-xs text-secondary-500 dark:text-secondary-300">
-														Auto-update
-													</span>
-													<button
-														type="button"
-														onClick={() =>
-															toggleAutoUpdateMutation.mutate(!host.auto_update)
-														}
-														disabled={toggleAutoUpdateMutation.isPending}
-														className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
-															host.auto_update
-																? "bg-primary-600 dark:bg-primary-500"
-																: "bg-secondary-200 dark:bg-secondary-600"
-														}`}
-													>
-														<span
-															className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-																host.auto_update
-																	? "translate-x-5"
-																	: "translate-x-1"
-															}`}
-														/>
-													</button>
-												</div>
-											</div>
-										)}
+										<div>
+											<p className="text-xs text-secondary-500 dark:text-secondary-300 mb-1.5">
+												Agent Version
+											</p>
+											<p className="font-medium text-secondary-900 dark:text-white text-sm">
+												{host.agent_version || "Unknown"}
+											</p>
+										</div>
+
+										<div>
+											<p className="text-xs text-secondary-500 dark:text-secondary-300 mb-1.5">
+												Auto-update
+											</p>
+											<button
+												type="button"
+												onClick={() =>
+													toggleAutoUpdateMutation.mutate(!host.auto_update)
+												}
+												disabled={toggleAutoUpdateMutation.isPending}
+												className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+													host.auto_update
+														? "bg-primary-600 dark:bg-primary-500"
+														: "bg-secondary-200 dark:bg-secondary-600"
+												}`}
+											>
+												<span
+													className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+														host.auto_update ? "translate-x-5" : "translate-x-1"
+													}`}
+												/>
+											</button>
+										</div>
 									</div>
 								</div>
 							)}

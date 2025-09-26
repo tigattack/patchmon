@@ -527,11 +527,11 @@ router.post(
 				});
 			});
 
-			// Check if auto-update is enabled and if there's a newer agent version available
+			// Check if agent auto-update is enabled and if there's a newer version available
 			let autoUpdateResponse = null;
 			try {
 				const settings = await prisma.settings.findFirst();
-				// Check both global auto-update setting AND host-specific auto-update setting
+				// Check both global agent auto-update setting AND host-specific agent auto-update setting
 				if (settings?.auto_update && host.auto_update) {
 					// Get current agent version from the request
 					const currentAgentVersion = req.body.agentVersion;
@@ -560,8 +560,8 @@ router.post(
 					}
 				}
 			} catch (error) {
-				console.error("Auto-update check error:", error);
-				// Don't fail the update if auto-update check fails
+				console.error("Agent auto-update check error:", error);
+				// Don't fail the update if agent auto-update check fails
 			}
 
 			const response = {
@@ -571,7 +571,7 @@ router.post(
 				securityUpdates: securityCount,
 			};
 
-			// Add auto-update response if available
+			// Add agent auto-update response if available
 			if (autoUpdateResponse) {
 				response.autoUpdate = autoUpdateResponse;
 			}
@@ -1060,7 +1060,7 @@ router.delete(
 	},
 );
 
-// Toggle host auto-update setting
+// Toggle agent auto-update setting
 router.patch(
 	"/:hostId/auto-update",
 	authenticateToken,
@@ -1068,7 +1068,7 @@ router.patch(
 	[
 		body("auto_update")
 			.isBoolean()
-			.withMessage("Auto-update must be a boolean"),
+			.withMessage("Agent auto-update setting must be a boolean"),
 	],
 	async (req, res) => {
 		try {
@@ -1089,7 +1089,7 @@ router.patch(
 			});
 
 			res.json({
-				message: `Host auto-update ${auto_update ? "enabled" : "disabled"} successfully`,
+				message: `Agent auto-update ${auto_update ? "enabled" : "disabled"} successfully`,
 				host: {
 					id: host.id,
 					friendlyName: host.friendly_name,
@@ -1097,8 +1097,8 @@ router.patch(
 				},
 			});
 		} catch (error) {
-			console.error("Host auto-update toggle error:", error);
-			res.status(500).json({ error: "Failed to toggle host auto-update" });
+			console.error("Agent auto-update toggle error:", error);
+			res.status(500).json({ error: "Failed to toggle agent auto-update" });
 		}
 	},
 );
