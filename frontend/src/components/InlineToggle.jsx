@@ -16,7 +16,6 @@ const InlineToggle = ({
 
 		// Check if value actually changed
 		if (newValue === value) {
-			setIsEditing(false);
 			return;
 		}
 
@@ -25,7 +24,6 @@ const InlineToggle = ({
 
 		try {
 			await onSave(newValue);
-			setIsEditing(false);
 		} catch (err) {
 			setError(err.message || "Failed to save");
 		} finally {
