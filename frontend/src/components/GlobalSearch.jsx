@@ -177,7 +177,7 @@ const GlobalSearch = () => {
 			case "host":
 				return {
 					primary: result.friendly_name || result.hostname,
-					secondary: result.ip || result.hostname,
+					secondary: result.hostname,
 				};
 			case "package":
 				return {

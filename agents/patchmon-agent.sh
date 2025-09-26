@@ -249,7 +249,6 @@ detect_os() {
     
     ARCHITECTURE=$(uname -m)
     HOSTNAME=$(hostname)
-    IP_ADDRESS=$(hostname -I | awk '{print $1}')
 }
 
 # Get repository information based on OS
@@ -787,34 +786,6 @@ get_hardware_info() {
     echo "{\"cpuModel\":\"$cpu_model\",\"cpuCores\":$cpu_cores,\"ramInstalled\":$ram_installed,\"swapSize\":$swap_size,\"diskDetails\":$disk_details}"
 }
 
-# Get network information
-get_network_info() {
-    local gateway_ip=""
-    local dns_servers="[]"
-    local network_interfaces="[]"
-    
-    # Gateway IP
-    if command -v ip >/dev/null 2>&1; then
-        gateway_ip=$(ip route | grep default | head -1 | awk '{print $3}')
-    elif command -v route >/dev/null 2>&1; then
-        gateway_ip=$(route -n | grep '^0.0.0.0' | head -1 | awk '{print $2}')
-    fi
-    
-    # DNS Servers
-    if [[ -f /etc/resolv.conf ]]; then
-        dns_servers=$(grep "nameserver" /etc/resolv.conf | awk '{print $2}' | jq -R . | jq -s .)
-    fi
-    
-    # Network Interfaces
-    if command -v ip >/dev/null 2>&1; then
-        network_interfaces=$(ip -j addr show | jq -c '[.[] | {name: .ifname, type: .link_type, addresses: [.addr_info[]? | {address: .local, family: .family}]}]')
-    elif command -v ifconfig >/dev/null 2>&1; then
-        network_interfaces=$(ifconfig -a | grep -E "^[a-zA-Z]" | awk '{print $1}' | jq -R . | jq -s .)
-    fi
-    
-    echo "{\"gatewayIp\":\"$gateway_ip\",\"dnsServers\":$dns_servers,\"networkInterfaces\":$network_interfaces}"
-}
-
 # Get system information
 get_system_info() {
     local kernel_version=""
@@ -880,16 +851,16 @@ send_update() {
     local packages_json=$(get_package_info)
     local repositories_json=$(get_repository_info)
     local hardware_json=$(get_hardware_info)
-    local network_json=$(get_network_info)
     local system_json=$(get_system_info)
     
     info "Sending update to PatchMon server..."
     
     # Merge all JSON objects into one
-    local merged_json=$(echo "$hardware_json $network_json $system_json" | jq -s '.[0] * .[1] * .[2]')
+    local merged_json=$(echo "$hardware_json $system_json" | jq -s '.[0] * .[1]')
+
     # Get machine ID
     local machine_id=$(get_machine_id)
-    
+
     # Create the base payload and merge with system info
     local base_payload=$(cat <<EOF
 {
@@ -898,7 +869,6 @@ send_update() {
     "osType": "$OS_TYPE",
     "osVersion": "$OS_VERSION",
     "hostname": "$HOSTNAME",
-    "ip": "$IP_ADDRESS",
     "architecture": "$ARCHITECTURE",
     "agentVersion": "$AGENT_VERSION",
     "machineId": "$machine_id"
