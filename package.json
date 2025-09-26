@@ -2,6 +2,7 @@
 	"name": "patchmon",
 	"version": "1.2.6",
 	"description": "Linux Patch Monitoring System",
+	"license": "AGPL-3.0",
 	"private": true,
 	"workspaces": [
 		"backend",

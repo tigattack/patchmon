@@ -111,29 +111,34 @@ async function createDefaultDashboardPreferences(userId, userRole = "user") {
 				order: 9,
 			},
 			{
+				cardId: "osDistributionDoughnut",
+				requiredPermission: "can_view_reports",
+				order: 10,
+			},
+			{
 				cardId: "recentCollection",
 				requiredPermission: "can_view_hosts",
-				order: 10,
+				order: 11,
 			},
 			{
 				cardId: "updateStatus",
 				requiredPermission: "can_view_reports",
-				order: 11,
+				order: 12,
 			},
 			{
 				cardId: "packagePriority",
 				requiredPermission: "can_view_packages",
-				order: 12,
+				order: 13,
 			},
 			{
 				cardId: "recentUsers",
 				requiredPermission: "can_view_users",
-				order: 13,
+				order: 14,
 			},
 			{
 				cardId: "quickStats",
 				requiredPermission: "can_view_dashboard",
-				order: 14,
+				order: 15,
 			},
 		];
 
@@ -309,39 +314,46 @@ router.get("/defaults", authenticateToken, async (_req, res) => {
 				order: 9,
 			},
 			{
+				cardId: "osDistributionDoughnut",
+				title: "OS Distribution (Doughnut)",
+				icon: "PieChart",
+				enabled: true,
+				order: 10,
+			},
+			{
 				cardId: "recentCollection",
 				title: "Recent Collection",
 				icon: "Server",
 				enabled: true,
-				order: 10,
+				order: 11,
 			},
 			{
 				cardId: "updateStatus",
 				title: "Update Status",
 				icon: "BarChart3",
 				enabled: true,
-				order: 11,
+				order: 12,
 			},
 			{
 				cardId: "packagePriority",
 				title: "Package Priority",
 				icon: "BarChart3",
 				enabled: true,
-				order: 12,
+				order: 13,
 			},
 			{
 				cardId: "recentUsers",
 				title: "Recent Users Logged in",
 				icon: "Users",
 				enabled: true,
-				order: 13,
+				order: 14,
 			},
 			{
 				cardId: "quickStats",
 				title: "Quick Stats",
 				icon: "TrendingUp",
 				enabled: true,
-				order: 14,
+				order: 15,
 			},
 		];
 

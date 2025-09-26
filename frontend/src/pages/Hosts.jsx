@@ -474,7 +474,9 @@ const Hosts = () => {
 
 	const toggleAutoUpdateMutation = useMutation({
 		mutationFn: ({ hostId, autoUpdate }) =>
-			adminHostsAPI.toggleAutoUpdate(hostId, autoUpdate).then((res) => res.data),
+			adminHostsAPI
+				.toggleAutoUpdate(hostId, autoUpdate)
+				.then((res) => res.data),
 		onSuccess: () => {
 			queryClient.invalidateQueries(["hosts"]);
 		},

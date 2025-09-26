@@ -23,7 +23,7 @@ import {
 	WifiOff,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar, Doughnut, Pie } from "react-chartjs-2";
 import { useNavigate } from "react-router-dom";
 import DashboardSettingsModal from "../components/DashboardSettingsModal";
 import { useAuth } from "../contexts/AuthContext";
@@ -291,6 +291,7 @@ const Dashboard = () => {
 			[
 				"osDistribution",
 				"osDistributionBar",
+				"osDistributionDoughnut",
 				"updateStatus",
 				"packagePriority",
 				"recentUsers",
@@ -664,8 +665,34 @@ const Dashboard = () => {
 						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
 							OS Distribution
 						</h3>
-						<div className="h-64">
-							<Pie data={osChartData} options={chartOptions} />
+						<div className="h-64 w-full flex items-center justify-center">
+							<div className="w-full h-full max-w-sm">
+								<Pie data={osChartData} options={chartOptions} />
+							</div>
+						</div>
+					</button>
+				);
+
+			case "osDistributionDoughnut":
+				return (
+					<button
+						type="button"
+						className="card p-6 cursor-pointer hover:shadow-card-hover dark:hover:shadow-card-hover-dark transition-shadow duration-200 w-full text-left"
+						onClick={handleOSDistributionClick}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleOSDistributionClick();
+							}
+						}}
+					>
+						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
+							OS Distribution
+						</h3>
+						<div className="h-64 w-full flex items-center justify-center">
+							<div className="w-full h-full max-w-sm">
+								<Doughnut data={osChartData} options={doughnutChartOptions} />
+							</div>
 						</div>
 					</button>
 				);
@@ -708,11 +735,13 @@ const Dashboard = () => {
 						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
 							Update Status
 						</h3>
-						<div className="h-64">
-							<Pie
-								data={updateStatusChartData}
-								options={updateStatusChartOptions}
-							/>
+						<div className="h-64 w-full flex items-center justify-center">
+							<div className="w-full h-full max-w-sm">
+								<Pie
+									data={updateStatusChartData}
+									options={updateStatusChartOptions}
+								/>
+							</div>
 						</div>
 					</button>
 				);
@@ -733,11 +762,13 @@ const Dashboard = () => {
 						<h3 className="text-lg font-medium text-secondary-900 dark:text-white mb-4">
 							Package Priority
 						</h3>
-						<div className="h-64">
-							<Pie
-								data={packagePriorityChartData}
-								options={packagePriorityChartOptions}
-							/>
+						<div className="h-64 w-full flex items-center justify-center">
+							<div className="w-full h-full max-w-sm">
+								<Pie
+									data={packagePriorityChartData}
+									options={packagePriorityChartOptions}
+								/>
+							</div>
 						</div>
 					</button>
 				);
@@ -875,9 +906,13 @@ const Dashboard = () => {
 										key={host.id}
 										className="flex items-center justify-between py-2 border-b border-secondary-100 dark:border-secondary-700 last:border-b-0"
 									>
-										<div className="text-sm font-medium text-secondary-900 dark:text-white">
+										<button
+											type="button"
+											onClick={() => navigate(`/hosts/${host.id}`)}
+											className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline text-left"
+										>
 											{host.friendly_name || host.hostname}
-										</div>
+										</button>
 										<div className="text-sm text-secondary-500 dark:text-secondary-400">
 											{host.last_update
 												? formatRelativeTime(host.last_update)
@@ -935,15 +970,49 @@ const Dashboard = () => {
 
 	const chartOptions = {
 		responsive: true,
+		maintainAspectRatio: false,
 		plugins: {
 			legend: {
-				position: "bottom",
+				position: "right",
 				labels: {
 					color: isDark ? "#ffffff" : "#374151",
 					font: {
 						size: 12,
 					},
+					padding: 15,
+					usePointStyle: true,
+					pointStyle: "circle",
 				},
+			},
+		},
+		layout: {
+			padding: {
+				right: 20,
+			},
+		},
+		onClick: handleOSChartClick,
+	};
+
+	const doughnutChartOptions = {
+		responsive: true,
+		maintainAspectRatio: false,
+		plugins: {
+			legend: {
+				position: "right",
+				labels: {
+					color: isDark ? "#ffffff" : "#374151",
+					font: {
+						size: 12,
+					},
+					padding: 15,
+					usePointStyle: true,
+					pointStyle: "circle",
+				},
+			},
+		},
+		layout: {
+			padding: {
+				right: 20,
 			},
 		},
 		onClick: handleOSChartClick,
@@ -951,15 +1020,24 @@ const Dashboard = () => {
 
 	const updateStatusChartOptions = {
 		responsive: true,
+		maintainAspectRatio: false,
 		plugins: {
 			legend: {
-				position: "bottom",
+				position: "right",
 				labels: {
 					color: isDark ? "#ffffff" : "#374151",
 					font: {
 						size: 12,
 					},
+					padding: 15,
+					usePointStyle: true,
+					pointStyle: "circle",
 				},
+			},
+		},
+		layout: {
+			padding: {
+				right: 20,
 			},
 		},
 		onClick: handleUpdateStatusChartClick,
@@ -967,15 +1045,24 @@ const Dashboard = () => {
 
 	const packagePriorityChartOptions = {
 		responsive: true,
+		maintainAspectRatio: false,
 		plugins: {
 			legend: {
-				position: "bottom",
+				position: "right",
 				labels: {
 					color: isDark ? "#ffffff" : "#374151",
 					font: {
 						size: 12,
 					},
+					padding: 15,
+					usePointStyle: true,
+					pointStyle: "circle",
 				},
+			},
+		},
+		layout: {
+			padding: {
+				right: 20,
 			},
 		},
 		onClick: handlePackagePriorityChartClick,

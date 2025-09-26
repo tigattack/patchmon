@@ -1,37 +1,15 @@
-import { Check, Edit2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const InlineToggle = ({
 	value,
 	onSave,
-	onCancel,
 	className = "",
 	disabled = false,
 	trueLabel = "Yes",
 	falseLabel = "No",
 }) => {
-	const [isEditing, setIsEditing] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
-
-	useEffect(() => {
-		// Auto-save when value changes during editing
-		if (isEditing && !isLoading) {
-			handleSave(!value);
-		}
-	}, [isEditing]);
-
-	const handleEdit = () => {
-		if (disabled) return;
-		setIsEditing(true);
-		setError("");
-	};
-
-	const handleCancel = () => {
-		setIsEditing(false);
-		setError("");
-		if (onCancel) onCancel();
-	};
 
 	const handleSave = async (newValue) => {
 		if (disabled || isLoading) return;
@@ -95,9 +73,7 @@ const InlineToggle = ({
 				</button>
 			)}
 			{error && (
-				<span className="text-xs text-red-600 dark:text-red-400">
-					{error}
-				</span>
+				<span className="text-xs text-red-600 dark:text-red-400">{error}</span>
 			)}
 		</div>
 	);

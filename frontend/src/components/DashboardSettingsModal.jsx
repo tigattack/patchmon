@@ -171,6 +171,7 @@ const DashboardSettingsModal = ({ isOpen, onClose }) => {
 					return "Top card";
 				if (cardId === "osDistribution") return "Pie chart";
 				if (cardId === "osDistributionBar") return "Bar chart";
+				if (cardId === "osDistributionDoughnut") return "Doughnut chart";
 				if (cardId === "updateStatus") return "Pie chart";
 				if (cardId === "packagePriority") return "Pie chart";
 				if (cardId === "recentUsers") return "Table";
