@@ -59,8 +59,7 @@ const RepositoryDetail = () => {
 						.includes(searchTerm.toLowerCase()) ||
 					hostRepo.hosts.hostname
 						?.toLowerCase()
-						.includes(searchTerm.toLowerCase()) ||
-					hostRepo.hosts.ip?.toLowerCase().includes(searchTerm.toLowerCase()),
+						.includes(searchTerm.toLowerCase()),
 			);
 		}
 
@@ -78,8 +77,7 @@ const RepositoryDetail = () => {
 							.includes(searchTerm.toLowerCase()) ||
 						hostRepo.hosts.hostname
 							?.toLowerCase()
-							.includes(searchTerm.toLowerCase()) ||
-						hostRepo.hosts.ip?.toLowerCase().includes(searchTerm.toLowerCase()),
+							.includes(searchTerm.toLowerCase()),
 				).length
 			: hosts.length) / pageSize,
 	);

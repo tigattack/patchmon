@@ -94,7 +94,6 @@ router.get("/", authenticateToken, async (req, res) => {
 					id: host.id,
 					hostname: host.hostname,
 					friendly_name: host.friendly_name,
-					ip: host.ip,
 					os_type: host.os_type,
 					os_version: host.os_version,
 					status: host.status,

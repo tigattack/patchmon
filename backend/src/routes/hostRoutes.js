@@ -283,19 +283,6 @@ router.post(
 			.optional()
 			.isArray()
 			.withMessage("Disk details must be an array"),
-		// Network Information
-		body("gatewayIp")
-			.optional()
-			.isIP()
-			.withMessage("Gateway IP must be a valid IP address"),
-		body("dnsServers")
-			.optional()
-			.isArray()
-			.withMessage("DNS servers must be an array"),
-		body("networkInterfaces")
-			.optional()
-			.isArray()
-			.withMessage("Network interfaces must be an array"),
 		// System Information
 		body("kernelVersion")
 			.optional()
@@ -343,7 +330,6 @@ router.post(
 			if (req.body.osType) updateData.os_type = req.body.osType;
 			if (req.body.osVersion) updateData.os_version = req.body.osVersion;
 			if (req.body.hostname) updateData.hostname = req.body.hostname;
-			if (req.body.ip) updateData.ip = req.body.ip;
 			if (req.body.architecture)
 				updateData.architecture = req.body.architecture;
 			if (req.body.agentVersion)
@@ -357,12 +343,6 @@ router.post(
 			if (req.body.swapSize !== undefined)
 				updateData.swap_size = req.body.swapSize;
 			if (req.body.diskDetails) updateData.disk_details = req.body.diskDetails;
-
-			// Network Information
-			if (req.body.gatewayIp) updateData.gateway_ip = req.body.gatewayIp;
-			if (req.body.dnsServers) updateData.dns_servers = req.body.dnsServers;
-			if (req.body.networkInterfaces)
-				updateData.network_interfaces = req.body.networkInterfaces;
 
 			// System Information
 			if (req.body.kernelVersion)

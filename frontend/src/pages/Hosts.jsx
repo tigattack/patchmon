@@ -127,7 +127,7 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 							placeholder="server.example.com"
 						/>
 						<p className="mt-2 text-sm text-secondary-500 dark:text-secondary-400">
-							System information (OS, IP, architecture) will be automatically
+							System information (OS, architecture, etc.) will be automatically
 							detected when the agent connects.
 						</p>
 					</div>
@@ -328,7 +328,6 @@ const Hosts = () => {
 		const defaultConfig = [
 			{ id: "select", label: "Select", visible: true, order: 0 },
 			{ id: "host", label: "Friendly Name", visible: true, order: 1 },
-			{ id: "ip", label: "IP Address", visible: false, order: 2 },
 			{ id: "group", label: "Group", visible: true, order: 3 },
 			{ id: "os", label: "OS", visible: true, order: 4 },
 			{ id: "os_version", label: "OS Version", visible: false, order: 5 },
@@ -542,7 +541,6 @@ const Hosts = () => {
 			const matchesSearch =
 				searchTerm === "" ||
 				host.friendly_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				host.ip?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 				host.os_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 				host.notes?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -597,10 +595,6 @@ const Hosts = () => {
 				case "hostname":
 					aValue = a.hostname?.toLowerCase() || "zzz_no_hostname";
 					bValue = b.hostname?.toLowerCase() || "zzz_no_hostname";
-					break;
-				case "ip":
-					aValue = a.ip?.toLowerCase() || "zzz_no_ip";
-					bValue = b.ip?.toLowerCase() || "zzz_no_ip";
 					break;
 				case "group":
 					aValue = a.host_groups?.name || "zzz_ungrouped";
@@ -740,7 +734,6 @@ const Hosts = () => {
 			{ id: "select", label: "Select", visible: true, order: 0 },
 			{ id: "host", label: "Friendly Name", visible: true, order: 1 },
 			{ id: "hostname", label: "System Hostname", visible: true, order: 2 },
-			{ id: "ip", label: "IP Address", visible: false, order: 3 },
 			{ id: "group", label: "Group", visible: true, order: 4 },
 			{ id: "os", label: "OS", visible: true, order: 5 },
 			{ id: "os_version", label: "OS Version", visible: false, order: 6 },
@@ -802,12 +795,6 @@ const Hosts = () => {
 				return (
 					<div className="text-sm text-secondary-900 dark:text-white font-mono">
 						{host.hostname || "N/A"}
-					</div>
-				);
-			case "ip":
-				return (
-					<div className="text-sm text-secondary-900 dark:text-white">
-						{host.ip || "N/A"}
 					</div>
 				);
 			case "group":
@@ -1150,7 +1137,7 @@ const Hosts = () => {
 									<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400 dark:text-secondary-500" />
 									<input
 										type="text"
-										placeholder="Search hosts, IP addresses, or OS..."
+										placeholder="Search hosts or OS..."
 										value={searchTerm}
 										onChange={(e) => setSearchTerm(e.target.value)}
 										className="pl-10 pr-4 py-2 w-full border border-secondary-300 dark:border-secondary-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-secondary-800 text-secondary-900 dark:text-white placeholder-secondary-500 dark:placeholder-secondary-400"
@@ -1369,15 +1356,6 @@ const Hosts = () => {
 																			>
 																				{column.label}
 																				{getSortIcon("hostname")}
-																			</button>
-																		) : column.id === "ip" ? (
-																			<button
-																				type="button"
-																				onClick={() => handleSort("ip")}
-																				className="flex items-center gap-2 hover:text-secondary-700"
-																			>
-																				{column.label}
-																				{getSortIcon("ip")}
 																			</button>
 																		) : column.id === "group" ? (
 																			<button

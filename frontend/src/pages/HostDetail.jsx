@@ -22,7 +22,6 @@ import {
 	Shield,
 	Terminal,
 	Trash2,
-	Wifi,
 	X,
 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
@@ -305,17 +304,6 @@ const HostDetail = () => {
 							</button>
 							<button
 								type="button"
-								onClick={() => handleTabChange("network")}
-								className={`px-4 py-2 text-sm font-medium ${
-									activeTab === "network"
-										? "text-primary-600 dark:text-primary-400 border-b-2 border-primary-500"
-										: "text-secondary-500 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300"
-								}`}
-							>
-								Network
-							</button>
-							<button
-								type="button"
 								onClick={() => handleTabChange("system")}
 								className={`px-4 py-2 text-sm font-medium ${
 									activeTab === "system"
@@ -464,79 +452,6 @@ const HostDetail = () => {
 									</div>
 								</div>
 							)}
-
-							{/* Network Information */}
-							{activeTab === "network" &&
-								(host.ip ||
-									host.gateway_ip ||
-									host.dns_servers ||
-									host.network_interfaces) && (
-									<div className="space-y-4">
-										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-											{host.ip && (
-												<div>
-													<p className="text-xs text-secondary-500 dark:text-secondary-300">
-														IP Address
-													</p>
-													<p className="font-medium text-secondary-900 dark:text-white font-mono text-sm">
-														{host.ip}
-													</p>
-												</div>
-											)}
-
-											{host.gateway_ip && (
-												<div>
-													<p className="text-xs text-secondary-500 dark:text-secondary-300">
-														Gateway IP
-													</p>
-													<p className="font-medium text-secondary-900 dark:text-white font-mono text-sm">
-														{host.gateway_ip}
-													</p>
-												</div>
-											)}
-
-											{host.dns_servers &&
-												Array.isArray(host.dns_servers) &&
-												host.dns_servers.length > 0 && (
-													<div>
-														<p className="text-xs text-secondary-500 dark:text-secondary-300">
-															DNS Servers
-														</p>
-														<div className="space-y-1">
-															{host.dns_servers.map((dns) => (
-																<p
-																	key={dns}
-																	className="font-medium text-secondary-900 dark:text-white font-mono text-sm"
-																>
-																	{dns}
-																</p>
-															))}
-														</div>
-													</div>
-												)}
-
-											{host.network_interfaces &&
-												Array.isArray(host.network_interfaces) &&
-												host.network_interfaces.length > 0 && (
-													<div>
-														<p className="text-xs text-secondary-500 dark:text-secondary-300">
-															Network Interfaces
-														</p>
-														<div className="space-y-1">
-															{host.network_interfaces.map((iface) => (
-																<p
-																	key={iface.name}
-																	className="font-medium text-secondary-900 dark:text-white text-sm"
-																>
-																	{iface.name}
-																</p>
-															))}
-														</div>
-													</div>
-												)}
-										</div>
-									</div>
-								)}
 
 							{/* System Information */}
 							{activeTab === "system" && (
@@ -812,21 +727,6 @@ const HostDetail = () => {
 										)}
 								</div>
 							)}
-
-							{activeTab === "network" &&
-								!(
-									host.ip ||
-									host.gateway_ip ||
-									host.dns_servers ||
-									host.network_interfaces
-								) && (
-									<div className="text-center py-8">
-										<Wifi className="h-8 w-8 text-secondary-400 mx-auto mb-2" />
-										<p className="text-sm text-secondary-500 dark:text-secondary-300">
-											No network information available
-										</p>
-									</div>
-								)}
 
 							{/* Update History */}
 							{activeTab === "history" && (

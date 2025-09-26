@@ -62,7 +62,6 @@ model hosts {
   id                 String              @id
   machine_id         String              @unique
   friendly_name      String
-  ip                 String?
   os_type            String
   os_version         String
   architecture       String?
@@ -78,12 +77,9 @@ model hosts {
   cpu_cores          Int?
   cpu_model          String?
   disk_details       Json?
-  dns_servers        Json?
-  gateway_ip         String?
   hostname           String?
   kernel_version     String?
   load_average       Json?
-  network_interfaces Json?
   ram_installed      Int?
   selinux_status     String?
   swap_size          Int?
