@@ -28,7 +28,7 @@ import {
 	X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useUpdateNotification } from "../contexts/UpdateNotificationContext";
 import { dashboardAPI, versionAPI } from "../utils/api";
@@ -44,6 +44,7 @@ const Layout = ({ children }) => {
 	const [_userMenuOpen, setUserMenuOpen] = useState(false);
 	const [githubStars, setGithubStars] = useState(null);
 	const location = useLocation();
+	const navigate = useNavigate();
 	const {
 		user,
 		logout,
@@ -236,7 +237,7 @@ const Layout = ({ children }) => {
 
 	const handleAddHost = () => {
 		// Navigate to hosts page with add modal parameter
-		window.location.href = "/hosts?action=add";
+		navigate("/hosts?action=add");
 	};
 
 	// Fetch GitHub stars count
