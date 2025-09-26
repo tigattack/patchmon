@@ -140,9 +140,9 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 							{/* No Group Option */}
 							<button
 								type="button"
-								onClick={() => setFormData({ ...formData, host_group_id: "" })}
+								onClick={() => setFormData({ ...formData, hostGroupId: "" })}
 								className={`flex flex-col items-center justify-center px-2 py-3 text-center border-2 rounded-lg transition-all duration-200 relative min-h-[80px] ${
-									formData.host_group_id === ""
+									formData.hostGroupId === ""
 										? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
 										: "border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 text-secondary-700 dark:text-secondary-200 hover:border-secondary-400 dark:hover:border-secondary-500"
 								}`}
@@ -151,7 +151,7 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 								<div className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
 									Ungrouped
 								</div>
-								{formData.host_group_id === "" && (
+								{formData.hostGroupId === "" && (
 									<div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary-500 flex items-center justify-center">
 										<div className="w-1.5 h-1.5 rounded-full bg-white"></div>
 									</div>
@@ -164,10 +164,10 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 									key={group.id}
 									type="button"
 									onClick={() =>
-										setFormData({ ...formData, host_group_id: group.id })
+										setFormData({ ...formData, hostGroupId: group.id })
 									}
 									className={`flex flex-col items-center justify-center px-2 py-3 text-center border-2 rounded-lg transition-all duration-200 relative min-h-[80px] ${
-										formData.host_group_id === group.id
+										formData.hostGroupId === group.id
 											? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
 											: "border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 text-secondary-700 dark:text-secondary-200 hover:border-secondary-400 dark:hover:border-secondary-500"
 									}`}
@@ -186,7 +186,7 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 									<div className="text-xs text-secondary-500 dark:text-secondary-400">
 										Group
 									</div>
-									{formData.host_group_id === group.id && (
+									{formData.hostGroupId === group.id && (
 										<div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary-500 flex items-center justify-center">
 											<div className="w-1.5 h-1.5 rounded-full bg-white"></div>
 										</div>
