@@ -118,9 +118,21 @@ router.post(
 			// Create default dashboard preferences for the new admin user
 			await createDefaultDashboardPreferences(user.id, "admin");
 
+			// Generate token for immediate login
+			const token = generateToken(user.id);
+
 			res.status(201).json({
 				message: "Admin user created successfully",
-				user: user,
+				token,
+				user: {
+					id: user.id,
+					username: user.username,
+					email: user.email,
+					role: user.role,
+					first_name: user.first_name,
+					last_name: user.last_name,
+					is_active: user.is_active,
+				},
 			});
 		} catch (error) {
 			console.error("Error creating admin user:", error);

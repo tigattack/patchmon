@@ -3,7 +3,7 @@ import { useId, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
 const FirstTimeAdminSetup = () => {
-	const { login } = useAuth();
+	const { login, setAuthState } = useAuth();
 	const firstNameId = useId();
 	const lastNameId = useId();
 	const usernameId = useId();
@@ -95,10 +95,18 @@ const FirstTimeAdminSetup = () => {
 
 			if (response.ok) {
 				setSuccess(true);
-				// Auto-login the user after successful setup
-				setTimeout(() => {
-					login(formData.username.trim(), formData.password);
-				}, 2000);
+
+				// If the response includes a token, use it to automatically log in
+				if (data.token && data.user) {
+					// Auto-login using the token from the setup response
+					setAuthState(data.token, data.user);
+					setTimeout(() => {}, 2000);
+				} else {
+					// Fallback to manual login if no token provided
+					setTimeout(() => {
+						login(formData.username.trim(), formData.password);
+					}, 2000);
+				}
 			} else {
 				setError(data.error || "Failed to create admin user");
 			}
