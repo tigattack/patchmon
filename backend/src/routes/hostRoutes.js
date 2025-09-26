@@ -375,14 +375,21 @@ router.post(
 				updateData.status = "active";
 			}
 
-			await prisma.hosts.update({
-				where: { id: host.id },
-				data: updateData,
-			});
+			// Calculate package counts before transaction
+			const securityCount = packages.filter(
+				(pkg) => pkg.isSecurityUpdate,
+			).length;
+			const updatesCount = packages.filter((pkg) => pkg.needsUpdate).length;
 
-			// Process packages in transaction
+			// Process everything in a single transaction to avoid race conditions
 			await prisma.$transaction(async (tx) => {
-				// Clear existing host packages
+				// Update host data
+				await tx.hosts.update({
+					where: { id: host.id },
+					data: updateData,
+				});
+
+				// Clear existing host packages to avoid duplicates
 				await tx.host_packages.deleteMany({
 					where: { host_id: host.id },
 				});
@@ -423,8 +430,22 @@ router.post(
 					}
 
 					// Create host package relationship
-					await tx.host_packages.create({
-						data: {
+					// Use upsert to handle potential duplicates gracefully
+					await tx.host_packages.upsert({
+						where: {
+							host_id_package_id: {
+								host_id: host.id,
+								package_id: pkg.id,
+							},
+						},
+						update: {
+							current_version: packageData.currentVersion,
+							available_version: packageData.availableVersion || null,
+							needs_update: packageData.needsUpdate,
+							is_security_update: packageData.isSecurityUpdate || false,
+							last_checked: new Date(),
+						},
+						create: {
 							id: uuidv4(),
 							host_id: host.id,
 							package_id: pkg.id,
@@ -493,22 +514,17 @@ router.post(
 						});
 					}
 				}
-			});
 
-			// Create update history record
-			const securityCount = packages.filter(
-				(pkg) => pkg.isSecurityUpdate,
-			).length;
-			const updatesCount = packages.filter((pkg) => pkg.needsUpdate).length;
-
-			await prisma.update_history.create({
-				data: {
-					id: uuidv4(),
-					host_id: host.id,
-					packages_count: updatesCount,
-					security_count: securityCount,
-					status: "success",
-				},
+				// Create update history record
+				await tx.update_history.create({
+					data: {
+						id: uuidv4(),
+						host_id: host.id,
+						packages_count: updatesCount,
+						security_count: securityCount,
+						status: "success",
+					},
+				});
 			});
 
 			// Check if auto-update is enabled and if there's a newer agent version available
