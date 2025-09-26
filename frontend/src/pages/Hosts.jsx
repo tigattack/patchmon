@@ -27,6 +27,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import InlineEdit from "../components/InlineEdit";
 import InlineGroupEdit from "../components/InlineGroupEdit";
+import InlineToggle from "../components/InlineToggle";
 import {
 	adminHostsAPI,
 	dashboardAPI,
@@ -471,6 +472,14 @@ const Hosts = () => {
 		},
 	});
 
+	const toggleAutoUpdateMutation = useMutation({
+		mutationFn: ({ hostId, autoUpdate }) =>
+			adminHostsAPI.toggleAutoUpdate(hostId, autoUpdate).then((res) => res.data),
+		onSuccess: () => {
+			queryClient.invalidateQueries(["hosts"]);
+		},
+	});
+
 	const bulkDeleteMutation = useMutation({
 		mutationFn: (hostIds) => adminHostsAPI.deleteBulk(hostIds),
 		onSuccess: (data) => {
@@ -818,15 +827,17 @@ const Hosts = () => {
 				);
 			case "auto_update":
 				return (
-					<span
-						className={`text-sm font-medium ${
-							host.auto_update
-								? "text-green-600 dark:text-green-400"
-								: "text-red-600 dark:text-red-400"
-						}`}
-					>
-						{host.auto_update ? "Yes" : "No"}
-					</span>
+					<InlineToggle
+						value={host.auto_update}
+						onSave={(autoUpdate) =>
+							toggleAutoUpdateMutation.mutate({
+								hostId: host.id,
+								autoUpdate: autoUpdate,
+							})
+						}
+						trueLabel="Yes"
+						falseLabel="No"
+					/>
 				);
 			case "status":
 				return (
