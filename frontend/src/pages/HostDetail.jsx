@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-	Activity,
 	AlertTriangle,
 	ArrowLeft,
 	Calendar,
@@ -9,13 +8,9 @@ import {
 	ChevronUp,
 	Clock,
 	Copy,
-	Cpu,
 	Eye,
 	EyeOff,
-	HardDrive,
 	Key,
-	MemoryStick,
-	Monitor,
 	Package,
 	RefreshCw,
 	Server,
@@ -233,13 +228,6 @@ const HostDetail = () => {
 					<h1 className="text-xl font-semibold text-secondary-900 dark:text-white">
 						{host.friendly_name}
 					</h1>
-					{host.system_uptime && (
-						<div className="flex items-center gap-1 text-sm text-secondary-600 dark:text-secondary-400">
-							<Clock className="h-4 w-4" />
-							<span className="text-xs font-medium">Uptime:</span>
-							<span>{host.system_uptime}</span>
-						</div>
-					)}
 					<div className="flex items-center gap-1 text-sm text-secondary-600 dark:text-secondary-400">
 						<Clock className="h-4 w-4" />
 						<span className="text-xs font-medium">Last updated:</span>
@@ -288,7 +276,7 @@ const HostDetail = () => {
 			<div className="flex-1 grid grid-cols-12 gap-4 overflow-hidden">
 				{/* Left Column - System Details with Tabs */}
 				<div className="col-span-12 lg:col-span-7 flex flex-col gap-4 overflow-hidden">
-					{/* Host Info, Hardware, Network, System Info in Tabs */}
+					{/* Host Info and System Info in Tabs */}
 					<div className="card">
 						<div className="flex border-b border-secondary-200 dark:border-secondary-600">
 							<button
@@ -512,221 +500,22 @@ const HostDetail = () => {
 											</div>
 										</div>
 									)}
-
-									{/* Resource Information */}
-									{(host.system_uptime ||
-										host.cpu_model ||
-										host.cpu_cores ||
-										host.ram_installed ||
-										host.swap_size !== undefined ||
-										(host.load_average &&
-											Array.isArray(host.load_average) &&
-											host.load_average.length > 0 &&
-											host.load_average.some((load) => load != null)) ||
-										(host.disk_details &&
-											Array.isArray(host.disk_details) &&
-											host.disk_details.length > 0)) && (
-										<div className="pt-4 border-t border-secondary-200 dark:border-secondary-600">
-											<h4 className="text-sm font-medium text-secondary-900 dark:text-white mb-3 flex items-center gap-2">
-												<Monitor className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-												Resource Information
-											</h4>
-
-											{/* System Overview */}
-											<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-												{/* System Uptime */}
-												{host.system_uptime && (
-													<div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
-														<div className="flex items-center gap-2 mb-2">
-															<Clock className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-															<p className="text-xs text-secondary-500 dark:text-secondary-300">
-																System Uptime
-															</p>
-														</div>
-														<p className="font-medium text-secondary-900 dark:text-white text-sm">
-															{host.system_uptime}
-														</p>
-													</div>
-												)}
-
-												{/* CPU Model */}
-												{host.cpu_model && (
-													<div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
-														<div className="flex items-center gap-2 mb-2">
-															<Cpu className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-															<p className="text-xs text-secondary-500 dark:text-secondary-300">
-																CPU Model
-															</p>
-														</div>
-														<p className="font-medium text-secondary-900 dark:text-white text-sm">
-															{host.cpu_model}
-														</p>
-													</div>
-												)}
-
-												{/* CPU Cores */}
-												{host.cpu_cores && (
-													<div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
-														<div className="flex items-center gap-2 mb-2">
-															<Cpu className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-															<p className="text-xs text-secondary-500 dark:text-secondary-300">
-																CPU Cores
-															</p>
-														</div>
-														<p className="font-medium text-secondary-900 dark:text-white text-sm">
-															{host.cpu_cores}
-														</p>
-													</div>
-												)}
-
-												{/* RAM Installed */}
-												{host.ram_installed && (
-													<div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
-														<div className="flex items-center gap-2 mb-2">
-															<MemoryStick className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-															<p className="text-xs text-secondary-500 dark:text-secondary-300">
-																RAM Installed
-															</p>
-														</div>
-														<p className="font-medium text-secondary-900 dark:text-white text-sm">
-															{host.ram_installed} GB
-														</p>
-													</div>
-												)}
-
-												{/* Swap Size */}
-												{host.swap_size !== undefined &&
-													host.swap_size !== null && (
-														<div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
-															<div className="flex items-center gap-2 mb-2">
-																<MemoryStick className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-																<p className="text-xs text-secondary-500 dark:text-secondary-300">
-																	Swap Size
-																</p>
-															</div>
-															<p className="font-medium text-secondary-900 dark:text-white text-sm">
-																{host.swap_size} GB
-															</p>
-														</div>
-													)}
-
-												{/* Load Average */}
-												{host.load_average &&
-													Array.isArray(host.load_average) &&
-													host.load_average.length > 0 &&
-													host.load_average.some((load) => load != null) && (
-														<div className="bg-secondary-50 dark:bg-secondary-700 p-4 rounded-lg">
-															<div className="flex items-center gap-2 mb-2">
-																<Activity className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-																<p className="text-xs text-secondary-500 dark:text-secondary-300">
-																	Load Average
-																</p>
-															</div>
-															<p className="font-medium text-secondary-900 dark:text-white text-sm">
-																{host.load_average
-																	.filter((load) => load != null)
-																	.map((load, index) => (
-																		<span key={`load-${index}-${load}`}>
-																			{typeof load === "number"
-																				? load.toFixed(2)
-																				: String(load)}
-																			{index <
-																				host.load_average.filter(
-																					(load) => load != null,
-																				).length -
-																					1 && ", "}
-																		</span>
-																	))}
-															</p>
-														</div>
-													)}
-											</div>
-
-											{/* Disk Information */}
-											{host.disk_details &&
-												Array.isArray(host.disk_details) &&
-												host.disk_details.length > 0 && (
-													<div className="pt-4 border-t border-secondary-200 dark:border-secondary-600">
-														<h5 className="text-sm font-medium text-secondary-900 dark:text-white mb-3 flex items-center gap-2">
-															<HardDrive className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-															Disk Usage
-														</h5>
-														<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-															{host.disk_details.map((disk, index) => (
-																<div
-																	key={disk.name || `disk-${index}`}
-																	className="bg-secondary-50 dark:bg-secondary-700 p-3 rounded-lg"
-																>
-																	<div className="flex items-center gap-2 mb-2">
-																		<HardDrive className="h-4 w-4 text-secondary-500" />
-																		<span className="font-medium text-secondary-900 dark:text-white text-sm">
-																			{disk.name || `Disk ${index + 1}`}
-																		</span>
-																	</div>
-																	{disk.size && (
-																		<p className="text-xs text-secondary-600 dark:text-secondary-300 mb-1">
-																			Size: {disk.size}
-																		</p>
-																	)}
-																	{disk.mountpoint && (
-																		<p className="text-xs text-secondary-600 dark:text-secondary-300 mb-1">
-																			Mount: {disk.mountpoint}
-																		</p>
-																	)}
-																	{disk.usage &&
-																		typeof disk.usage === "number" && (
-																			<div className="mt-2">
-																				<div className="flex justify-between text-xs text-secondary-600 dark:text-secondary-300 mb-1">
-																					<span>Usage</span>
-																					<span>{disk.usage}%</span>
-																				</div>
-																				<div className="w-full bg-secondary-200 dark:bg-secondary-600 rounded-full h-2">
-																					<div
-																						className="bg-primary-600 dark:bg-primary-400 h-2 rounded-full transition-all duration-300"
-																						style={{
-																							width: `${Math.min(Math.max(disk.usage, 0), 100)}%`,
-																						}}
-																					></div>
-																				</div>
-																			</div>
-																		)}
-																</div>
-															))}
-														</div>
-													</div>
-												)}
-										</div>
-									)}
-
-									{/* No Data State */}
-									{!host.kernel_version &&
-										!host.selinux_status &&
-										!host.architecture &&
-										!host.system_uptime &&
-										!host.cpu_model &&
-										!host.cpu_cores &&
-										!host.ram_installed &&
-										host.swap_size === undefined &&
-										(!host.load_average ||
-											!Array.isArray(host.load_average) ||
-											host.load_average.length === 0 ||
-											!host.load_average.some((load) => load != null)) &&
-										(!host.disk_details ||
-											!Array.isArray(host.disk_details) ||
-											host.disk_details.length === 0) && (
-											<div className="text-center py-8">
-												<Terminal className="h-8 w-8 text-secondary-400 mx-auto mb-2" />
-												<p className="text-sm text-secondary-500 dark:text-secondary-300">
-													No system information available
-												</p>
-												<p className="text-xs text-secondary-400 dark:text-secondary-400 mt-1">
-													System information will appear once the agent collects
-													data from this host
-												</p>
-											</div>
-										)}
 								</div>
 							)}
+
+							{activeTab === "system" &&
+								!(
+									host.kernel_version ||
+									host.selinux_status ||
+									host.architecture
+								) && (
+									<div className="text-center py-8">
+										<Terminal className="h-8 w-8 text-secondary-400 mx-auto mb-2" />
+										<p className="text-sm text-secondary-500 dark:text-secondary-300">
+											No system information available
+										</p>
+									</div>
+								)}
 
 							{/* Update History */}
 							{activeTab === "history" && (

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# PatchMon Agent Script v1.2.7
+# PatchMon Agent Script v1.2.8
 # This script sends package update information to the PatchMon server using API credentials
 
 # Configuration
 PATCHMON_SERVER="${PATCHMON_SERVER:-http://localhost:3001}"
 API_VERSION="v1"
-AGENT_VERSION="1.2.7"
+AGENT_VERSION="1.2.8"
 CONFIG_FILE="/etc/patchmon/agent.conf"
 CREDENTIALS_FILE="/etc/patchmon/credentials"
 LOG_FILE="/var/log/patchmon-agent.log"
@@ -740,58 +740,11 @@ get_yum_packages() {
     done <<< "$installed"
 }
 
-# Get hardware information
-get_hardware_info() {
-    local cpu_model=""
-    local cpu_cores=0
-    local ram_installed=0
-    local swap_size=0
-    local disk_details="[]"
-    
-    # CPU Information
-    if command -v lscpu >/dev/null 2>&1; then
-        cpu_model=$(lscpu | grep "Model name" | cut -d':' -f2 | xargs)
-        cpu_cores=$(lscpu | grep "^CPU(s):" | cut -d':' -f2 | xargs)
-    elif [[ -f /proc/cpuinfo ]]; then
-        cpu_model=$(grep "model name" /proc/cpuinfo | head -1 | cut -d':' -f2 | xargs)
-        cpu_cores=$(grep -c "^processor" /proc/cpuinfo)
-    fi
-    
-    # Memory Information
-    if command -v free >/dev/null 2>&1; then
-        # Use free -m to get MB, then convert to GB with decimal precision
-        ram_installed=$(free -m | grep "^Mem:" | awk '{printf "%.2f", $2/1024}')
-        swap_size=$(free -m | grep "^Swap:" | awk '{printf "%.2f", $2/1024}')
-    elif [[ -f /proc/meminfo ]]; then
-        # Convert KB to GB with decimal precision
-        ram_installed=$(grep "MemTotal" /proc/meminfo | awk '{printf "%.2f", $2/1048576}')
-        swap_size=$(grep "SwapTotal" /proc/meminfo | awk '{printf "%.2f", $2/1048576}')
-    fi
-    
-    # Ensure minimum value of 0.01GB to prevent 0 values
-    if (( $(echo "$ram_installed < 0.01" | bc -l) )); then
-        ram_installed="0.01"
-    fi
-    if (( $(echo "$swap_size < 0" | bc -l) )); then
-        swap_size="0"
-    fi
-    
-    # Disk Information
-    if command -v lsblk >/dev/null 2>&1; then
-        disk_details=$(lsblk -J -o NAME,SIZE,TYPE,MOUNTPOINT | jq -c '[.blockdevices[] | select(.type == "disk") | {name: .name, size: .size, mountpoint: .mountpoint}]')
-    elif command -v df >/dev/null 2>&1; then
-        disk_details=$(df -h | grep -E "^/dev/" | awk '{print "{\"name\":\""$1"\",\"size\":\""$2"\",\"mountpoint\":\""$6"\"}"}' | jq -s .)
-    fi
-    
-    echo "{\"cpuModel\":\"$cpu_model\",\"cpuCores\":$cpu_cores,\"ramInstalled\":$ram_installed,\"swapSize\":$swap_size,\"diskDetails\":$disk_details}"
-}
 
 # Get system information
 get_system_info() {
     local kernel_version=""
     local selinux_status=""
-    local system_uptime=""
-    local load_average="[]"
     
     # Kernel Version
     if [[ -f /proc/version ]]; then
@@ -817,25 +770,7 @@ get_system_info() {
         selinux_status="disabled"
     fi
     
-    # System Uptime
-    if [[ -f /proc/uptime ]]; then
-        local uptime_seconds=$(cat /proc/uptime | awk '{print int($1)}')
-        local days=$((uptime_seconds / 86400))
-        local hours=$(((uptime_seconds % 86400) / 3600))
-        local minutes=$(((uptime_seconds % 3600) / 60))
-        system_uptime="${days}d ${hours}h ${minutes}m"
-    elif command -v uptime >/dev/null 2>&1; then
-        system_uptime=$(uptime | awk -F'up ' '{print $2}' | awk -F', load' '{print $1}')
-    fi
-    
-    # Load Average
-    if [[ -f /proc/loadavg ]]; then
-        load_average=$(cat /proc/loadavg | awk '{print "["$1","$2","$3"]"}')
-    elif command -v uptime >/dev/null 2>&1; then
-        load_average=$(uptime | awk -F'load average: ' '{print "["$2"]"}' | tr -d ' ')
-    fi
-    
-    echo "{\"kernelVersion\":\"$kernel_version\",\"selinuxStatus\":\"$selinux_status\",\"systemUptime\":\"$system_uptime\",\"loadAverage\":$load_average}"
+    echo "{\"kernelVersion\":\"$kernel_version\",\"selinuxStatus\":\"$selinux_status\"}"
 }
 
 # Send package update to server
@@ -850,13 +785,9 @@ send_update() {
     info "Collecting system information..."
     local packages_json=$(get_package_info)
     local repositories_json=$(get_repository_info)
-    local hardware_json=$(get_hardware_info)
     local system_json=$(get_system_info)
     
     info "Sending update to PatchMon server..."
-    
-    # Merge all JSON objects into one
-    local merged_json=$(echo "$hardware_json $system_json" | jq -s '.[0] * .[1]')
 
     # Get machine ID
     local machine_id=$(get_machine_id)
@@ -877,7 +808,7 @@ EOF
 )
     
     # Merge the base payload with the system information
-    local payload=$(echo "$base_payload $merged_json" | jq -s '.[0] * .[1]')
+    local payload=$(echo "$base_payload $system_json" | jq -s '.[0] * .[1]')
     
     
     local response=$(curl $CURL_FLAGS -X POST \
@@ -1228,7 +1159,6 @@ show_diagnostics() {
     echo "Architecture: $(uname -m)"
     echo "Kernel: $(uname -r)"
     echo "Hostname: $(hostname)"
-    echo "Uptime: $(uptime -p 2>/dev/null || uptime)"
     echo ""
     
     # Agent information

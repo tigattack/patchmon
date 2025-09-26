@@ -262,27 +262,6 @@ router.post(
 			.optional()
 			.isLength({ min: 1 })
 			.withMessage("Agent version must be a non-empty string"),
-		// Hardware Information
-		body("cpuModel")
-			.optional()
-			.isString()
-			.withMessage("CPU model must be a string"),
-		body("cpuCores")
-			.optional()
-			.isInt({ min: 1 })
-			.withMessage("CPU cores must be a positive integer"),
-		body("ramInstalled")
-			.optional()
-			.isFloat({ min: 0.01 })
-			.withMessage("RAM installed must be a positive number"),
-		body("swapSize")
-			.optional()
-			.isFloat({ min: 0 })
-			.withMessage("Swap size must be a non-negative number"),
-		body("diskDetails")
-			.optional()
-			.isArray()
-			.withMessage("Disk details must be an array"),
 		// System Information
 		body("kernelVersion")
 			.optional()
@@ -292,14 +271,6 @@ router.post(
 			.optional()
 			.isIn(["enabled", "disabled", "permissive"])
 			.withMessage("SELinux status must be enabled, disabled, or permissive"),
-		body("systemUptime")
-			.optional()
-			.isString()
-			.withMessage("System uptime must be a string"),
-		body("loadAverage")
-			.optional()
-			.isArray()
-			.withMessage("Load average must be an array"),
 		body("machineId")
 			.optional()
 			.isString()
@@ -335,23 +306,11 @@ router.post(
 			if (req.body.agentVersion)
 				updateData.agent_version = req.body.agentVersion;
 
-			// Hardware Information
-			if (req.body.cpuModel) updateData.cpu_model = req.body.cpuModel;
-			if (req.body.cpuCores) updateData.cpu_cores = req.body.cpuCores;
-			if (req.body.ramInstalled)
-				updateData.ram_installed = req.body.ramInstalled;
-			if (req.body.swapSize !== undefined)
-				updateData.swap_size = req.body.swapSize;
-			if (req.body.diskDetails) updateData.disk_details = req.body.diskDetails;
-
 			// System Information
 			if (req.body.kernelVersion)
 				updateData.kernel_version = req.body.kernelVersion;
 			if (req.body.selinuxStatus)
 				updateData.selinux_status = req.body.selinuxStatus;
-			if (req.body.systemUptime)
-				updateData.system_uptime = req.body.systemUptime;
-			if (req.body.loadAverage) updateData.load_average = req.body.loadAverage;
 
 			// If this is the first update (status is 'pending'), change to 'active'
 			if (host.status === "pending") {
