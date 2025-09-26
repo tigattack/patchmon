@@ -15,7 +15,7 @@ import {
 	X,
 } from "lucide-react";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import UpgradeNotificationIcon from "../components/UpgradeNotificationIcon";
 import { useUpdateNotification } from "../contexts/UpdateNotificationContext";
 import {
