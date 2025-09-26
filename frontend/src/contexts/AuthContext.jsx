@@ -5,6 +5,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
+import { flushSync } from "react-dom";
 import { AUTH_PHASES, isAuthPhase } from "../constants/authPhases";
 
 const AuthContext = createContext();
@@ -268,11 +269,20 @@ export const AuthProvider = ({ children }) => {
 	}, [authPhase, checkAdminUsersExist]);
 
 	const setAuthState = (authToken, authUser) => {
-		setToken(authToken);
-		setUser(authUser);
+		// Use flushSync to ensure all state updates are applied synchronously
+		flushSync(() => {
+			setToken(authToken);
+			setUser(authUser);
+			setNeedsFirstTimeSetup(false);
+			setAuthPhase(AUTH_PHASES.READY);
+		});
+
+		// Store in localStorage after state is updated
 		localStorage.setItem("token", authToken);
 		localStorage.setItem("user", JSON.stringify(authUser));
-		setAuthPhase(AUTH_PHASES.READY); // Authentication complete, move to ready phase
+
+		// Fetch permissions immediately for the new authenticated user
+		fetchPermissions(authToken);
 	};
 
 	// Computed loading state based on phase and permissions state
