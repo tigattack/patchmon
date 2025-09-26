@@ -1,53 +1,41 @@
 {
-  "name": "patchmon",
-  "version": "1.2.6",
-  "description": "Linux Patch Monitoring System",
-  "private": true,
-  "workspaces": [
-    "backend",
-    "frontend"
-  ],
-  "scripts": {
-    "install:all": "npm install && npm run install:backend && npm run install:frontend",
-    "install:backend": "cd backend && npm install",
-    "install:frontend": "cd frontend && npm install",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "build:backend": "cd backend && npm run build",
-    "build:frontend": "cd frontend && npm run build",
-    "build": "npm run build:backend && npm run build:frontend",
-    "format": "prettier --cache --write \"**/*.{js,jsx,ts,tsx,json,md,css,scss,yml,yaml}\"",
-    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,css,scss,yml,yaml}\"",
-    "lint": "eslint . --ext .js,.jsx --cache",
-    "lint:fix": "eslint . --ext .js,.jsx --fix --cache"
-  },
-  "devDependencies": {
-    "@commitlint/cli": "^20.0.0",
-    "@commitlint/config-conventional": "^20.0.0",
-    "@eslint/js": "^9.17.0",
-    "concurrently": "^8.2.2",
-    "eslint": "^9.17.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.1.3",
-    "eslint-plugin-react": "^7.37.2",
-    "eslint-plugin-react-hooks": "^5.1.0",
-    "eslint-plugin-security": "^1.7.1",
-    "eslint-plugin-simple-import-sort": "^12.0.0",
-    "eslint-plugin-unicorn": "^55.0.0",
-    "husky": "^9.1.6",
-    "lint-staged": "^15.2.10",
-    "markdownlint-cli": "^0.41.0",
-    "prettier": "^3.3.3",
-    "prettier-plugin-tailwindcss": "^0.6.8"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "lint-staged": {
-    "*": {
-      "{js,jsx}": "[\"eslint --fix --cache\",\"prettier --write\"]",
-      "{md,yml,yaml,json,css,scss}": "[\"prettier --write\"]"
-    }
-  }
+	"name": "patchmon",
+	"version": "1.2.6",
+	"description": "Linux Patch Monitoring System",
+	"license": "AGPL-3.0",
+	"private": true,
+	"workspaces": [
+		"backend",
+		"frontend"
+	],
+	"scripts": {
+		"install:all": "npm install && npm run install:backend && npm run install:frontend",
+		"install:backend": "cd backend && npm install",
+		"install:frontend": "cd frontend && npm install",
+		"prepare": "lefthook install",
+		"dev:backend": "cd backend && npm run dev",
+		"dev:frontend": "cd frontend && npm run dev",
+		"dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+		"build:backend": "cd backend && npm run build",
+		"build:frontend": "cd frontend && npm run build",
+		"build": "npm run build:backend && npm run build:frontend",
+		"format": "npx @biomejs/biome format --write .",
+		"format:check": "npx @biomejs/biome format .",
+		"lint": "npx @biomejs/biome check .",
+		"lint:fix": "npx @biomejs/biome check --write ."
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.2.4",
+		"@commitlint/cli": "^20.0.0",
+		"@commitlint/config-conventional": "^20.0.0",
+		"concurrently": "^8.2.2",
+		"lefthook": "^1.13.4",
+		"lint-staged": "^15.2.10",
+		"markdownlint-cli": "^0.41.0",
+		"prettier": "^3.3.3",
+		"prettier-plugin-tailwindcss": "^0.6.8"
+	},
+	"engines": {
+		"node": ">=18.0.0"
+	}
 }

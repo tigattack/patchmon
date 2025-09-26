@@ -10,8 +10,8 @@ PatchMon is a containerised application that monitors system patches and updates
 
 ## Images
 
-- **Backend**: `ghcr.io/9technologygroup/patchmon-backend:latest`
-- **Frontend**: `ghcr.io/9technologygroup/patchmon-frontend:latest`
+- **Backend**: [ghcr.io/9technologygroup/patchmon-backend:latest](https://github.com/9technologygroup/patchmon.net/pkgs/container/patchmon-backend)
+- **Frontend**: [ghcr.io/9technologygroup/patchmon-frontend:latest](https://github.com/9technologygroup/patchmon.net/pkgs/container/patchmon-frontend)
 
 Version tags are also available (e.g. `1.2.3`) for both of these images.
 
@@ -20,15 +20,22 @@ Version tags are also available (e.g. `1.2.3`) for both of these images.
 ### Production Deployment
 
 1. Download the [Docker Compose file](docker-compose.yml)
-
-2. Configure environment variables (see [Configuration](#configuration) section)
-
-3. Start the application:
+2. Change the default database password in the file:
+   ```yaml
+   environment:
+     POSTGRES_PASSWORD: YOUR_SECURE_PASSWORD_HERE
+   ```
+3. Update the corresponding `DATABASE_URL` in the backend service:
+   ```yaml
+   environment:
+     DATABASE_URL: postgresql://patchmon_user:YOUR_SECURE_PASSWORD_HERE@database:5432/patchmon_db
+   ```
+4. Configure environment variables (see [Configuration](#configuration) section)
+5. Start the application:
    ```bash
    docker compose up -d
    ```
-
-4. Access the application at `http://localhost:3000`
+6. Access the application at `http://localhost:3000`
 
 ## Configuration
 
@@ -62,21 +69,17 @@ Version tags are also available (e.g. `1.2.3`) for both of these images.
 - `BACKEND_HOST`: Backend service hostname (default: `backend`)
 - `BACKEND_PORT`: Backend service port (default: 3001)
 
-### Security Configuration
+### Volumes
 
-**⚠️ IMPORTANT**: Before deploying to production, you MUST:
+The compose file creates two Docker volumes:
 
-1. Change the default database password in `docker-compose.yml`:
-   ```yaml
-   environment:
-     POSTGRES_PASSWORD: YOUR_SECURE_PASSWORD_HERE
-   ```
+* `postgres_data`: PostgreSQL's data directory.
+* `agent_files`: PatchMon's agent files.
 
-2. Update the corresponding `DATABASE_URL` in the backend service:
-   ```yaml
-   environment:
-     DATABASE_URL: postgresql://patchmon_user:YOUR_SECURE_PASSWORD_HERE@database:5432/patchmon_db
-   ```
+If you wish to bind either if their respective container paths to a host path rather than a Docker volume, you can do so in the Docker Compose file.
+
+> [!TIP]
+> The backend container runs as user & group ID 1000. If you plan to re-bind the agent files directory, ensure that the same user and/or group ID has permission to write to the host path to which it's bound.
 
 ---
 
