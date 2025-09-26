@@ -23,10 +23,11 @@ import {
 	Users,
 	X,
 } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import InlineEdit from "../components/InlineEdit";
 import InlineGroupEdit from "../components/InlineGroupEdit";
+import InlineToggle from "../components/InlineToggle";
 import {
 	adminHostsAPI,
 	dashboardAPI,
@@ -57,11 +58,11 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 		setIsSubmitting(true);
 		setError("");
 
-		console.log("Submitting form data:", formData);
+		console.log("Creating host:", formData.friendly_name);
 
 		try {
 			const response = await adminHostsAPI.create(formData);
-			console.log("Host created successfully:", response.data);
+			console.log("Host created successfully:", formData.friendly_name);
 			onSuccess(response.data);
 			setFormData({ friendly_name: "", hostGroupId: "" });
 			onClose();
@@ -139,9 +140,9 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 							{/* No Group Option */}
 							<button
 								type="button"
-								onClick={() => setFormData({ ...formData, host_group_id: "" })}
+								onClick={() => setFormData({ ...formData, hostGroupId: "" })}
 								className={`flex flex-col items-center justify-center px-2 py-3 text-center border-2 rounded-lg transition-all duration-200 relative min-h-[80px] ${
-									formData.host_group_id === ""
+									formData.hostGroupId === ""
 										? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
 										: "border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 text-secondary-700 dark:text-secondary-200 hover:border-secondary-400 dark:hover:border-secondary-500"
 								}`}
@@ -150,7 +151,7 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 								<div className="text-xs text-secondary-500 dark:text-secondary-400 mt-1">
 									Ungrouped
 								</div>
-								{formData.host_group_id === "" && (
+								{formData.hostGroupId === "" && (
 									<div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary-500 flex items-center justify-center">
 										<div className="w-1.5 h-1.5 rounded-full bg-white"></div>
 									</div>
@@ -163,10 +164,10 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 									key={group.id}
 									type="button"
 									onClick={() =>
-										setFormData({ ...formData, host_group_id: group.id })
+										setFormData({ ...formData, hostGroupId: group.id })
 									}
 									className={`flex flex-col items-center justify-center px-2 py-3 text-center border-2 rounded-lg transition-all duration-200 relative min-h-[80px] ${
-										formData.host_group_id === group.id
+										formData.hostGroupId === group.id
 											? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
 											: "border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 text-secondary-700 dark:text-secondary-200 hover:border-secondary-400 dark:hover:border-secondary-500"
 									}`}
@@ -185,7 +186,7 @@ const AddHostModal = ({ isOpen, onClose, onSuccess }) => {
 									<div className="text-xs text-secondary-500 dark:text-secondary-400">
 										Group
 									</div>
-									{formData.host_group_id === group.id && (
+									{formData.hostGroupId === group.id && (
 										<div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-primary-500 flex items-center justify-center">
 											<div className="w-1.5 h-1.5 rounded-full bg-white"></div>
 										</div>
@@ -471,6 +472,16 @@ const Hosts = () => {
 		},
 	});
 
+	const toggleAutoUpdateMutation = useMutation({
+		mutationFn: ({ hostId, autoUpdate }) =>
+			adminHostsAPI
+				.toggleAutoUpdate(hostId, autoUpdate)
+				.then((res) => res.data),
+		onSuccess: () => {
+			queryClient.invalidateQueries(["hosts"]);
+		},
+	});
+
 	const bulkDeleteMutation = useMutation({
 		mutationFn: (hostIds) => adminHostsAPI.deleteBulk(hostIds),
 		onSuccess: (data) => {
@@ -510,7 +521,7 @@ const Hosts = () => {
 	};
 
 	// Table filtering and sorting logic
-	const filteredAndSortedHosts = React.useMemo(() => {
+	const filteredAndSortedHosts = useMemo(() => {
 		if (!hosts) return [];
 
 		const filtered = hosts.filter((host) => {
@@ -629,7 +640,7 @@ const Hosts = () => {
 	]);
 
 	// Group hosts by selected field
-	const groupedHosts = React.useMemo(() => {
+	const groupedHosts = useMemo(() => {
 		if (groupBy === "none") {
 			return { "All Hosts": filteredAndSortedHosts };
 		}
@@ -818,15 +829,17 @@ const Hosts = () => {
 				);
 			case "auto_update":
 				return (
-					<span
-						className={`text-sm font-medium ${
-							host.auto_update
-								? "text-green-600 dark:text-green-400"
-								: "text-red-600 dark:text-red-400"
-						}`}
-					>
-						{host.auto_update ? "Yes" : "No"}
-					</span>
+					<InlineToggle
+						value={host.auto_update}
+						onSave={(autoUpdate) =>
+							toggleAutoUpdateMutation.mutate({
+								hostId: host.id,
+								autoUpdate: autoUpdate,
+							})
+						}
+						trueLabel="Yes"
+						falseLabel="No"
+					/>
 				);
 			case "status":
 				return (

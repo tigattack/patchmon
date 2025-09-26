@@ -827,25 +827,30 @@ async function getPermissionBasedPreferences(userRole) {
 			order: 9,
 		},
 		{
+			cardId: "osDistributionDoughnut",
+			requiredPermission: "can_view_reports",
+			order: 10,
+		},
+		{
 			cardId: "recentCollection",
 			requiredPermission: "can_view_hosts",
-			order: 10,
+			order: 11,
 		}, // Collection is host-related
 		{
 			cardId: "updateStatus",
 			requiredPermission: "can_view_reports",
-			order: 11,
+			order: 12,
 		},
 		{
 			cardId: "packagePriority",
 			requiredPermission: "can_view_packages",
-			order: 12,
+			order: 13,
 		},
-		{ cardId: "recentUsers", requiredPermission: "can_view_users", order: 13 },
+		{ cardId: "recentUsers", requiredPermission: "can_view_users", order: 14 },
 		{
 			cardId: "quickStats",
 			requiredPermission: "can_view_dashboard",
-			order: 14,
+			order: 15,
 		},
 	];
 

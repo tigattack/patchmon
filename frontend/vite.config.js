@@ -11,7 +11,7 @@ export default defineConfig({
 		allowedHosts: true, // Allow all hosts in development
 		proxy: {
 			"/api": {
-				target: `http://${process.env.BACKEND_HOST}:${process.env.BACKEND_PORT}`,
+				target: `http://${process.env.BACKEND_HOST || "localhost"}:${process.env.BACKEND_PORT || "3001"}`,
 				changeOrigin: true,
 				secure: false,
 				configure:

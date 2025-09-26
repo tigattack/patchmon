@@ -1073,7 +1073,7 @@ router.patch(
 			});
 
 			res.json({
-				message: `Host auto-update ${autoUpdate ? "enabled" : "disabled"} successfully`,
+				message: `Host auto-update ${auto_update ? "enabled" : "disabled"} successfully`,
 				host: {
 					id: host.id,
 					friendlyName: host.friendly_name,
