@@ -123,7 +123,7 @@ Operational
 
 ## Support
 
-- Discord: https://discord.gg/S7RXUHwg
+- Discord: https://discord.com/invite/6GF9jczKkR
 - Email: support@patchmon.net
 
 ## Roadmap
@@ -244,7 +244,7 @@ Thank you to all our contributors who help make PatchMon better every day!
 ## 🔗 Links
 
 - **Website**: [patchmon.net](https://patchmon.net) **(New website coming soon)**
-- **Discord**: [discord.gg/S7RXUHwg](https://discord.gg/S7RXUHwg)
+- **Discord**: [discord.gg/6GF9jczKkR](https://discord.com/invite/6GF9jczKkR)
 - **Roadmap**: [GitHub Projects](https://github.com/users/9technologygroup/projects/1)
 - **Documentation**: [Coming Soon]
 - **Support**: support@patchmon.net
@@ -255,7 +255,7 @@ Thank you to all our contributors who help make PatchMon better every day!
 
 **Made with ❤️ by the PatchMon Team**
 
-[![Discord](https://img.shields.io/badge/Discord-Join%20Server-blue?style=for-the-badge&logo=discord)](https://discord.gg/S7RXUHwg)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Server-blue?style=for-the-badge&logo=discord)](https://discord.gg/6GF9jczKkR)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/9technologygroup/patchmon.net)
 
 </div>
