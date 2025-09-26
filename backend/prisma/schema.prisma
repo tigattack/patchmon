@@ -74,16 +74,9 @@ model hosts {
   host_group_id      String?
   agent_version      String?
   auto_update        Boolean             @default(true)
-  cpu_cores          Int?
-  cpu_model          String?
-  disk_details       Json?
   hostname           String?
   kernel_version     String?
-  load_average       Json?
-  ram_installed      Int?
   selinux_status     String?
-  swap_size          Int?
-  system_uptime      String?
   notes              String?
   host_packages      host_packages[]
   host_repositories  host_repositories[]
