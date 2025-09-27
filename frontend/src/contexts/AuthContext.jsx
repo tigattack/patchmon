@@ -41,7 +41,6 @@ export const AuthProvider = ({ children }) => {
 			if (response.ok) {
 				const data = await response.json();
 				setPermissions(data);
-				localStorage.setItem("permissions", JSON.stringify(data));
 				return data;
 			} else {
 				console.error("Failed to fetch permissions");
@@ -67,25 +66,19 @@ export const AuthProvider = ({ children }) => {
 	useEffect(() => {
 		const storedToken = localStorage.getItem("token");
 		const storedUser = localStorage.getItem("user");
-		const storedPermissions = localStorage.getItem("permissions");
 
 		if (storedToken && storedUser) {
 			try {
 				setToken(storedToken);
 				setUser(JSON.parse(storedUser));
-				if (storedPermissions) {
-					setPermissions(JSON.parse(storedPermissions));
-				} else {
-					// Use the proper fetchPermissions function
-					fetchPermissions(storedToken);
-				}
+				// Fetch permissions from backend
+				fetchPermissions(storedToken);
 				// User is authenticated, skip setup check
 				setAuthPhase(AUTH_PHASES.READY);
 			} catch (error) {
 				console.error("Error parsing stored user data:", error);
 				localStorage.removeItem("token");
 				localStorage.removeItem("user");
-				localStorage.removeItem("permissions");
 				// Move to setup check phase
 				setAuthPhase(AUTH_PHASES.CHECKING_SETUP);
 			}
@@ -153,7 +146,6 @@ export const AuthProvider = ({ children }) => {
 			setPermissions(null);
 			localStorage.removeItem("token");
 			localStorage.removeItem("user");
-			localStorage.removeItem("permissions");
 		}
 	};
 
