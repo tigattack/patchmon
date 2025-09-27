@@ -95,14 +95,6 @@ export const AuthProvider = ({ children }) => {
 		}
 	}, [fetchPermissions]);
 
-	// Refresh permissions when user logs in (no automatic refresh)
-	useEffect(() => {
-		if (token && user) {
-			// Only refresh permissions once when user logs in
-			refreshPermissions();
-		}
-	}, [token, user, refreshPermissions]);
-
 	const login = async (username, password) => {
 		try {
 			const response = await fetch("/api/v1/auth/login", {
@@ -116,6 +108,12 @@ export const AuthProvider = ({ children }) => {
 			const data = await response.json();
 
 			if (response.ok) {
+				// Check if TFA is required
+				if (data.requiresTfa) {
+					return { success: true, requiresTfa: true };
+				}
+
+				// Regular successful login
 				setToken(data.token);
 				setUser(data.user);
 				localStorage.setItem("token", data.token);
