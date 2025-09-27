@@ -44,11 +44,7 @@ const HostDetail = () => {
 	const [showCredentialsModal, setShowCredentialsModal] = useState(false);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [showAllUpdates, setShowAllUpdates] = useState(false);
-	const [activeTab, setActiveTab] = useState(() => {
-		// Restore tab state from localStorage
-		const savedTab = localStorage.getItem(`host-detail-tab-${hostId}`);
-		return savedTab || "host";
-	});
+	const [activeTab, setActiveTab] = useState("host");
 
 	const {
 		data: host,
@@ -63,10 +59,9 @@ const HostDetail = () => {
 		refetchOnWindowFocus: false, // Don't refetch when window regains focus
 	});
 
-	// Save tab state to localStorage when it changes
+	// Tab change handler
 	const handleTabChange = (tabName) => {
 		setActiveTab(tabName);
-		localStorage.setItem(`host-detail-tab-${hostId}`, tabName);
 	};
 
 	// Auto-show credentials modal for new/pending hosts
