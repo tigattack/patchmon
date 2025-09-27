@@ -1,9 +1,11 @@
 import { AlertCircle, CheckCircle, Shield, UserPlus } from "lucide-react";
 import { useId, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 const FirstTimeAdminSetup = () => {
 	const { login, setAuthState } = useAuth();
+	const navigate = useNavigate();
 	const firstNameId = useId();
 	const lastNameId = useId();
 	const usernameId = useId();
@@ -98,13 +100,24 @@ const FirstTimeAdminSetup = () => {
 
 				// If the response includes a token, use it to automatically log in
 				if (data.token && data.user) {
-					// Auto-login using the token from the setup response
+					// Set the authentication state immediately
 					setAuthState(data.token, data.user);
-					setTimeout(() => {}, 2000);
+					// Navigate to dashboard after successful setup
+					setTimeout(() => {
+						navigate("/", { replace: true });
+					}, 100); // Small delay to ensure auth state is set
 				} else {
 					// Fallback to manual login if no token provided
-					setTimeout(() => {
-						login(formData.username.trim(), formData.password);
+					setTimeout(async () => {
+						try {
+							await login(formData.username.trim(), formData.password);
+						} catch (error) {
+							console.error("Auto-login failed:", error);
+							setError(
+								"Account created but auto-login failed. Please login manually.",
+							);
+							setSuccess(false);
+						}
 					}, 2000);
 				}
 			} else {
@@ -132,8 +145,8 @@ const FirstTimeAdminSetup = () => {
 							Admin Account Created!
 						</h1>
 						<p className="text-secondary-600 dark:text-secondary-300 mb-6">
-							Your admin account has been successfully created. You will be
-							automatically logged in shortly.
+							Your admin account has been successfully created and you are now
+							logged in. Redirecting to the dashboard...
 						</p>
 						<div className="flex justify-center">
 							<div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>

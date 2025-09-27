@@ -67,23 +67,17 @@ const Login = () => {
 		setError("");
 
 		try {
-			const response = await authAPI.login(
-				formData.username,
-				formData.password,
-			);
+			// Use the AuthContext login function which handles everything
+			const result = await login(formData.username, formData.password);
 
-			if (response.data.requiresTfa) {
+			if (result.requiresTfa) {
 				setRequiresTfa(true);
 				setTfaUsername(formData.username);
 				setError("");
+			} else if (result.success) {
+				navigate("/");
 			} else {
-				// Regular login successful
-				const result = await login(formData.username, formData.password);
-				if (result.success) {
-					navigate("/");
-				} else {
-					setError(result.error || "Login failed");
-				}
+				setError(result.error || "Login failed");
 			}
 		} catch (err) {
 			setError(err.response?.data?.error || "Login failed");

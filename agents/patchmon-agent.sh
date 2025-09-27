@@ -821,7 +821,7 @@ EOF
             success "Update sent successfully"
             echo "$response" | grep -o '"packagesProcessed":[0-9]*' | cut -d':' -f2 | xargs -I {} info "Processed {} packages"
             
-            # Check for auto-update instructions (look specifically in autoUpdate section)
+            # Check for PatchMon agent update instructions (this updates the agent script, not system packages)
             if echo "$response" | grep -q '"autoUpdate":{'; then
                 local auto_update_section=$(echo "$response" | grep -o '"autoUpdate":{[^}]*}')
                 local should_update=$(echo "$auto_update_section" | grep -o '"shouldUpdate":true' | cut -d':' -f2)
@@ -830,15 +830,15 @@ EOF
                     local current_version=$(echo "$auto_update_section" | grep -o '"currentVersion":"[^"]*' | cut -d'"' -f4)
                     local update_message=$(echo "$auto_update_section" | grep -o '"message":"[^"]*' | cut -d'"' -f4)
                     
-                    info "Auto-update detected: $update_message"
+                    info "PatchMon agent update detected: $update_message"
                     info "Current version: $current_version, Latest version: $latest_version"
                     
-                    # Automatically run update-agent command
-                    info "Automatically updating agent to latest version..."
+                    # Automatically run update-agent command to update the PatchMon agent script
+                    info "Automatically updating PatchMon agent to latest version..."
                     if "$0" update-agent; then
-                        success "Agent auto-update completed successfully"
+                        success "PatchMon agent update completed successfully"
                     else
-                        warning "Agent auto-update failed, but data was sent successfully"
+                        warning "PatchMon agent update failed, but data was sent successfully"
                     fi
                 fi
             fi

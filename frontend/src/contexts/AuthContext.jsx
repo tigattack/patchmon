@@ -5,6 +5,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
+import { flushSync } from "react-dom";
 import { AUTH_PHASES, isAuthPhase } from "../constants/authPhases";
 
 const AuthContext = createContext();
@@ -40,7 +41,6 @@ export const AuthProvider = ({ children }) => {
 			if (response.ok) {
 				const data = await response.json();
 				setPermissions(data);
-				localStorage.setItem("permissions", JSON.stringify(data));
 				return data;
 			} else {
 				console.error("Failed to fetch permissions");
@@ -66,25 +66,19 @@ export const AuthProvider = ({ children }) => {
 	useEffect(() => {
 		const storedToken = localStorage.getItem("token");
 		const storedUser = localStorage.getItem("user");
-		const storedPermissions = localStorage.getItem("permissions");
 
 		if (storedToken && storedUser) {
 			try {
 				setToken(storedToken);
 				setUser(JSON.parse(storedUser));
-				if (storedPermissions) {
-					setPermissions(JSON.parse(storedPermissions));
-				} else {
-					// Use the proper fetchPermissions function
-					fetchPermissions(storedToken);
-				}
+				// Fetch permissions from backend
+				fetchPermissions(storedToken);
 				// User is authenticated, skip setup check
 				setAuthPhase(AUTH_PHASES.READY);
 			} catch (error) {
 				console.error("Error parsing stored user data:", error);
 				localStorage.removeItem("token");
 				localStorage.removeItem("user");
-				localStorage.removeItem("permissions");
 				// Move to setup check phase
 				setAuthPhase(AUTH_PHASES.CHECKING_SETUP);
 			}
@@ -93,14 +87,6 @@ export const AuthProvider = ({ children }) => {
 			setAuthPhase(AUTH_PHASES.CHECKING_SETUP);
 		}
 	}, [fetchPermissions]);
-
-	// Refresh permissions when user logs in (no automatic refresh)
-	useEffect(() => {
-		if (token && user) {
-			// Only refresh permissions once when user logs in
-			refreshPermissions();
-		}
-	}, [token, user, refreshPermissions]);
 
 	const login = async (username, password) => {
 		try {
@@ -115,6 +101,12 @@ export const AuthProvider = ({ children }) => {
 			const data = await response.json();
 
 			if (response.ok) {
+				// Check if TFA is required
+				if (data.requiresTfa) {
+					return { success: true, requiresTfa: true };
+				}
+
+				// Regular successful login
 				setToken(data.token);
 				setUser(data.user);
 				localStorage.setItem("token", data.token);
@@ -154,7 +146,6 @@ export const AuthProvider = ({ children }) => {
 			setPermissions(null);
 			localStorage.removeItem("token");
 			localStorage.removeItem("user");
-			localStorage.removeItem("permissions");
 		}
 	};
 
@@ -268,11 +259,20 @@ export const AuthProvider = ({ children }) => {
 	}, [authPhase, checkAdminUsersExist]);
 
 	const setAuthState = (authToken, authUser) => {
-		setToken(authToken);
-		setUser(authUser);
+		// Use flushSync to ensure all state updates are applied synchronously
+		flushSync(() => {
+			setToken(authToken);
+			setUser(authUser);
+			setNeedsFirstTimeSetup(false);
+			setAuthPhase(AUTH_PHASES.READY);
+		});
+
+		// Store in localStorage after state is updated
 		localStorage.setItem("token", authToken);
 		localStorage.setItem("user", JSON.stringify(authUser));
-		setAuthPhase(AUTH_PHASES.READY); // Authentication complete, move to ready phase
+
+		// Fetch permissions immediately for the new authenticated user
+		fetchPermissions(authToken);
 	};
 
 	// Computed loading state based on phase and permissions state

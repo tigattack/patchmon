@@ -375,14 +375,21 @@ router.post(
 				updateData.status = "active";
 			}
 
-			await prisma.hosts.update({
-				where: { id: host.id },
-				data: updateData,
-			});
+			// Calculate package counts before transaction
+			const securityCount = packages.filter(
+				(pkg) => pkg.isSecurityUpdate,
+			).length;
+			const updatesCount = packages.filter((pkg) => pkg.needsUpdate).length;
 
-			// Process packages in transaction
+			// Process everything in a single transaction to avoid race conditions
 			await prisma.$transaction(async (tx) => {
-				// Clear existing host packages
+				// Update host data
+				await tx.hosts.update({
+					where: { id: host.id },
+					data: updateData,
+				});
+
+				// Clear existing host packages to avoid duplicates
 				await tx.host_packages.deleteMany({
 					where: { host_id: host.id },
 				});
@@ -423,8 +430,22 @@ router.post(
 					}
 
 					// Create host package relationship
-					await tx.host_packages.create({
-						data: {
+					// Use upsert to handle potential duplicates gracefully
+					await tx.host_packages.upsert({
+						where: {
+							host_id_package_id: {
+								host_id: host.id,
+								package_id: pkg.id,
+							},
+						},
+						update: {
+							current_version: packageData.currentVersion,
+							available_version: packageData.availableVersion || null,
+							needs_update: packageData.needsUpdate,
+							is_security_update: packageData.isSecurityUpdate || false,
+							last_checked: new Date(),
+						},
+						create: {
 							id: uuidv4(),
 							host_id: host.id,
 							package_id: pkg.id,
@@ -493,29 +514,24 @@ router.post(
 						});
 					}
 				}
+
+				// Create update history record
+				await tx.update_history.create({
+					data: {
+						id: uuidv4(),
+						host_id: host.id,
+						packages_count: updatesCount,
+						security_count: securityCount,
+						status: "success",
+					},
+				});
 			});
 
-			// Create update history record
-			const securityCount = packages.filter(
-				(pkg) => pkg.isSecurityUpdate,
-			).length;
-			const updatesCount = packages.filter((pkg) => pkg.needsUpdate).length;
-
-			await prisma.update_history.create({
-				data: {
-					id: uuidv4(),
-					host_id: host.id,
-					packages_count: updatesCount,
-					security_count: securityCount,
-					status: "success",
-				},
-			});
-
-			// Check if auto-update is enabled and if there's a newer agent version available
+			// Check if agent auto-update is enabled and if there's a newer version available
 			let autoUpdateResponse = null;
 			try {
 				const settings = await prisma.settings.findFirst();
-				// Check both global auto-update setting AND host-specific auto-update setting
+				// Check both global agent auto-update setting AND host-specific agent auto-update setting
 				if (settings?.auto_update && host.auto_update) {
 					// Get current agent version from the request
 					const currentAgentVersion = req.body.agentVersion;
@@ -544,8 +560,8 @@ router.post(
 					}
 				}
 			} catch (error) {
-				console.error("Auto-update check error:", error);
-				// Don't fail the update if auto-update check fails
+				console.error("Agent auto-update check error:", error);
+				// Don't fail the update if agent auto-update check fails
 			}
 
 			const response = {
@@ -555,7 +571,7 @@ router.post(
 				securityUpdates: securityCount,
 			};
 
-			// Add auto-update response if available
+			// Add agent auto-update response if available
 			if (autoUpdateResponse) {
 				response.autoUpdate = autoUpdateResponse;
 			}
@@ -1044,7 +1060,7 @@ router.delete(
 	},
 );
 
-// Toggle host auto-update setting
+// Toggle agent auto-update setting
 router.patch(
 	"/:hostId/auto-update",
 	authenticateToken,
@@ -1052,7 +1068,7 @@ router.patch(
 	[
 		body("auto_update")
 			.isBoolean()
-			.withMessage("Auto-update must be a boolean"),
+			.withMessage("Agent auto-update setting must be a boolean"),
 	],
 	async (req, res) => {
 		try {
@@ -1073,7 +1089,7 @@ router.patch(
 			});
 
 			res.json({
-				message: `Host auto-update ${auto_update ? "enabled" : "disabled"} successfully`,
+				message: `Agent auto-update ${auto_update ? "enabled" : "disabled"} successfully`,
 				host: {
 					id: host.id,
 					friendlyName: host.friendly_name,
@@ -1081,8 +1097,8 @@ router.patch(
 				},
 			});
 		} catch (error) {
-			console.error("Host auto-update toggle error:", error);
-			res.status(500).json({ error: "Failed to toggle host auto-update" });
+			console.error("Agent auto-update toggle error:", error);
+			res.status(500).json({ error: "Failed to toggle agent auto-update" });
 		}
 	},
 );

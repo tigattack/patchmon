@@ -326,7 +326,12 @@ const Hosts = () => {
 			{ id: "os", label: "OS", visible: true, order: 4 },
 			{ id: "os_version", label: "OS Version", visible: false, order: 5 },
 			{ id: "agent_version", label: "Agent Version", visible: true, order: 6 },
-			{ id: "auto_update", label: "Auto-update", visible: true, order: 7 },
+			{
+				id: "auto_update",
+				label: "Agent Auto-Update",
+				visible: true,
+				order: 7,
+			},
 			{ id: "status", label: "Status", visible: true, order: 8 },
 			{ id: "updates", label: "Updates", visible: true, order: 9 },
 			{ id: "last_update", label: "Last Update", visible: true, order: 10 },
