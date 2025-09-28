@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY frontend/package*.json ./frontend/
 
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 COPY frontend/ ./frontend/
 

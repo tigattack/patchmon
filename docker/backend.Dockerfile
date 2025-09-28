@@ -9,7 +9,7 @@ COPY --chown=node:node backend/ /app/backend/
 
 WORKDIR /app/backend
 
-RUN npm ci &&\
+RUN npm ci --ignore-scripts &&\
     npx prisma generate &&\
     npm prune --omit=dev &&\
     npm cache clean --force
