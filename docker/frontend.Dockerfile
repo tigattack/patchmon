@@ -6,7 +6,7 @@ COPY package*.json ./
 COPY frontend/package*.json ./frontend/
 
 RUN npm ci --ignore-scripts && \
-    npm install --only=optional
+    npm install --ignore-scripts --only=optional
 
 COPY frontend/ ./frontend/
 
