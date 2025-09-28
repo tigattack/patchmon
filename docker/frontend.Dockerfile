@@ -5,7 +5,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY frontend/package*.json ./frontend/
 
-RUN npm ci --ignore-scripts
+RUN npm ci --ignore-scripts && \
+    npm install --only=optional
 
 COPY frontend/ ./frontend/
 
