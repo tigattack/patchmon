@@ -158,8 +158,8 @@ else
     warning "Initial package data failed, but agent is configured. You can run 'patchmon-agent.sh update' manually."
 fi
 
-# Setup crontab for automatic updates
-info "⏰ Setting up automatic updates every $UPDATE_INTERVAL minutes..."
+# Setup crontab for automatic package status updates
+info "⏰ Setting up automatic package status update every $UPDATE_INTERVAL minutes..."
 if [[ $UPDATE_INTERVAL -eq 60 ]]; then
     # Hourly updates
     echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | crontab -
@@ -179,7 +179,7 @@ if [[ "$EXPECTED_VERSION" != "Unknown" ]]; then
 fi
 echo "   • Config directory: /etc/patchmon/"
 echo "   • Credentials file: /etc/patchmon/credentials"
-echo "   • Automatic updates: Every $UPDATE_INTERVAL minutes via crontab"
+echo "   • Status updates: Every $UPDATE_INTERVAL minutes via crontab"
 echo "   • View logs: tail -f /var/log/patchmon-agent.log"
 echo ""
 echo "🔧 Manual commands:"
