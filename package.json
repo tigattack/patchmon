@@ -26,15 +26,8 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.2.4",
-		"@types/bcryptjs": "^2.4.6",
-		"@commitlint/cli": "^20.0.0",
-		"@commitlint/config-conventional": "^20.0.0",
 		"concurrently": "^8.2.2",
-		"lefthook": "^1.13.4",
-		"lint-staged": "^15.2.10",
-		"markdownlint-cli": "^0.41.0",
-		"prettier": "^3.3.3",
-		"prettier-plugin-tailwindcss": "^0.6.8"
+		"lefthook": "^1.13.4"
 	},
 	"engines": {
 		"node": ">=18.0.0"
