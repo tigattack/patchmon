@@ -4,19 +4,13 @@ RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-# Copy backend package files
-COPY --chown=node:node backend/package*.json /app/backend/
+COPY --chown=node:node package*.json /app/
+COPY --chown=node:node backend/ /app/backend/
 
 WORKDIR /app/backend
 
-# Install backend dependencies (now has its own package-lock.json)
-RUN npm ci --ignore-scripts
-
-# Copy backend source after dependencies are installed
-COPY --chown=node:node backend/ /app/backend/
-
-# Generate Prisma client and clean up
-RUN npx prisma generate &&\
+RUN npm ci --ignore-scripts &&\
+    npx prisma generate &&\
     npm prune --omit=dev &&\
     npm cache clean --force
 
@@ -35,6 +29,7 @@ USER node
 WORKDIR /app
 
 COPY --from=builder /app/backend /app/backend
+COPY --from=builder /app/node_modules /app/node_modules
 COPY --chown=node:node agents ./agents_backup
 COPY --chown=node:node agents ./agents
 COPY --chmod=755 docker/backend.docker-entrypoint.sh ./entrypoint.sh
