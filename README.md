@@ -243,7 +243,7 @@ Thank you to all our contributors who help make PatchMon better every day!
 
 ## 🔗 Links
 
-- **Website**: [patchmon.net](https://patchmon.net) **(New website coming soon)**
+- **Website**: [patchmon.net](https://patchmon.net)
 - **Discord**: [https://patchmon.net/discord](https://patchmon.net/discord)
 - **Roadmap**: [GitHub Projects](https://github.com/users/9technologygroup/projects/1)
 - **Documentation**: [Coming Soon]
