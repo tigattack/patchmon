@@ -37,6 +37,42 @@ Version tags are also available (e.g. `1.2.3`) for both of these images.
    ```
 6. Access the application at `http://localhost:3000`
 
+## Updating
+
+To update PatchMon to the latest version:
+
+```bash
+docker compose up -d --pull
+```
+
+This command will:
+- Pull the latest images from the registry
+- Recreate containers with updated images
+- Maintain your data and configuration
+
+### Version-Specific Updates
+
+If you're using specific version tags instead of `latest` in your compose file:
+
+1. Update the image tags in your `docker-compose.yml`. For example:
+   ```yaml
+   services:
+     backend:
+       image: ghcr.io/9technologygroup/patchmon-backend:1.2.7  # Update version here
+      ...
+     frontend:
+       image: ghcr.io/9technologygroup/patchmon-frontend:1.2.7  # Update version here
+      ...
+   ```
+
+2. Then run the update command:
+   ```bash
+   docker compose up -d --pull
+   ```
+
+> [!TIP]
+> Check the [releases page](https://github.com/9technologygroup/patchmon.net/releases) for version-specific changes and migration notes.
+
 ## Configuration
 
 ### Environment Variables
