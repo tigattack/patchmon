@@ -4,7 +4,7 @@ FROM node:lts-alpine AS development
 WORKDIR /app
 
 COPY package*.json ./
-COPY frontend/ /app/frontend/
+COPY frontend/ ./frontend/
 
 RUN npm ci --ignore-scripts
 
