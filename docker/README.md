@@ -99,40 +99,54 @@ For development with live reload and source code mounting:
 
 2. Start development environment:
    ```bash
-   # Attached, live log output, services stopped on Ctrl+C
    docker compose -f docker/docker-compose.dev.yml up
-
-   # Detached
-   docker compose -f docker/docker-compose.dev.yml up -d
    ```
+   _See [Development Commands](#development-commands) for more options._
+
+3. Access the application:
+   - Frontend: `http://localhost:3000`
+   - Backend API: `http://localhost:3001`
+   - Database: `localhost:5432`
 
 ## Development Docker Compose
 
 The development compose file (`docker/docker-compose.dev.yml`):
-- Builds images locally from source
-- Enables development workflow  
-- Supports live reload and debugging
+- Builds images locally from source using development targets
+- Enables hot reload with Docker Compose watch functionality
+- Exposes database and backend ports for testing and development
+- Mounts source code directly into containers for live development
+- Supports debugging with enhanced logging
 
 ## Building Images Locally
 
-```
-docker build -t patchmon-backend:dev -f docker/backend.Dockerfile .
-docker build -t patchmon-frontend:dev -f docker/frontend.Dockerfile .
-```
-
-## Running in Docker Compose
-
-For development or custom builds:
+Both Dockerfiles use multi-stage builds with separate development and production targets:
 
 ```bash
-# Build backend image
-docker build -f docker/backend.Dockerfile -t patchmon-backend:dev .
+# Build development images
+docker build -f docker/backend.Dockerfile --target development -t patchmon-backend:dev .
+docker build -f docker/frontend.Dockerfile --target development -t patchmon-frontend:dev .
 
-# Build frontend image  
-docker build -f docker/frontend.Dockerfile -t patchmon-frontend:dev .
+# Build production images (default target)
+docker build -f docker/backend.Dockerfile -t patchmon-backend:latest .
+docker build -f docker/frontend.Dockerfile -t patchmon-frontend:latest .
 ```
 
 ## Development Commands
+
+### Hot Reload Development
+```bash
+# Attached, live log output, services stopped on Ctrl+C
+docker compose -f docker/docker-compose.dev.yml up
+
+# Attached with Docker Compose watch for hot reload
+docker compose -f docker/docker-compose.dev.yml up --watch
+
+# Detached
+docker compose -f docker/docker-compose.dev.yml up -d
+
+# Quiet, no log output, with Docker Compose watch for hot reload
+docker compose -f docker/docker-compose.dev.yml watch
+```
 
 ### Rebuild Services
 ```bash
@@ -143,9 +157,43 @@ docker compose -f docker/docker-compose.dev.yml up -d --build backend
 docker compose -f docker/docker-compose.dev.yml up -d --build
 ```
 
+### Development Ports
+The development setup exposes additional ports for debugging:
+- **Database**: `5432` - Direct PostgreSQL access
+- **Backend**: `3001` - API server with development features
+- **Frontend**: `3000` - React development server with hot reload
+
 ## Development Workflow
 
-1. **Code Changes**: Edit source files
-2. **Rebuild**: `docker compose -f docker/docker-compose.dev.yml up -d --build`
-3. **Test**: Access application and verify changes
-4. **Debug**: Check logs with `docker compose logs -f`
+1. **Initial Setup**: Clone repository and start development environment
+   ```bash
+   git clone https://github.com/9technologygroup/patchmon.net.git
+   cd patchmon.net
+   docker compose -f docker/docker-compose.dev.yml up -d --build
+   ```
+
+2. **Hot Reload Development**: Use Docker Compose watch for automatic reload
+   ```bash
+   docker compose -f docker/docker-compose.dev.yml up --watch --build
+   ```
+
+3. **Code Changes**: 
+   - **Frontend/Backend Source**: Files are synced automatically with watch mode
+   - **Package.json Changes**: Triggers automatic service rebuild
+   - **Prisma Schema Changes**: Backend service restarts automatically
+
+4. **Database Access**: Connect database client directly to `localhost:5432`
+
+5. **Debug**: If started with `docker compose [...] up -d` or `docker compose [...] watch`, check logs manually:
+   ```bash
+   docker compose -f docker/docker-compose.dev.yml logs -f
+   ```
+   Otherwise logs are shown automatically in attached modes (`up`, `up --watch`).
+
+### Features in Development Mode
+
+- **Hot Reload**: Automatic code synchronization and service restarts
+- **Enhanced Logging**: Detailed logs for debugging
+- **Direct Access**: Exposed ports for database and API debugging  
+- **Health Checks**: Built-in health monitoring for services
+- **Volume Persistence**: Development data persists between restarts
