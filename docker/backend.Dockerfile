@@ -35,7 +35,6 @@ USER node
 WORKDIR /app
 
 COPY --from=builder /app/backend /app/backend
-COPY --from=builder /app/node_modules /app/node_modules
 COPY --chown=node:node agents ./agents_backup
 COPY --chown=node:node agents ./agents
 COPY --chmod=755 docker/backend.docker-entrypoint.sh ./entrypoint.sh
