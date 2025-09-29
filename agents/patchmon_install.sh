@@ -160,12 +160,22 @@ fi
 
 # Setup crontab for automatic package status updates
 info "⏰ Setting up automatic package status update every $UPDATE_INTERVAL minutes..."
+
+# Check if patchmon cron job already exists
+PATCHMON_CRON_EXISTS=$(crontab -l 2>/dev/null | grep -c "patchmon-agent.sh update" || true)
+
+if [[ $PATCHMON_CRON_EXISTS -gt 0 ]]; then
+    info "   Existing PatchMon cron job found, removing old entry..."
+    # Remove existing patchmon cron entries and preserve other entries
+    (crontab -l 2>/dev/null | grep -v "patchmon-agent.sh update") | crontab -
+fi
+
 if [[ $UPDATE_INTERVAL -eq 60 ]]; then
-    # Hourly updates
-    echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | crontab -
+    # Hourly updates - safely append to existing crontab
+    (crontab -l 2>/dev/null; echo "0 * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1") | crontab -
 else
-    # Custom interval updates
-    echo "*/$UPDATE_INTERVAL * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1" | crontab -
+    # Custom interval updates - safely append to existing crontab
+    (crontab -l 2>/dev/null; echo "*/$UPDATE_INTERVAL * * * * /usr/local/bin/patchmon-agent.sh update >/dev/null 2>&1") | crontab -
 fi
 
 success "🎉 PatchMon Agent installation complete!"
