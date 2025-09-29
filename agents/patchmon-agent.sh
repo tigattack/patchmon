@@ -144,7 +144,7 @@ EOF
 test_credentials() {
     load_credentials
     
-    local response=$(curl -s -X POST \
+    local response=$(curl -ksv -X POST \
         -H "Content-Type: application/json" \
         -H "X-API-ID: $API_ID" \
         -H "X-API-KEY: $API_KEY" \
@@ -809,7 +809,7 @@ EOF
     local payload=$(echo "$base_payload $merged_json" | jq -s '.[0] * .[1]')
     
     
-    local response=$(curl -s -X POST \
+    local response=$(curl -ksv -X POST \
         -H "Content-Type: application/json" \
         -H "X-API-ID: $API_ID" \
         -H "X-API-KEY: $API_KEY" \
@@ -877,7 +877,7 @@ EOF
 ping_server() {
     load_credentials
     
-    local response=$(curl -s -X POST \
+    local response=$(curl -ksv -X POST \
         -H "Content-Type: application/json" \
         -H "X-API-ID: $API_ID" \
         -H "X-API-KEY: $API_KEY" \
@@ -920,7 +920,7 @@ check_version() {
     
     info "Checking for agent updates..."
     
-    local response=$(curl -s -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/agent/version")
+    local response=$(curl -ksv -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/agent/version")
     
     if [[ $? -eq 0 ]]; then
         local current_version=$(echo "$response" | grep -o '"currentVersion":"[^"]*' | cut -d'"' -f4)
@@ -955,7 +955,7 @@ update_agent() {
     
     info "Updating agent script..."
     
-    local response=$(curl -s -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/agent/version")
+    local response=$(curl -ksv -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/agent/version")
     
     if [[ $? -eq 0 ]]; then
         local download_url=$(echo "$response" | grep -o '"downloadUrl":"[^"]*' | cut -d'"' -f4)
@@ -973,7 +973,7 @@ update_agent() {
         cp "$0" "$0.backup.$(date +%Y%m%d_%H%M%S)"
         
         # Download new version
-        if curl -s -o "/tmp/patchmon-agent-new.sh" "$download_url"; then
+        if curl -ksv -o "/tmp/patchmon-agent-new.sh" "$download_url"; then
             # Verify the downloaded script is valid
             if bash -n "/tmp/patchmon-agent-new.sh" 2>/dev/null; then
                 # Replace current script
@@ -1009,7 +1009,7 @@ update_agent() {
 update_crontab() {
     load_credentials
     info "Updating crontab with current policy..."
-    local response=$(curl -s -X GET "$PATCHMON_SERVER/api/$API_VERSION/settings/update-interval")
+    local response=$(curl -ksv -X GET "$PATCHMON_SERVER/api/$API_VERSION/settings/update-interval")
     if [[ $? -eq 0 ]]; then
         local update_interval=$(echo "$response" | grep -o '"updateInterval":[0-9]*' | cut -d':' -f2)
         if [[ -n "$update_interval" ]]; then

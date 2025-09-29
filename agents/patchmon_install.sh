@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # PatchMon Agent Installation Script
-# Usage: curl -sSL {PATCHMON_URL}/api/v1/hosts/install | bash -s -- {PATCHMON_URL} {API_ID} {API_KEY}
+# Usage: curl -ksSL {PATCHMON_URL}/api/v1/hosts/install | bash -s -- {PATCHMON_URL} {API_ID} {API_KEY}
 
 set -e
 
@@ -74,10 +74,10 @@ PATCHMON_URL="http://localhost:3001"
 
 # Parse arguments
 if [[ $# -ne 3 ]]; then
-    echo "Usage: curl -sSL {PATCHMON_URL}/api/v1/hosts/install | bash -s -- {PATCHMON_URL} {API_ID} {API_KEY}"
+    echo "Usage: curl -ksSL {PATCHMON_URL}/api/v1/hosts/install | bash -s -- {PATCHMON_URL} {API_ID} {API_KEY}"
     echo ""
     echo "Example:"
-    echo "curl -sSL http://patchmon.example.com/api/v1/hosts/install | bash -s -- http://patchmon.example.com patchmon_1a2b3c4d abcd1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+    echo "curl -ksSL http://patchmon.example.com/api/v1/hosts/install | bash -s -- http://patchmon.example.com patchmon_1a2b3c4d abcd1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
     echo ""
     echo "Contact your PatchMon administrator to get your API credentials."
     exit 1
@@ -110,7 +110,7 @@ mkdir -p /etc/patchmon
 
 # Download the agent script
 info "📥 Downloading PatchMon agent script..."
-curl -sSL "$PATCHMON_URL/api/v1/hosts/agent/download" -o /usr/local/bin/patchmon-agent.sh
+curl -ksSL "$PATCHMON_URL/api/v1/hosts/agent/download" -o /usr/local/bin/patchmon-agent.sh
 chmod +x /usr/local/bin/patchmon-agent.sh
 
 # Get the agent version from the downloaded script
@@ -118,7 +118,7 @@ AGENT_VERSION=$(grep '^AGENT_VERSION=' /usr/local/bin/patchmon-agent.sh | cut -d
 info "📋 Agent version: $AGENT_VERSION"
 
 # Get expected agent version from server
-EXPECTED_VERSION=$(curl -s "$PATCHMON_URL/api/v1/hosts/agent/version" | grep -o '"currentVersion":"[^"]*' | cut -d'"' -f4 2>/dev/null || echo "Unknown")
+EXPECTED_VERSION=$(curl -ksv "$PATCHMON_URL/api/v1/hosts/agent/version" | grep -o '"currentVersion":"[^"]*' | cut -d'"' -f4 2>/dev/null || echo "Unknown")
 if [[ "$EXPECTED_VERSION" != "Unknown" ]]; then
     info "📋 Expected version: $EXPECTED_VERSION"
     if [[ "$AGENT_VERSION" != "$EXPECTED_VERSION" ]]; then
@@ -127,7 +127,7 @@ if [[ "$EXPECTED_VERSION" != "Unknown" ]]; then
 fi
 
 # Get update interval policy from server
-UPDATE_INTERVAL=$(curl -s "$PATCHMON_URL/api/v1/settings/update-interval" | grep -o '"updateInterval":[0-9]*' | cut -d':' -f2 2>/dev/null || echo "60")
+UPDATE_INTERVAL=$(curl -ksv "$PATCHMON_URL/api/v1/settings/update-interval" | grep -o '"updateInterval":[0-9]*' | cut -d':' -f2 2>/dev/null || echo "60")
 info "📋 Update interval: $UPDATE_INTERVAL minutes"
 
 # Create credentials file
