@@ -188,7 +188,6 @@ router.get("/hosts", authenticateToken, requireViewHosts, async (_req, res) => {
 				machine_id: true,
 				friendly_name: true,
 				hostname: true,
-				ip: true,
 				os_type: true,
 				os_version: true,
 				last_update: true,

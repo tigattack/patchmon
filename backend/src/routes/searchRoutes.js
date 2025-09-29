@@ -69,7 +69,6 @@ router.get("/", authenticateToken, async (req, res) => {
 						OR: [
 							{ hostname: { contains: searchTerm, mode: "insensitive" } },
 							{ friendly_name: { contains: searchTerm, mode: "insensitive" } },
-							{ ip: { contains: searchTerm, mode: "insensitive" } },
 							{ machine_id: { contains: searchTerm, mode: "insensitive" } },
 						],
 					},
@@ -78,7 +77,6 @@ router.get("/", authenticateToken, async (req, res) => {
 						machine_id: true,
 						hostname: true,
 						friendly_name: true,
-						ip: true,
 						os_type: true,
 						os_version: true,
 						status: true,

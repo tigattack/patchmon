@@ -114,7 +114,6 @@ router.get(
 									id: true,
 									friendly_name: true,
 									hostname: true,
-									ip: true,
 									os_type: true,
 									os_version: true,
 									status: true,

@@ -44,7 +44,6 @@ router.get("/:id", authenticateToken, async (req, res) => {
 						id: true,
 						friendly_name: true,
 						hostname: true,
-						ip: true,
 						os_type: true,
 						os_version: true,
 						status: true,
@@ -235,7 +234,6 @@ router.get("/:id/hosts", authenticateToken, async (req, res) => {
 			select: {
 				id: true,
 				friendly_name: true,
-				ip: true,
 				os_type: true,
 				os_version: true,
 				architecture: true,

@@ -191,7 +191,6 @@ router.post(
 					friendly_name: friendly_name,
 					os_type: "unknown", // Will be updated when agent connects
 					os_version: "unknown", // Will be updated when agent connects
-					ip: null, // Will be updated when agent connects
 					architecture: null, // Will be updated when agent connects
 					api_id: apiId,
 					api_key: apiKey,
@@ -525,7 +524,6 @@ router.get("/info", validateApiCredentials, async (req, res) => {
 				id: true,
 				friendly_name: true,
 				hostname: true,
-				ip: true,
 				os_type: true,
 				os_version: true,
 				architecture: true,
@@ -787,7 +785,6 @@ router.get(
 					id: true,
 					friendly_name: true,
 					hostname: true,
-					ip: true,
 					os_type: true,
 					os_version: true,
 					architecture: true,
@@ -1446,7 +1443,6 @@ router.patch(
 					id: true,
 					friendly_name: true,
 					hostname: true,
-					ip: true,
 					os_type: true,
 					os_version: true,
 					architecture: true,
@@ -1519,7 +1515,6 @@ router.patch(
 					id: true,
 					friendly_name: true,
 					hostname: true,
-					ip: true,
 					os_type: true,
 					os_version: true,
 					architecture: true,
