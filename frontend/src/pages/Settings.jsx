@@ -24,8 +24,18 @@ import {
 } from "../utils/api";
 
 const Settings = () => {
-	const _scriptFileId = useId();
-	const _scriptContentId = useId();
+	const repoPublicId = useId();
+	const repoPrivateId = useId();
+	const useCustomSshKeyId = useId();
+	const protocolId = useId();
+	const hostId = useId();
+	const portId = useId();
+	const updateIntervalId = useId();
+	const defaultRoleId = useId();
+	const githubRepoUrlId = useId();
+	const sshKeyPathId = useId();
+	const scriptFileId = useId();
+	const scriptContentId = useId();
 	const [formData, setFormData] = useState({
 		serverProtocol: "http",
 		serverHost: "localhost",
