@@ -167,7 +167,6 @@ router.get("/:packageId", async (req, res) => {
 							select: {
 								id: true,
 								hostname: true,
-								ip: true,
 								os_type: true,
 								os_version: true,
 								last_update: true,
