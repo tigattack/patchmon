@@ -4,13 +4,19 @@ RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-COPY --chown=node:node package*.json /app/
-COPY --chown=node:node backend/ /app/backend/
+# Copy backend package files
+COPY --chown=node:node backend/package*.json /app/backend/
 
 WORKDIR /app/backend
 
-RUN npm ci --ignore-scripts &&\
-    npx prisma generate &&\
+# Install backend dependencies (now has its own package-lock.json)
+RUN npm ci --ignore-scripts
+
+# Copy backend source after dependencies are installed
+COPY --chown=node:node backend/ /app/backend/
+
+# Generate Prisma client and clean up
+RUN npx prisma generate &&\
     npm prune --omit=dev &&\
     npm cache clean --force
 

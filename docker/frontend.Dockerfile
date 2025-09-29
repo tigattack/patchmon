@@ -2,14 +2,19 @@ FROM node:lts-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
+# Copy frontend package files
 COPY frontend/package*.json ./frontend/
 
+WORKDIR /app/frontend
+
+# Install frontend dependencies (now has its own package-lock.json)
 RUN npm ci --ignore-scripts
 
-COPY frontend/ ./frontend/
+# Copy frontend source after dependencies are installed
+COPY frontend/ ./
 
-RUN npm run build:frontend
+# Build the frontend
+RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:alpine
 
