@@ -34,8 +34,8 @@ const Settings = () => {
 	const defaultRoleId = useId();
 	const githubRepoUrlId = useId();
 	const sshKeyPathId = useId();
-	const scriptFileId = useId();
-	const scriptContentId = useId();
+	const _scriptFileId = useId();
+	const _scriptContentId = useId();
 	const [formData, setFormData] = useState({
 		serverProtocol: "http",
 		serverHost: "localhost",
