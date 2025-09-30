@@ -17,6 +17,7 @@ import Profile from "./pages/Profile";
 import Repositories from "./pages/Repositories";
 import RepositoryDetail from "./pages/RepositoryDetail";
 import AlertChannels from "./pages/settings/AlertChannels";
+import Notifications from "./pages/settings/Notifications";
 import SettingsAgentConfig from "./pages/settings/SettingsAgentConfig";
 import SettingsHostGroups from "./pages/settings/SettingsHostGroups";
 import SettingsServerConfig from "./pages/settings/SettingsServerConfig";
@@ -188,7 +189,9 @@ function AppRoutes() {
 				element={
 					<ProtectedRoute requirePermission="can_manage_settings">
 						<Layout>
-							<SettingsHostGroups />
+							<SettingsLayout>
+								<Notifications />
+							</SettingsLayout>
 						</Layout>
 					</ProtectedRoute>
 				}
