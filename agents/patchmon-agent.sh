@@ -683,11 +683,21 @@ get_hardware_info() {
     
     # Memory Information
     if command -v free >/dev/null 2>&1; then
-        ram_installed=$(free -g | grep "^Mem:" | awk '{print $2}')
-        swap_size=$(free -g | grep "^Swap:" | awk '{print $2}')
+        # Use free -m to get MB, then convert to GB with decimal precision
+        ram_installed=$(free -m | grep "^Mem:" | awk '{printf "%.2f", $2/1024}')
+        swap_size=$(free -m | grep "^Swap:" | awk '{printf "%.2f", $2/1024}')
     elif [[ -f /proc/meminfo ]]; then
-        ram_installed=$(grep "MemTotal" /proc/meminfo | awk '{print int($2/1024/1024)}')
-        swap_size=$(grep "SwapTotal" /proc/meminfo | awk '{print int($2/1024/1024)}')
+        # Convert KB to GB with decimal precision
+        ram_installed=$(grep "MemTotal" /proc/meminfo | awk '{printf "%.2f", $2/1048576}')
+        swap_size=$(grep "SwapTotal" /proc/meminfo | awk '{printf "%.2f", $2/1048576}')
+    fi
+    
+    # Ensure minimum value of 0.01GB to prevent 0 values
+    if (( $(echo "$ram_installed < 0.01" | bc -l) )); then
+        ram_installed="0.01"
+    fi
+    if (( $(echo "$swap_size < 0" | bc -l) )); then
+        swap_size="0"
     fi
     
     # Disk Information

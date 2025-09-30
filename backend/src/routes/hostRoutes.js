@@ -281,12 +281,12 @@ router.post(
 			.withMessage("CPU cores must be a positive integer"),
 		body("ramInstalled")
 			.optional()
-			.isInt({ min: 1 })
-			.withMessage("RAM installed must be a positive integer"),
+			.isFloat({ min: 0.01 })
+			.withMessage("RAM installed must be a positive number"),
 		body("swapSize")
 			.optional()
-			.isInt({ min: 0 })
-			.withMessage("Swap size must be a non-negative integer"),
+			.isFloat({ min: 0 })
+			.withMessage("Swap size must be a non-negative number"),
 		body("diskDetails")
 			.optional()
 			.isArray()
