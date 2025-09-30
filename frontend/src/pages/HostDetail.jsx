@@ -65,11 +65,6 @@ const HostDetail = () => {
 		queryFn: () => settingsAPI.get().then((res) => res.data),
 	});
 
-	// Helper function to get curl flags based on settings
-	const getCurlFlags = () => {
-		return settings?.ignore_ssl_self_signed ? "-sk" : "-s";
-	};
-
 	// Tab change handler
 	const handleTabChange = (tabName) => {
 		setActiveTab(tabName);
@@ -1010,6 +1005,7 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
 		queryFn: () => settingsAPI.get().then((res) => res.data),
 	});
 
+	// Helper function to get curl flags based on settings
 	const getCurlFlags = () => {
 		return settings?.ignore_ssl_self_signed ? "-sk" : "-s";
 	};
