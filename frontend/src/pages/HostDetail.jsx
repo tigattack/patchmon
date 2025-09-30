@@ -59,12 +59,6 @@ const HostDetail = () => {
 		refetchOnWindowFocus: false, // Don't refetch when window regains focus
 	});
 
-	// Fetch settings for dynamic curl flags
-	const { data: settings } = useQuery({
-		queryKey: ["settings"],
-		queryFn: () => settingsAPI.get().then((res) => res.data),
-	});
-
 	// Tab change handler
 	const handleTabChange = (tabName) => {
 		setActiveTab(tabName);
