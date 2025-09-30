@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import FirstTimeAdminSetup from "./components/FirstTimeAdminSetup";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
+import SettingsLayout from "./components/SettingsLayout";
 import { isAuthPhase } from "./constants/authPhases";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -10,15 +11,17 @@ import Dashboard from "./pages/Dashboard";
 import HostDetail from "./pages/HostDetail";
 import Hosts from "./pages/Hosts";
 import Login from "./pages/Login";
-import Options from "./pages/Options";
 import PackageDetail from "./pages/PackageDetail";
 import Packages from "./pages/Packages";
-import Permissions from "./pages/Permissions";
 import Profile from "./pages/Profile";
 import Repositories from "./pages/Repositories";
 import RepositoryDetail from "./pages/RepositoryDetail";
-import Settings from "./pages/Settings";
-import Users from "./pages/Users";
+import AlertChannels from "./pages/settings/AlertChannels";
+import Notifications from "./pages/settings/Notifications";
+import SettingsAgentConfig from "./pages/settings/SettingsAgentConfig";
+import SettingsHostGroups from "./pages/settings/SettingsHostGroups";
+import SettingsServerConfig from "./pages/settings/SettingsServerConfig";
+import SettingsUsers from "./pages/settings/SettingsUsers";
 
 function AppRoutes() {
 	const { needsFirstTimeSetup, authPhase, isAuthenticated } = useAuth();
@@ -114,7 +117,7 @@ function AppRoutes() {
 				element={
 					<ProtectedRoute requirePermission="can_view_users">
 						<Layout>
-							<Users />
+							<SettingsUsers />
 						</Layout>
 					</ProtectedRoute>
 				}
@@ -124,7 +127,7 @@ function AppRoutes() {
 				element={
 					<ProtectedRoute requirePermission="can_manage_settings">
 						<Layout>
-							<Permissions />
+							<SettingsUsers />
 						</Layout>
 					</ProtectedRoute>
 				}
@@ -134,7 +137,143 @@ function AppRoutes() {
 				element={
 					<ProtectedRoute requirePermission="can_manage_settings">
 						<Layout>
-							<Settings />
+							<SettingsServerConfig />
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/users"
+				element={
+					<ProtectedRoute requirePermission="can_view_users">
+						<Layout>
+							<SettingsUsers />
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/roles"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<SettingsUsers />
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/profile"
+				element={
+					<ProtectedRoute>
+						<Layout>
+							<SettingsLayout>
+								<Profile />
+							</SettingsLayout>
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/host-groups"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<SettingsHostGroups />
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/notifications"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<SettingsLayout>
+								<Notifications />
+							</SettingsLayout>
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/agent-config"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<SettingsAgentConfig />
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/agent-config/management"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<SettingsAgentConfig />
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/server-config"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<SettingsServerConfig />
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/server-config/version"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<SettingsServerConfig />
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/alert-channels"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<SettingsLayout>
+								<AlertChannels />
+							</SettingsLayout>
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/server-url"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<SettingsServerConfig />
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/server-version"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<SettingsServerConfig />
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/agent-version"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<SettingsAgentConfig />
 						</Layout>
 					</ProtectedRoute>
 				}
@@ -144,17 +283,7 @@ function AppRoutes() {
 				element={
 					<ProtectedRoute requirePermission="can_manage_hosts">
 						<Layout>
-							<Options />
-						</Layout>
-					</ProtectedRoute>
-				}
-			/>
-			<Route
-				path="/profile"
-				element={
-					<ProtectedRoute>
-						<Layout>
-							<Profile />
+							<SettingsHostGroups />
 						</Layout>
 					</ProtectedRoute>
 				}

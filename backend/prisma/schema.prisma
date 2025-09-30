@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model dashboard_preferences {
   id         String   @id
   user_id    String
@@ -157,6 +156,7 @@ model settings {
   update_available  Boolean   @default(false)
   signup_enabled    Boolean   @default(false)
   default_user_role String    @default("user")
+  ignore_ssl_self_signed Boolean @default(false)
 }
 
 model update_history {
@@ -175,8 +175,6 @@ model users {
   username              String                  @unique
   email                 String                  @unique
   password_hash         String
-  first_name            String?
-  last_name             String?
   role                  String                  @default("admin")
   is_active             Boolean                 @default(true)
   last_login            DateTime?
@@ -185,5 +183,7 @@ model users {
   tfa_backup_codes      String?
   tfa_enabled           Boolean                 @default(false)
   tfa_secret            String?
+  first_name            String?
+  last_name             String?
   dashboard_preferences dashboard_preferences[]
 }

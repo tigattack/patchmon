@@ -257,6 +257,7 @@ const Hosts = () => {
 		const filter = searchParams.get("filter");
 		const showFiltersParam = searchParams.get("showFilters");
 		const osFilterParam = searchParams.get("osFilter");
+		const groupParam = searchParams.get("group");
 
 		if (filter === "needsUpdates") {
 			setShowFilters(true);
@@ -282,6 +283,12 @@ const Hosts = () => {
 		if (osFilterParam) {
 			setShowFilters(true);
 			setOsFilter(osFilterParam);
+		}
+
+		// Handle group filter parameter
+		if (groupParam) {
+			setShowFilters(true);
+			setGroupFilter(groupParam);
 		}
 
 		// Handle add host action from navigation
