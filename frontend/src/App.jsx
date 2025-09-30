@@ -16,7 +16,6 @@ import Packages from "./pages/Packages";
 import Profile from "./pages/Profile";
 import Repositories from "./pages/Repositories";
 import RepositoryDetail from "./pages/RepositoryDetail";
-import Settings from "./pages/Settings";
 import AlertChannels from "./pages/settings/AlertChannels";
 import SettingsAgentConfig from "./pages/settings/SettingsAgentConfig";
 import SettingsHostGroups from "./pages/settings/SettingsHostGroups";
