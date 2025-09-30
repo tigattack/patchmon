@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertCircle, Code, Download, Plus, Shield, X } from "lucide-react";
 import { useId, useState } from "react";
-import { agentFileAPI } from "../../utils/api";
+import { agentFileAPI, settingsAPI } from "../../utils/api";
 
 const AgentManagementTab = () => {
 	const scriptFileId = useId();
@@ -18,6 +18,17 @@ const AgentManagementTab = () => {
 		queryKey: ["agentFile"],
 		queryFn: () => agentFileAPI.getInfo().then((res) => res.data),
 	});
+
+	// Fetch settings for dynamic curl flags
+	const { data: settings } = useQuery({
+		queryKey: ["settings"],
+		queryFn: () => settingsAPI.get().then((res) => res.data),
+	});
+
+	// Helper function to get curl flags based on settings
+	const getCurlFlags = () => {
+		return settings?.ignore_ssl_self_signed ? "-sk" : "-s";
+	};
 
 	const uploadAgentMutation = useMutation({
 		mutationFn: (scriptContent) =>
@@ -171,13 +182,13 @@ const AgentManagementTab = () => {
 									</p>
 									<div className="flex items-center gap-2">
 										<div className="bg-red-100 dark:bg-red-800 rounded p-2 font-mono text-xs flex-1">
-											curl -ks {window.location.origin}
+											curl {getCurlFlags()} {window.location.origin}
 											/api/v1/hosts/remove | sudo bash
 										</div>
 										<button
 											type="button"
 											onClick={() => {
-												const command = `curl -ks ${window.location.origin}/api/v1/hosts/remove | sudo bash`;
+												const command = `curl ${getCurlFlags()} ${window.location.origin}/api/v1/hosts/remove | sudo bash`;
 												navigator.clipboard.writeText(command);
 												// You could add a toast notification here
 											}}

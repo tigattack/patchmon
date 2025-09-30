@@ -1,13 +1,10 @@
 import {
-	AlertTriangle,
-	ArrowLeft,
 	Bell,
 	ChevronLeft,
 	ChevronRight,
 	Code,
 	Folder,
 	RefreshCw,
-	Server,
 	Settings,
 	Shield,
 	UserCircle,
@@ -121,7 +118,7 @@ const SettingsLayout = ({ children }) => {
 
 	const isActive = (path) => location.pathname === path;
 
-	const getPageTitle = () => {
+	const _getPageTitle = () => {
 		const path = location.pathname;
 
 		if (path.startsWith("/settings/users")) return "Users";

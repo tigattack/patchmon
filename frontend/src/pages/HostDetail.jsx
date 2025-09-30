@@ -59,6 +59,17 @@ const HostDetail = () => {
 		refetchOnWindowFocus: false, // Don't refetch when window regains focus
 	});
 
+	// Fetch settings for dynamic curl flags
+	const { data: settings } = useQuery({
+		queryKey: ["settings"],
+		queryFn: () => settingsAPI.get().then((res) => res.data),
+	});
+
+	// Helper function to get curl flags based on settings
+	const getCurlFlags = () => {
+		return settings?.ignore_ssl_self_signed ? "-sk" : "-s";
+	};
+
 	// Tab change handler
 	const handleTabChange = (tabName) => {
 		setActiveTab(tabName);
@@ -419,7 +430,7 @@ const HostDetail = () => {
 
 										<div>
 											<p className="text-xs text-secondary-500 dark:text-secondary-300 mb-1.5">
-												Auto-update
+												Agent Auto-update
 											</p>
 											<button
 												type="button"
@@ -993,6 +1004,16 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
 
 	const serverUrl = serverUrlData?.server_url || "http://localhost:3001";
 
+	// Fetch settings for dynamic curl flags (local to modal)
+	const { data: settings } = useQuery({
+		queryKey: ["settings"],
+		queryFn: () => settingsAPI.get().then((res) => res.data),
+	});
+
+	const getCurlFlags = () => {
+		return settings?.ignore_ssl_self_signed ? "-ks" : "-s";
+	};
+
 	const copyToClipboard = async (text) => {
 		try {
 			// Try modern clipboard API first
@@ -1089,7 +1110,7 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
 							<div className="flex items-center gap-2">
 								<input
 									type="text"
-									value={`curl -ks ${serverUrl}/api/v1/hosts/install -H "X-API-ID: ${host.api_id}" -H "X-API-KEY: ${host.api_key}" | bash`}
+									value={`curl ${getCurlFlags()} ${serverUrl}/api/v1/hosts/install -H "X-API-ID: ${host.api_id}" -H "X-API-KEY: ${host.api_key}" | bash`}
 									readOnly
 									className="flex-1 px-3 py-2 border border-primary-300 dark:border-primary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
 								/>
@@ -1097,7 +1118,7 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
 									type="button"
 									onClick={() =>
 										copyToClipboard(
-											`curl -ks ${serverUrl}/api/v1/hosts/install -H "X-API-ID: ${host.api_id}" -H "X-API-KEY: ${host.api_key}" | bash`,
+											`curl ${getCurlFlags()} ${serverUrl}/api/v1/hosts/install -H "X-API-ID: ${host.api_id}" -H "X-API-KEY: ${host.api_key}" | bash`,
 										)
 									}
 									className="btn-primary flex items-center gap-1"
@@ -1147,7 +1168,7 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
 									<div className="flex items-center gap-2">
 										<input
 											type="text"
-											value={`curl -ko /usr/local/bin/patchmon-agent.sh ${serverUrl}/api/v1/hosts/agent/download -H "X-API-ID: ${host.api_id}" -H "X-API-KEY: ${host.api_key}" && sudo chmod +x /usr/local/bin/patchmon-agent.sh`}
+											value={`curl ${getCurlFlags()} -o /usr/local/bin/patchmon-agent.sh ${serverUrl}/api/v1/hosts/agent/download -H "X-API-ID: ${host.api_id}" -H "X-API-KEY: ${host.api_key}" && sudo chmod +x /usr/local/bin/patchmon-agent.sh`}
 											readOnly
 											className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-white dark:bg-secondary-800 text-sm font-mono text-secondary-900 dark:text-white"
 										/>
@@ -1155,7 +1176,7 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
 											type="button"
 											onClick={() =>
 												copyToClipboard(
-													`curl -ko /usr/local/bin/patchmon-agent.sh ${serverUrl}/api/v1/hosts/agent/download -H "X-API-ID: ${host.api_id}" -H "X-API-KEY: ${host.api_key}" && sudo chmod +x /usr/local/bin/patchmon-agent.sh`,
+													`curl ${getCurlFlags()} -o /usr/local/bin/patchmon-agent.sh ${serverUrl}/api/v1/hosts/agent/download -H "X-API-ID: ${host.api_id}" -H "X-API-KEY: ${host.api_key}" && sudo chmod +x /usr/local/bin/patchmon-agent.sh`,
 												)
 											}
 											className="btn-secondary flex items-center gap-1"

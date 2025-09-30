@@ -8,11 +8,13 @@ const AgentUpdatesTab = () => {
 	const autoUpdateId = useId();
 	const signupEnabledId = useId();
 	const defaultRoleId = useId();
+	const ignoreSslId = useId();
 	const [formData, setFormData] = useState({
 		updateInterval: 60,
 		autoUpdate: false,
 		signupEnabled: false,
 		defaultUserRole: "user",
+		ignoreSslSelfSigned: false,
 	});
 	const [errors, setErrors] = useState({});
 	const [isDirty, setIsDirty] = useState(false);
@@ -41,8 +43,9 @@ const AgentUpdatesTab = () => {
 			const newFormData = {
 				updateInterval: settings.update_interval || 60,
 				autoUpdate: settings.auto_update || false,
-				signupEnabled: settings.signup_enabled === true ? true : false,
+				signupEnabled: settings.signup_enabled === true,
 				defaultUserRole: settings.default_user_role || "user",
+				ignoreSslSelfSigned: settings.ignore_ssl_self_signed === true,
 			};
 			setFormData(newFormData);
 			setIsDirty(false);
@@ -297,6 +300,31 @@ const AgentUpdatesTab = () => {
 					<p className="mt-1 text-sm text-secondary-500 dark:text-secondary-400">
 						When enabled, agents will automatically update themselves when a
 						newer version is available during their regular update cycle.
+					</p>
+				</div>
+
+				{/* SSL Certificate Setting */}
+				<div>
+					<label className="block text-sm font-medium text-secondary-700 dark:text-secondary-200 mb-2">
+						<div className="flex items-center gap-2">
+							<input
+								id={ignoreSslId}
+								type="checkbox"
+								checked={formData.ignoreSslSelfSigned}
+								onChange={(e) =>
+									handleInputChange("ignoreSslSelfSigned", e.target.checked)
+								}
+								className="rounded border-secondary-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
+							/>
+							<label htmlFor={ignoreSslId}>
+								Ignore SSL Self-Signed Certificates
+							</label>
+						</div>
+					</label>
+					<p className="mt-1 text-sm text-secondary-500 dark:text-secondary-400">
+						When enabled, curl commands in agent scripts will use the -k flag to
+						ignore SSL certificate validation errors. Use with caution on
+						production systems as this reduces security.
 					</p>
 				</div>
 

@@ -6,8 +6,6 @@ import {
 	Download,
 	Edit,
 	Package,
-	Plus,
-	RefreshCw,
 	Save,
 	Server,
 	Settings,

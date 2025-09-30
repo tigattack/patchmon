@@ -1,9 +1,14 @@
 #!/bin/bash
 
 # PatchMon Agent Installation Script
-# Usage: curl -ks {PATCHMON_URL}/api/v1/hosts/install -H "X-API-ID: {API_ID}" -H "X-API-KEY: {API_KEY}" | bash
+# Usage: curl -s {PATCHMON_URL}/api/v1/hosts/install -H "X-API-ID: {API_ID}" -H "X-API-KEY: {API_KEY}" | bash
 
 set -e
+
+# This placeholder will be dynamically replaced by the server when serving this
+# script based on the "ignore SSL self-signed" setting. If set to -k, curl will
+# ignore certificate validation. Otherwise, it will be empty for secure default.
+CURL_FLAGS=""
 
 # Colors for output
 RED='\033[0;31m'
@@ -145,7 +150,7 @@ if [[ -f "/usr/local/bin/patchmon-agent.sh" ]]; then
     info "📋 Moved existing agent to: /usr/local/bin/patchmon-agent.sh.backup.$(date +%Y%m%d_%H%M%S)"
 fi
 
-curl -ks \
+curl $CURL_FLAGS \
     -H "X-API-ID: $API_ID" \
     -H "X-API-KEY: $API_KEY" \
     "$PATCHMON_URL/api/v1/hosts/agent/download" \
@@ -185,7 +190,7 @@ fi
 
 # Step 6: Get update interval policy from server and setup crontab
 info "⏰ Getting update interval policy from server..."
-UPDATE_INTERVAL=$(curl -ks \
+UPDATE_INTERVAL=$(curl $CURL_FLAGS \
     -H "X-API-ID: $API_ID" \
     -H "X-API-KEY: $API_KEY" \
     "$PATCHMON_URL/api/v1/settings/update-interval" | \

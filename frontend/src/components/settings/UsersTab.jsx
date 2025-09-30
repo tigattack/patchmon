@@ -5,7 +5,6 @@ import {
 	Edit,
 	Key,
 	Mail,
-	Plus,
 	Shield,
 	Trash2,
 	User,

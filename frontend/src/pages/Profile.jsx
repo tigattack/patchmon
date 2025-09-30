@@ -11,7 +11,6 @@ import {
 	Moon,
 	RefreshCw,
 	Save,
-	Settings,
 	Shield,
 	Smartphone,
 	Sun,

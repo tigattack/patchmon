@@ -11,6 +11,11 @@ CONFIG_FILE="/etc/patchmon/agent.conf"
 CREDENTIALS_FILE="/etc/patchmon/credentials"
 LOG_FILE="/var/log/patchmon-agent.log"
 
+# This placeholder will be dynamically replaced by the server when serving this
+# script based on the "ignore SSL self-signed" setting. If set to -k, curl will
+# ignore certificate validation. Otherwise, it will be empty for secure default.
+CURL_FLAGS=""
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -144,7 +149,7 @@ EOF
 test_credentials() {
     load_credentials
     
-    local response=$(curl -ks -X POST \
+    local response=$(curl $CURL_FLAGS -X POST \
         -H "Content-Type: application/json" \
         -H "X-API-ID: $API_ID" \
         -H "X-API-KEY: $API_KEY" \
@@ -809,7 +814,7 @@ EOF
     local payload=$(echo "$base_payload $merged_json" | jq -s '.[0] * .[1]')
     
     
-    local response=$(curl -ks -X POST \
+    local response=$(curl $CURL_FLAGS -X POST \
         -H "Content-Type: application/json" \
         -H "X-API-ID: $API_ID" \
         -H "X-API-KEY: $API_KEY" \
@@ -870,7 +875,7 @@ EOF
 ping_server() {
     load_credentials
     
-    local response=$(curl -ks -X POST \
+    local response=$(curl $CURL_FLAGS -X POST \
         -H "Content-Type: application/json" \
         -H "X-API-ID: $API_ID" \
         -H "X-API-KEY: $API_KEY" \
@@ -913,7 +918,7 @@ check_version() {
     
     info "Checking for agent updates..."
     
-    local response=$(curl -ks -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/agent/version")
+    local response=$(curl $CURL_FLAGS -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/agent/version")
     
     if [[ $? -eq 0 ]]; then
         local current_version=$(echo "$response" | grep -o '"currentVersion":"[^"]*' | cut -d'"' -f4)
@@ -945,7 +950,7 @@ check_version() {
 # Check if auto-update is enabled (both globally and for this host)
 check_auto_update_enabled() {
     # Get settings from server using API credentials
-    local response=$(curl -ks -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/settings" 2>/dev/null)
+    local response=$(curl $CURL_FLAGS -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/settings" 2>/dev/null)
     if [[ $? -ne 0 ]]; then
         return 1
     fi
@@ -970,7 +975,7 @@ check_agent_update_needed() {
     fi
     
     # Get server agent info using API credentials
-    local response=$(curl -ks -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/agent/timestamp" 2>/dev/null)
+    local response=$(curl $CURL_FLAGS -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/agent/timestamp" 2>/dev/null)
     
     if [[ $? -eq 0 ]]; then
         local server_version=$(echo "$response" | grep -o '"version":"[^"]*' | cut -d'"' -f4)
@@ -1007,7 +1012,7 @@ check_agent_update() {
     fi
     
     # Get server agent info using API credentials
-    local response=$(curl -ks -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/agent/timestamp")
+    local response=$(curl $CURL_FLAGS -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -X GET "$PATCHMON_SERVER/api/$API_VERSION/hosts/agent/timestamp")
     
     if [[ $? -eq 0 ]]; then
         local server_version=$(echo "$response" | grep -o '"version":"[^"]*' | cut -d'"' -f4)
@@ -1057,7 +1062,7 @@ update_agent() {
     cp "$0" "$backup_file"
     
     # Download new version using API credentials
-    if curl -ks -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -o "/tmp/patchmon-agent-new.sh" "$download_url"; then
+    if curl $CURL_FLAGS -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -o "/tmp/patchmon-agent-new.sh" "$download_url"; then
         # Verify the downloaded script is valid
         if bash -n "/tmp/patchmon-agent-new.sh" 2>/dev/null; then
             # Replace current script
@@ -1090,7 +1095,7 @@ update_agent() {
 update_crontab() {
     load_credentials
     info "Updating crontab with current policy..."
-    local response=$(curl -ks -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -X GET "$PATCHMON_SERVER/api/$API_VERSION/settings/update-interval")
+    local response=$(curl $CURL_FLAGS -H "X-API-ID: $API_ID" -H "X-API-KEY: $API_KEY" -X GET "$PATCHMON_SERVER/api/$API_VERSION/settings/update-interval")
     if [[ $? -eq 0 ]]; then
         local update_interval=$(echo "$response" | grep -o '"updateInterval":[0-9]*' | cut -d':' -f2)
         # Fallback if not found
