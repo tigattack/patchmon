@@ -1011,7 +1011,7 @@ const CredentialsModal = ({ host, isOpen, onClose }) => {
 	});
 
 	const getCurlFlags = () => {
-		return settings?.ignore_ssl_self_signed ? "-ks" : "-s";
+		return settings?.ignore_ssl_self_signed ? "-sk" : "-s";
 	};
 
 	const copyToClipboard = async (text) => {

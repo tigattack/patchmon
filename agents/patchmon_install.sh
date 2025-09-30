@@ -8,7 +8,7 @@ set -e
 # This placeholder will be dynamically replaced by the server when serving this
 # script based on the "ignore SSL self-signed" setting. If set to -k, curl will
 # ignore certificate validation. Otherwise, it will be empty for secure default.
-CURL_FLAGS=""
+# CURL_FLAGS is now set via environment variables by the backend
 
 # Colors for output
 RED='\033[0;31m'
@@ -40,6 +40,60 @@ if [[ $EUID -ne 0 ]]; then
    error "This script must be run as root (use sudo)"
 fi
 
+# Verify system datetime and timezone
+verify_datetime() {
+    info "🕐 Verifying system datetime and timezone..."
+    
+    # Get current system time
+    local system_time=$(date)
+    local timezone=$(timedatectl show --property=Timezone --value 2>/dev/null || echo "Unknown")
+    
+    # Display current datetime info
+    echo ""
+    echo -e "${BLUE}📅 Current System Date/Time:${NC}"
+    echo "   • Date/Time: $system_time"
+    echo "   • Timezone: $timezone"
+    echo ""
+    
+    # Check if we can read from stdin (interactive terminal)
+    if [[ -t 0 ]]; then
+        # Interactive terminal - ask user
+        read -p "Does this date/time look correct to you? (y/N): " -r response
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            success "✅ Date/time verification passed"
+            echo ""
+            return 0
+        else
+            echo ""
+            echo -e "${RED}❌ Date/time verification failed${NC}"
+            echo ""
+            echo -e "${YELLOW}💡 Please fix the date/time and re-run the installation script:${NC}"
+            echo "   sudo timedatectl set-time 'YYYY-MM-DD HH:MM:SS'"
+            echo "   sudo timedatectl set-timezone 'America/New_York'  # or your timezone"
+            echo "   sudo timedatectl list-timezones  # to see available timezones"
+            echo ""
+            echo -e "${BLUE}ℹ️  After fixing the date/time, re-run this installation script.${NC}"
+            error "Installation cancelled - please fix date/time and re-run"
+        fi
+    else
+        # Non-interactive (piped from curl) - show warning and continue
+        echo -e "${YELLOW}⚠️  Non-interactive installation detected${NC}"
+        echo ""
+        echo "Please verify the date/time shown above is correct."
+        echo "If the date/time is incorrect, it may cause issues with:"
+        echo "   • Logging timestamps"
+        echo "   • Scheduled updates"
+        echo "   • Data synchronization"
+        echo ""
+        echo -e "${GREEN}✅ Continuing with installation...${NC}"
+        success "✅ Date/time verification completed (assumed correct)"
+        echo ""
+    fi
+}
+
+# Run datetime verification
+verify_datetime
+
 # Clean up old files (keep only last 3 of each type)
 cleanup_old_files() {
     # Clean up old credential backups
@@ -63,6 +117,15 @@ fi
 info "🚀 Starting PatchMon Agent Installation..."
 info "📋 Server: $PATCHMON_URL"
 info "🔑 API ID: ${API_ID:0:16}..."
+
+# Display diagnostic information
+echo ""
+echo -e "${BLUE}🔧 Installation Diagnostics:${NC}"
+echo "   • URL: $PATCHMON_URL"
+echo "   • CURL FLAGS: $CURL_FLAGS"
+echo "   • API ID: ${API_ID:0:16}..."
+echo "   • API Key: ${API_KEY:0:16}..."
+echo ""
 
 # Install required dependencies
 info "📦 Installing required dependencies..."
@@ -175,7 +238,7 @@ fi
 # Step 4: Test the configuration
 info "🧪 Testing API credentials and connectivity..."
 if /usr/local/bin/patchmon-agent.sh test; then
-    success "✅ API credentials are valid and server is reachable"
+    success "✅ TEST: API credentials are valid and server is reachable"
 else
     error "❌ Failed to validate API credentials or reach server"
 fi
@@ -183,7 +246,7 @@ fi
 # Step 5: Send initial data
 info "📊 Sending initial package data to server..."
 if /usr/local/bin/patchmon-agent.sh update; then
-    success "✅ Initial package data sent successfully"
+    success "✅ UPDATE: Initial package data sent successfully"
 else
     warning "⚠️  Failed to send initial data. You can retry later with: /usr/local/bin/patchmon-agent.sh update"
 fi

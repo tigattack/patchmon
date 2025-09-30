@@ -25,7 +25,10 @@ NC='\033[0m' # No Color
 
 # Logging function
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+    # Try to write to log file, but don't fail if we can't
+    if [[ -w "$(dirname "$LOG_FILE")" ]] 2>/dev/null; then
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE" 2>/dev/null
+    fi
 }
 
 # Error handling
@@ -35,21 +38,21 @@ error() {
     exit 1
 }
 
-# Info logging
+# Info logging (cleaner output - only stdout, no duplicate logging)
 info() {
-    echo -e "${BLUE}INFO: $1${NC}"
+    echo -e "${BLUE}ℹ️  $1${NC}"
     log "INFO: $1"
 }
 
-# Success logging
+# Success logging (cleaner output - only stdout, no duplicate logging)
 success() {
-    echo -e "${GREEN}SUCCESS: $1${NC}"
+    echo -e "${GREEN}✅ $1${NC}"
     log "SUCCESS: $1"
 }
 
-# Warning logging
+# Warning logging (cleaner output - only stdout, no duplicate logging)
 warning() {
-    echo -e "${YELLOW}WARNING: $1${NC}"
+    echo -e "${YELLOW}⚠️  $1${NC}"
     log "WARNING: $1"
 }
 
@@ -58,6 +61,31 @@ check_root() {
     if [[ $EUID -ne 0 ]]; then
         error "This script must be run as root"
     fi
+}
+
+# Verify system datetime and timezone
+verify_datetime() {
+    info "Verifying system datetime and timezone..."
+    
+    # Get current system time
+    local system_time=$(date)
+    local timezone="Unknown"
+    
+    # Try to get timezone with timeout protection
+    if command -v timedatectl >/dev/null 2>&1; then
+        timezone=$(timedatectl show --property=Timezone --value 2>/dev/null || echo "Unknown")
+    fi
+    
+    # Log datetime info (non-blocking)
+    log "System datetime check - time: $system_time, timezone: $timezone" 2>/dev/null || true
+    
+    # Simple check - just log the info, don't block execution
+    if [[ "$timezone" == "Unknown" ]] || [[ -z "$timezone" ]]; then
+        warning "System timezone not configured: $timezone"
+        log "WARNING: System timezone not configured - timezone: $timezone" 2>/dev/null || true
+    fi
+    
+    return 0
 }
 
 # Create necessary directories
@@ -786,19 +814,16 @@ get_system_info() {
 send_update() {
     load_credentials
     
-    info "Collecting package information..."
-    local packages_json=$(get_package_info)
-    
-    info "Collecting repository information..."
-    local repositories_json=$(get_repository_info)
-    
-    info "Collecting hardware information..."
-    local hardware_json=$(get_hardware_info)
-    
-    info "Collecting network information..."
-    local network_json=$(get_network_info)
+    # Verify datetime before proceeding
+    if ! verify_datetime; then
+        warning "Datetime verification failed, but continuing with update..."
+    fi
     
     info "Collecting system information..."
+    local packages_json=$(get_package_info)
+    local repositories_json=$(get_repository_info)
+    local hardware_json=$(get_hardware_info)
+    local network_json=$(get_network_info)
     local system_json=$(get_system_info)
     
     info "Sending update to PatchMon server..."
@@ -833,45 +858,35 @@ EOF
     
     if [[ $? -eq 0 ]]; then
         if echo "$response" | grep -q "success"; then
-            success "Update sent successfully"
-            echo "$response" | grep -o '"packagesProcessed":[0-9]*' | cut -d':' -f2 | xargs -I {} info "Processed {} packages"
+            local packages_count=$(echo "$response" | grep -o '"packagesProcessed":[0-9]*' | cut -d':' -f2)
+            success "Update sent successfully (${packages_count} packages processed)"
             
             # Check if auto-update is enabled and check for agent updates locally
             if check_auto_update_enabled; then
-                info "Auto-update is enabled, checking for agent updates..."
+                info "Checking for agent updates..."
                 if check_agent_update_needed; then
-                    info "Agent update available, automatically updating..."
+                    info "Agent update available, updating..."
                     if "$0" update-agent; then
-                        success "PatchMon agent update completed successfully"
+                        success "Agent updated successfully"
                     else
-                        warning "PatchMon agent update failed, but data was sent successfully"
+                        warning "Agent update failed, but data was sent successfully"
                     fi
                 else
                     info "Agent is up to date"
                 fi
             fi
             
-            # Check for crontab update instructions (look specifically in crontabUpdate section)
-            if echo "$response" | grep -q '"crontabUpdate":{'; then
-                local crontab_update_section=$(echo "$response" | grep -o '"crontabUpdate":{[^}]*}')
-                local should_update_crontab=$(echo "$crontab_update_section" | grep -o '"shouldUpdate":true' | cut -d':' -f2)
-                if [[ "$should_update_crontab" == "true" ]]; then
-                    local crontab_message=$(echo "$crontab_update_section" | grep -o '"message":"[^"]*' | cut -d'"' -f4)
-                    local crontab_command=$(echo "$crontab_update_section" | grep -o '"command":"[^"]*' | cut -d'"' -f4)
-                    
-                    if [[ -n "$crontab_message" ]]; then
-                        info "Crontab update detected: $crontab_message"
-                    fi
-                    
-                    if [[ "$crontab_command" == "update-crontab" ]]; then
-                        info "Automatically updating crontab with new interval..."
-                        if "$0" update-crontab; then
-                            success "Crontab updated successfully"
-                        else
-                            warning "Crontab update failed, but data was sent successfully"
-                        fi
-                    fi
-                fi
+            # Automatically check if crontab needs updating based on server settings
+            info "Checking crontab configuration..."
+            "$0" update-crontab
+            local crontab_exit_code=$?
+            if [[ $crontab_exit_code -eq 0 ]]; then
+                success "Crontab updated successfully"
+            elif [[ $crontab_exit_code -eq 2 ]]; then
+                # Already up to date - no additional message needed
+                true
+            else
+                warning "Crontab update failed, but data was sent successfully"
             fi
         else
             error "Update failed: $response"
@@ -898,7 +913,7 @@ ping_server() {
             info "Connected as host: $hostname"
         fi
         
-        # Check for crontab update trigger
+        # Check for crontab update instructions
         local should_update_crontab=$(echo "$response" | grep -o '"shouldUpdate":true' | cut -d':' -f2)
         if [[ "$should_update_crontab" == "true" ]]; then
             local message=$(echo "$response" | grep -o '"message":"[^"]*' | cut -d'"' -f4)
@@ -909,11 +924,16 @@ ping_server() {
             fi
             
             if [[ "$command" == "update-crontab" ]]; then
-                info "Automatically updating crontab with new interval..."
-                if "$0" update-crontab; then
+                info "Updating crontab with new interval..."
+                "$0" update-crontab
+                local crontab_exit_code=$?
+                if [[ $crontab_exit_code -eq 0 ]]; then
                     success "Crontab updated successfully"
+                elif [[ $crontab_exit_code -eq 2 ]]; then
+                    # Already up to date - no additional message needed
+                    true
                 else
-                    warning "Crontab update failed, but ping was successful"
+                    warning "Crontab update failed, but data was sent successfully"
                 fi
             fi
         fi
@@ -1144,7 +1164,7 @@ update_crontab() {
             # Check if crontab needs updating
             if [[ "$current_patchmon_entry" == "$expected_crontab" ]]; then
                 info "Crontab is already up to date (interval: $update_interval minutes)"
-                return 0
+                return 2  # Special return code for "already up to date"
             fi
             
             info "Setting update interval to $update_interval minutes"
