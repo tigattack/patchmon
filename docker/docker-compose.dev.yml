@@ -1,3 +1,5 @@
+name: patchmon-dev
+
 services:
   database:
     image: postgres:17-alpine
