@@ -126,6 +126,7 @@ router.get("/", async (req, res) => {
 						osType: hp.hosts.os_type,
 						currentVersion: hp.current_version,
 						availableVersion: hp.available_version,
+						needsUpdate: hp.needs_update,
 						isSecurityUpdate: hp.is_security_update,
 					})),
 					stats: {
