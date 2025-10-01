@@ -10,6 +10,7 @@ import {
 	Server,
 	Shield,
 	ShieldOff,
+	Trash2,
 	Unlock,
 } from "lucide-react";
 
@@ -24,13 +25,14 @@ const RepositoryDetail = () => {
 	const priorityId = useId();
 	const descriptionId = useId();
 	const { repositoryId } = useParams();
-	const queryClient = useQueryClient();
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 	const [editMode, setEditMode] = useState(false);
 	const [formData, setFormData] = useState({});
 	const [searchTerm, setSearchTerm] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
 	const [pageSize, setPageSize] = useState(25);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
 
 	// Fetch repository details
 	const {
@@ -96,6 +98,15 @@ const RepositoryDetail = () => {
 		},
 	});
 
+	// Delete repository mutation
+	const deleteRepositoryMutation = useMutation({
+		mutationFn: () => repositoryAPI.delete(repositoryId),
+		onSuccess: () => {
+			queryClient.invalidateQueries(["repositories"]);
+			navigate("/repositories");
+		},
+	});
+
 	const handleEdit = () => {
 		setFormData({
 			name: repository.name,
@@ -113,6 +124,19 @@ const RepositoryDetail = () => {
 	const handleCancel = () => {
 		setEditMode(false);
 		setFormData({});
+	};
+
+	const handleDelete = () => {
+		setShowDeleteModal(true);
+	};
+
+	const confirmDelete = () => {
+		deleteRepositoryMutation.mutate();
+		setShowDeleteModal(false);
+	};
+
+	const cancelDelete = () => {
+		setShowDeleteModal(false);
 	};
 
 	if (isLoading) {
@@ -174,6 +198,56 @@ const RepositoryDetail = () => {
 
 	return (
 		<div className="space-y-6">
+			{/* Delete Confirmation Modal */}
+			{showDeleteModal && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-white dark:bg-secondary-800 rounded-lg p-6 max-w-md w-full mx-4">
+						<div className="flex items-center mb-4">
+							<AlertTriangle className="h-6 w-6 text-red-500 mr-3" />
+							<h3 className="text-lg font-semibold text-secondary-900 dark:text-white">
+								Delete Repository
+							</h3>
+						</div>
+						<div className="mb-6">
+							<p className="text-secondary-700 dark:text-secondary-300 mb-2">
+								Are you sure you want to delete{" "}
+								<strong>"{repository?.name}"</strong>?
+							</p>
+							{repository?.host_repositories?.length > 0 && (
+								<p className="text-amber-600 dark:text-amber-400 text-sm">
+									⚠️ This repository is currently assigned to{" "}
+									{repository.host_repositories.length} host
+									{repository.host_repositories.length !== 1 ? "s" : ""}.
+								</p>
+							)}
+							<p className="text-red-600 dark:text-red-400 text-sm mt-2">
+								This action cannot be undone.
+							</p>
+						</div>
+						<div className="flex gap-3 justify-end">
+							<button
+								type="button"
+								onClick={cancelDelete}
+								className="px-4 py-2 text-secondary-600 dark:text-secondary-400 hover:text-secondary-800 dark:hover:text-secondary-200 transition-colors"
+								disabled={deleteRepositoryMutation.isPending}
+							>
+								Cancel
+							</button>
+							<button
+								type="button"
+								onClick={confirmDelete}
+								className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+								disabled={deleteRepositoryMutation.isPending}
+							>
+								{deleteRepositoryMutation.isPending
+									? "Deleting..."
+									: "Delete Repository"}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-4">
@@ -229,9 +303,24 @@ const RepositoryDetail = () => {
 							</button>
 						</>
 					) : (
-						<button type="button" onClick={handleEdit} className="btn-primary">
-							Edit Repository
-						</button>
+						<>
+							<button
+								type="button"
+								onClick={handleDelete}
+								className="btn-outline border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:border-red-700 flex items-center gap-2"
+								disabled={deleteRepositoryMutation.isPending}
+							>
+								<Trash2 className="h-4 w-4" />
+								{deleteRepositoryMutation.isPending ? "Deleting..." : "Delete"}
+							</button>
+							<button
+								type="button"
+								onClick={handleEdit}
+								className="btn-primary"
+							>
+								Edit Repository
+							</button>
+						</>
 					)}
 				</div>
 			</div>
