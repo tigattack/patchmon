@@ -232,4 +232,109 @@ router.get("/:packageId", async (req, res) => {
 	}
 });
 
+// Get hosts where a package is installed
+router.get("/:packageId/hosts", async (req, res) => {
+	try {
+		const { packageId } = req.params;
+		const {
+			page = 1,
+			limit = 25,
+			search = "",
+			sortBy = "friendly_name",
+			sortOrder = "asc",
+		} = req.query;
+
+		const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+		// Build search conditions
+		const searchConditions = search
+			? {
+					OR: [
+						{
+							hosts: {
+								friendly_name: { contains: search, mode: "insensitive" },
+							},
+						},
+						{ hosts: { hostname: { contains: search, mode: "insensitive" } } },
+						{ current_version: { contains: search, mode: "insensitive" } },
+						{ available_version: { contains: search, mode: "insensitive" } },
+					],
+				}
+			: {};
+
+		// Build sort conditions
+		const orderBy = {};
+		if (
+			sortBy === "friendly_name" ||
+			sortBy === "hostname" ||
+			sortBy === "os_type"
+		) {
+			orderBy.hosts = { [sortBy]: sortOrder };
+		} else if (sortBy === "needs_update") {
+			orderBy[sortBy] = sortOrder;
+		} else {
+			orderBy[sortBy] = sortOrder;
+		}
+
+		// Get total count
+		const totalCount = await prisma.host_packages.count({
+			where: {
+				package_id: packageId,
+				...searchConditions,
+			},
+		});
+
+		// Get paginated results
+		const hostPackages = await prisma.host_packages.findMany({
+			where: {
+				package_id: packageId,
+				...searchConditions,
+			},
+			include: {
+				hosts: {
+					select: {
+						id: true,
+						friendly_name: true,
+						hostname: true,
+						os_type: true,
+						os_version: true,
+						last_update: true,
+					},
+				},
+			},
+			orderBy,
+			skip: offset,
+			take: parseInt(limit, 10),
+		});
+
+		// Transform the data for the frontend
+		const hosts = hostPackages.map((hp) => ({
+			hostId: hp.hosts.id,
+			friendlyName: hp.hosts.friendly_name,
+			hostname: hp.hosts.hostname,
+			osType: hp.hosts.os_type,
+			osVersion: hp.hosts.os_version,
+			lastUpdate: hp.hosts.last_update,
+			currentVersion: hp.current_version,
+			availableVersion: hp.available_version,
+			needsUpdate: hp.needs_update,
+			isSecurityUpdate: hp.is_security_update,
+			lastChecked: hp.last_checked,
+		}));
+
+		res.json({
+			hosts,
+			pagination: {
+				page: parseInt(page, 10),
+				limit: parseInt(limit, 10),
+				total: totalCount,
+				pages: Math.ceil(totalCount / parseInt(limit, 10)),
+			},
+		});
+	} catch (error) {
+		console.error("Error fetching package hosts:", error);
+		res.status(500).json({ error: "Failed to fetch package hosts" });
+	}
+});
+
 module.exports = router;
