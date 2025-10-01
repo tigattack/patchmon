@@ -400,8 +400,8 @@ const PackageDetail = () => {
 												{host.current_version || "Unknown"}
 											</td>
 											<td className="px-6 py-4 whitespace-nowrap">
-												{host.needs_update ? (
-													host.is_security_update ? (
+												{host.needsUpdate ? (
+													host.isSecurityUpdate ? (
 														<span className="badge-danger flex items-center gap-1 w-fit">
 															<Shield className="h-3 w-3" />
 															Security Update
@@ -418,8 +418,8 @@ const PackageDetail = () => {
 												)}
 											</td>
 											<td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500 dark:text-secondary-300">
-												{host.last_updated
-													? formatRelativeTime(host.last_updated)
+												{host.lastUpdate
+													? formatRelativeTime(host.lastUpdate)
 													: "Never"}
 											</td>
 										</tr>
