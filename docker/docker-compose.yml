@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: patchmon_db
       POSTGRES_USER: patchmon_user
-      POSTGRES_PASSWORD: INSECURE_REPLACE_ME_PLEASE_INSECURE
+      POSTGRES_PASSWORD: # CREATE A STRONG PASSWORD AND PUT IT HERE
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     environment:
       LOG_LEVEL: info
-      DATABASE_URL: postgresql://patchmon_user:INSECURE_REPLACE_ME_PLEASE_INSECURE@database:5432/patchmon_db
+      DATABASE_URL: postgresql://patchmon_user:REPLACE_YOUR_POSTGRES_PASSWORD_HERE@database:5432/patchmon_db
       PM_DB_CONN_MAX_ATTEMPTS: 30
       PM_DB_CONN_WAIT_INTERVAL: 2
       JWT_SECRET: # CREATE A STRONG SECRET AND PUT IT HERE - Generate with 'openssl rand -hex 64'
