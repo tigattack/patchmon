@@ -20,26 +20,37 @@ Version tags are also available (e.g. `1.2.3`) for both of these images.
 ### Production Deployment
 
 1. Download the [Docker Compose file](docker-compose.yml)
-2. Change the default database password in the file:
+2. Set a database password in the file where it says:
    ```yaml
    environment:
-     POSTGRES_PASSWORD: YOUR_SECURE_PASSWORD_HERE
+     POSTGRES_PASSWORD: # CREATE A STRONG PASSWORD AND PUT IT HERE
    ```
-3. Update the corresponding `DATABASE_URL` in the backend service:
+3. Update the corresponding `DATABASE_URL` with your password in the backend service where it says:
    ```yaml
    environment:
-     DATABASE_URL: postgresql://patchmon_user:YOUR_SECURE_PASSWORD_HERE@database:5432/patchmon_db
+     DATABASE_URL: postgresql://patchmon_user:REPLACE_YOUR_POSTGRES_PASSWORD_HERE@database:5432/patchmon_db
    ```
-4. Configure environment variables (see [Configuration](#configuration) section)
-5. Start the application:
+4. Generate a strong JWT secret. You can do this like so:
+   ```bash
+   openssl rand -hex 64
+   ```
+5. Set a JWT secret in the backend service where it says:
+   ```yaml
+   environment:
+     JWT_SECRET: # CREATE A STRONG SECRET AND PUT IT HERE
+   ```
+6. Configure environment variables (see [Configuration](#configuration) section)
+7. Start the application:
    ```bash
    docker compose up -d
    ```
-6. Access the application at `http://localhost:3000`
+8. Access the application at `http://localhost:3000`
 
 ## Updating
 
-To update PatchMon to the latest version:
+By default, the compose file uses the `latest` tag for both backend and frontend images.
+
+This means you can update PatchMon to the latest version as easily as:
 
 ```bash
 docker compose up -d --pull
