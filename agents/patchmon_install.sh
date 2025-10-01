@@ -268,78 +268,14 @@ else
     error "❌ Failed to validate API credentials or reach server"
 fi
 
-# Step 5: Send initial data
+# Step 5: Send initial data and setup automated updates
 info "📊 Sending initial package data to server..."
 if /usr/local/bin/patchmon-agent.sh update; then
     success "✅ UPDATE: Initial package data sent successfully"
+    info "✅ Automated updates configured by agent"
 else
     warning "⚠️  Failed to send initial data. You can retry later with: /usr/local/bin/patchmon-agent.sh update"
 fi
-
-# Step 6: Get update interval policy from server and setup crontab
-info "⏰ Getting update interval policy from server..."
-UPDATE_INTERVAL=$(curl $CURL_FLAGS \
-    -H "X-API-ID: $API_ID" \
-    -H "X-API-KEY: $API_KEY" \
-    "$PATCHMON_URL/api/v1/settings/update-interval" | \
-    grep -o '"updateInterval":[0-9]*' | cut -d':' -f2 2>/dev/null || echo "60")
-
-info "📋 Update interval: $UPDATE_INTERVAL minutes"
-
-# Setup crontab (smart duplicate detection)
-info "📅 Setting up automated updates..."
-
-# Check if PatchMon cron entries already exist
-if crontab -l 2>/dev/null | grep -q "/usr/local/bin/patchmon-agent.sh update"; then
-    warning "⚠️  Existing PatchMon cron entries found"
-    warning "⚠️  These will be replaced with new schedule"
-fi
-
-# Function to setup crontab without duplicates
-setup_crontab() {
-    local update_interval="$1"
-    local patchmon_pattern="/usr/local/bin/patchmon-agent.sh update"
-
-    # Normalize interval: min 5, max 1440
-    if [[ -z "$update_interval" ]]; then update_interval=60; fi
-    if [[ "$update_interval" -lt 5 ]]; then update_interval=5; fi
-    if [[ "$update_interval" -gt 1440 ]]; then update_interval=1440; fi
-
-    # Get current crontab, remove any existing patchmon entries
-    local current_cron=$(crontab -l 2>/dev/null | grep -v "$patchmon_pattern" || true)
-
-    # Determine new cron entry
-    local new_entry
-    if [[ "$update_interval" -lt 60 ]]; then
-        # Every N minutes (5-59)
-        new_entry="*/$update_interval * * * * $patchmon_pattern >/dev/null 2>&1"
-        info "📋 Configuring updates every $update_interval minutes"
-    else
-        if [[ "$update_interval" -eq 60 ]]; then
-            # Hourly updates - use current minute to spread load
-            local current_minute=$(date +%M)
-            new_entry="$current_minute * * * * $patchmon_pattern >/dev/null 2>&1"
-            info "📋 Configuring hourly updates at minute $current_minute"
-        else
-            # For 120, 180, 360, 720, 1440 -> every H hours at minute 0
-            local hours=$((update_interval / 60))
-            new_entry="0 */$hours * * * $patchmon_pattern >/dev/null 2>&1"
-            info "📋 Configuring updates every $hours hour(s)"
-        fi
-    fi
-
-    # Combine existing cron (without patchmon entries) + new entry
-    {
-        if [[ -n "$current_cron" ]]; then
-            echo "$current_cron"
-        fi
-        echo "$new_entry"
-    } | crontab -
-
-    success "✅ Crontab configured successfully (duplicates removed)"
-}
-
-setup_crontab "$UPDATE_INTERVAL"
 
 # Installation complete
 success "🎉 PatchMon Agent installation completed successfully!"
@@ -348,8 +284,9 @@ echo -e "${GREEN}📋 Installation Summary:${NC}"
 echo "   • Configuration directory: /etc/patchmon"
 echo "   • Agent installed: /usr/local/bin/patchmon-agent.sh"
 echo "   • Dependencies installed: jq, curl, bc"
-echo "   • Crontab configured for automatic updates"
+echo "   • Automated updates configured via crontab"
 echo "   • API credentials configured and tested"
+echo "   • Update schedule managed by agent"
 
 # Check for moved files and show them
 MOVED_FILES=$(ls /etc/patchmon/credentials.backup.* /usr/local/bin/patchmon-agent.sh.backup.* /var/log/patchmon-agent.log.old.* 2>/dev/null || true)
