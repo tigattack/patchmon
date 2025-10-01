@@ -63,16 +63,18 @@ This command will:
 
 ### Version-Specific Updates
 
-If you're using specific version tags instead of `latest` in your compose file:
+If you'd like to pin your Docker deployment of PatchMon to a specific version, you can do this in the compose file.
 
-1. Update the image tags in your `docker-compose.yml`. For example:
+When you do this, updating to a new version requires manually updating the image tags in the compose file yourself:
+
+1. Update the image tags in `docker-compose.yml`. For example:
    ```yaml
    services:
      backend:
-       image: ghcr.io/9technologygroup/patchmon-backend:1.2.7  # Update version here
+       image: ghcr.io/9technologygroup/patchmon-backend:1.2.3  # Update version here
       ...
      frontend:
-       image: ghcr.io/9technologygroup/patchmon-frontend:1.2.7  # Update version here
+       image: ghcr.io/9technologygroup/patchmon-frontend:1.2.3  # Update version here
       ...
    ```
 
