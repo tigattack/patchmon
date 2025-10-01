@@ -42,9 +42,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
-          # Using PAT as a hack due to issues with GITHUB_TOKEN and package permissions
-          # This should be reverted to use GITHUB_TOKEN once a solution is discovered.
-          password: ${{ secrets.GHCR_PAT }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels)
         id: meta
