@@ -17,7 +17,9 @@ import Profile from "./pages/Profile";
 import Repositories from "./pages/Repositories";
 import RepositoryDetail from "./pages/RepositoryDetail";
 import AlertChannels from "./pages/settings/AlertChannels";
+import Integrations from "./pages/settings/Integrations";
 import Notifications from "./pages/settings/Notifications";
+import PatchManagement from "./pages/settings/PatchManagement";
 import SettingsAgentConfig from "./pages/settings/SettingsAgentConfig";
 import SettingsHostGroups from "./pages/settings/SettingsHostGroups";
 import SettingsServerConfig from "./pages/settings/SettingsServerConfig";
@@ -244,6 +246,26 @@ function AppRoutes() {
 							<SettingsLayout>
 								<AlertChannels />
 							</SettingsLayout>
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/integrations"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<Integrations />
+						</Layout>
+					</ProtectedRoute>
+				}
+			/>
+			<Route
+				path="/settings/patch-management"
+				element={
+					<ProtectedRoute requirePermission="can_manage_settings">
+						<Layout>
+							<PatchManagement />
 						</Layout>
 					</ProtectedRoute>
 				}

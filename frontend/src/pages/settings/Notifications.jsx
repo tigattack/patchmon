@@ -1,4 +1,4 @@
-import { Bell, Plus, Settings } from "lucide-react";
+import { Bell, Settings } from "lucide-react";
 
 const Notifications = () => {
 	return (
@@ -13,10 +13,6 @@ const Notifications = () => {
 						Configure notification preferences and alert rules
 					</p>
 				</div>
-				<button type="button" className="btn-primary flex items-center gap-2">
-					<Plus className="h-4 w-4" />
-					Add Rule
-				</button>
 			</div>
 
 			{/* Coming Soon Card */}
@@ -46,7 +42,7 @@ const Notifications = () => {
 			</div>
 
 			{/* Notification Settings Preview */}
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+			<div className="grid grid-cols-1 md:grid-cols-1 gap-6">
 				{/* Package Updates */}
 				<div className="bg-white dark:bg-secondary-800 border border-secondary-200 dark:border-secondary-600 rounded-lg p-6">
 					<div className="flex items-center gap-3 mb-4">
@@ -87,47 +83,6 @@ const Notifications = () => {
 						</div>
 					</div>
 				</div>
-
-				{/* System Events */}
-				<div className="bg-white dark:bg-secondary-800 border border-secondary-200 dark:border-secondary-600 rounded-lg p-6">
-					<div className="flex items-center gap-3 mb-4">
-						<div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-							<Bell className="h-4 w-4 text-green-600 dark:text-green-400" />
-						</div>
-						<h3 className="text-lg font-medium text-secondary-900 dark:text-white">
-							System Events
-						</h3>
-					</div>
-					<p className="text-sm text-secondary-600 dark:text-secondary-400 mb-4">
-						Monitor system health and performance events
-					</p>
-					<div className="space-y-2">
-						<div className="flex items-center justify-between">
-							<span className="text-sm text-secondary-700 dark:text-secondary-300">
-								Host Offline
-							</span>
-							<span className="text-xs text-secondary-500 dark:text-secondary-400">
-								Coming Soon
-							</span>
-						</div>
-						<div className="flex items-center justify-between">
-							<span className="text-sm text-secondary-700 dark:text-secondary-300">
-								High CPU Usage
-							</span>
-							<span className="text-xs text-secondary-500 dark:text-secondary-400">
-								Coming Soon
-							</span>
-						</div>
-						<div className="flex items-center justify-between">
-							<span className="text-sm text-secondary-700 dark:text-secondary-300">
-								Disk Space Low
-							</span>
-							<span className="text-xs text-secondary-500 dark:text-secondary-400">
-								Coming Soon
-							</span>
-						</div>
-					</div>
-				</div>
 			</div>
 
 			{/* Empty State */}
@@ -148,12 +103,6 @@ const Notifications = () => {
 					<p className="mt-1 text-sm text-secondary-500 dark:text-secondary-400">
 						Get started by creating your first notification rule.
 					</p>
-					<div className="mt-6">
-						<button type="button" className="btn-primary">
-							<Plus className="h-4 w-4 mr-2" />
-							Add Rule
-						</button>
-					</div>
 				</div>
 			</div>
 		</div>
