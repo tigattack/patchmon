@@ -162,19 +162,19 @@ router.get("/:packageId", async (req, res) => {
 			include: {
 				host_packages: {
 					include: {
-						host: {
+						hosts: {
 							select: {
 								id: true,
 								hostname: true,
 								ip: true,
-								osType: true,
-								osVersion: true,
-								lastUpdate: true,
+								os_type: true,
+								os_version: true,
+								last_update: true,
 							},
 						},
 					},
 					orderBy: {
-						needsUpdate: "desc",
+						needs_update: "desc",
 					},
 				},
 			},
@@ -187,25 +187,25 @@ router.get("/:packageId", async (req, res) => {
 		// Calculate statistics
 		const stats = {
 			totalInstalls: packageData.host_packages.length,
-			updatesNeeded: packageData.host_packages.filter((hp) => hp.needsUpdate)
+			updatesNeeded: packageData.host_packages.filter((hp) => hp.needs_update)
 				.length,
 			securityUpdates: packageData.host_packages.filter(
-				(hp) => hp.needsUpdate && hp.isSecurityUpdate,
+				(hp) => hp.needs_update && hp.is_security_update,
 			).length,
-			upToDate: packageData.host_packages.filter((hp) => !hp.needsUpdate)
+			upToDate: packageData.host_packages.filter((hp) => !hp.needs_update)
 				.length,
 		};
 
 		// Group by version
 		const versionDistribution = packageData.host_packages.reduce((acc, hp) => {
-			const version = hp.currentVersion;
+			const version = hp.current_version;
 			acc[version] = (acc[version] || 0) + 1;
 			return acc;
 		}, {});
 
 		// Group by OS type
 		const osDistribution = packageData.host_packages.reduce((acc, hp) => {
-			const osType = hp.host.osType;
+			const osType = hp.hosts.os_type;
 			acc[osType] = (acc[osType] || 0) + 1;
 			return acc;
 		}, {});
