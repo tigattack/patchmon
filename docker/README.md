@@ -84,7 +84,7 @@ When you do this, updating to a new version requires manually updating the image
    ```
 
 > [!TIP]
-> Check the [releases page](https://github.com/9technologygroup/patchmon.net/releases) for version-specific changes and migration notes.
+> Check the [releases page](https://github.com/PatchMon/PatchMon/releases) for version-specific changes and migration notes.
 
 ## Configuration
 
@@ -142,7 +142,7 @@ For development with live reload and source code mounting:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/9technologygroup/patchmon.net.git
+   git clone https://github.com/PatchMon/PatchMon.git
    cd patchmon.net
    ```
 
@@ -216,7 +216,7 @@ The development setup exposes additional ports for debugging:
 
 1. **Initial Setup**: Clone repository and start development environment
    ```bash
-   git clone https://github.com/9technologygroup/patchmon.net.git
+   git clone https://github.com/PatchMon/PatchMon.git
    cd patchmon.net
    docker compose -f docker/docker-compose.dev.yml up -d --build
    ```
