@@ -1,4 +1,4 @@
-import { Bell, Plus } from "lucide-react";
+import { Bell } from "lucide-react";
 
 const AlertChannels = () => {
 	return (
@@ -13,10 +13,6 @@ const AlertChannels = () => {
 						Configure how PatchMon sends notifications and alerts
 					</p>
 				</div>
-				<button type="button" className="btn-primary flex items-center gap-2">
-					<Plus className="h-4 w-4" />
-					Add Channel
-				</button>
 			</div>
 
 			{/* Coming Soon Card */}
@@ -62,12 +58,6 @@ const AlertChannels = () => {
 					<p className="mt-1 text-sm text-secondary-500 dark:text-secondary-400">
 						Get started by adding your first alert channel.
 					</p>
-					<div className="mt-6">
-						<button type="button" className="btn-primary">
-							<Plus className="h-4 w-4 mr-2" />
-							Add Channel
-						</button>
-					</div>
 				</div>
 			</div>
 		</div>

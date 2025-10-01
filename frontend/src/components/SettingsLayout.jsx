@@ -92,8 +92,36 @@ const SettingsLayout = ({ children }) => {
 			});
 		}
 
+		// Patch Management
+		if (canManageSettings()) {
+			nav.push({
+				section: "Patch Management",
+				items: [
+					{
+						name: "Policies",
+						href: "/settings/patch-management",
+						icon: Settings,
+						comingSoon: true,
+					},
+				],
+			});
+		}
+
 		// Server Config
 		if (canManageSettings()) {
+			// Integrations section
+			nav.push({
+				section: "Integrations",
+				items: [
+					{
+						name: "Integrations",
+						href: "/settings/integrations",
+						icon: Wrench,
+						comingSoon: true,
+					},
+				],
+			});
+
 			nav.push({
 				section: "Server",
 				items: [
