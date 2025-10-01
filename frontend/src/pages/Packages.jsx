@@ -331,10 +331,14 @@ const Packages = () => {
 		switch (column.id) {
 			case "name":
 				return (
-					<div className="flex items-center">
-						<Package className="h-5 w-5 text-secondary-400 mr-3" />
-						<div>
-							<div className="text-sm font-medium text-secondary-900 dark:text-white">
+					<button
+						type="button"
+						onClick={() => navigate(`/packages/${pkg.id}`)}
+						className="flex items-center text-left hover:bg-secondary-100 dark:hover:bg-secondary-700 rounded p-2 -m-2 transition-colors group w-full"
+					>
+						<Package className="h-5 w-5 text-secondary-400 mr-3 flex-shrink-0" />
+						<div className="flex-1">
+							<div className="text-sm font-medium text-secondary-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">
 								{pkg.name}
 							</div>
 							{pkg.description && (
@@ -348,7 +352,7 @@ const Packages = () => {
 								</div>
 							)}
 						</div>
-					</div>
+					</button>
 				);
 			case "packageHosts": {
 				// Show total number of hosts where this package is installed
