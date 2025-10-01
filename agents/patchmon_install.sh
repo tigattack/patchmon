@@ -133,23 +133,23 @@ info "📦 Installing required dependencies..."
 # Detect package manager and install jq and curl
 if command -v apt-get >/dev/null 2>&1; then
     # Debian/Ubuntu
-    apt-get update >/dev/null 2>&1
-    apt-get install -y jq curl >/dev/null 2>&1
-elif command -v yum >/dev/null 2>&1; then
+    apt-get update
+    apt-get install jq curl -y
+elif command -v yum
     # CentOS/RHEL 7
-    yum install -y jq curl >/dev/null 2>&1
-elif command -v dnf >/dev/null 2>&1; then
+    yum install -y jq curl
+elif command -v dnf
     # CentOS/RHEL 8+/Fedora
-    dnf install -y jq curl >/dev/null 2>&1
-elif command -v zypper >/dev/null 2>&1; then
+    dnf install -y jq curl
+elif command -v zypper
     # openSUSE
-    zypper install -y jq curl >/dev/null 2>&1
-elif command -v pacman >/dev/null 2>&1; then
+    zypper install -y jq curl
+elif command -v pacman
     # Arch Linux
-    pacman -S --noconfirm jq curl >/dev/null 2>&1
-elif command -v apk >/dev/null 2>&1; then
+    pacman -S --noconfirm jq curl
+elif command -v apk
     # Alpine Linux
-    apk add --no-cache jq curl >/dev/null 2>&1
+    apk add --no-cache jq curl
 else
     warning "Could not detect package manager. Please ensure 'jq' and 'curl' are installed manually."
 fi
