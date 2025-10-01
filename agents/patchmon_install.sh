@@ -129,30 +129,55 @@ echo ""
 
 # Install required dependencies
 info "📦 Installing required dependencies..."
+echo ""
 
 # Detect package manager and install jq and curl
 if command -v apt-get >/dev/null 2>&1; then
     # Debian/Ubuntu
+    info "Detected apt-get (Debian/Ubuntu)"
+    echo ""
+    info "Updating package lists..."
     apt-get update
-    apt-get install jq curl -y
-elif command -v yum
+    echo ""
+    info "Installing jq, curl, and bc..."
+    apt-get install jq curl bc -y
+elif command -v yum >/dev/null 2>&1; then
     # CentOS/RHEL 7
-    yum install -y jq curl
-elif command -v dnf
+    info "Detected yum (CentOS/RHEL 7)"
+    echo ""
+    info "Installing jq, curl, and bc..."
+    yum install -y jq curl bc
+elif command -v dnf >/dev/null 2>&1; then
     # CentOS/RHEL 8+/Fedora
-    dnf install -y jq curl
-elif command -v zypper
+    info "Detected dnf (CentOS/RHEL 8+/Fedora)"
+    echo ""
+    info "Installing jq, curl, and bc..."
+    dnf install -y jq curl bc
+elif command -v zypper >/dev/null 2>&1; then
     # openSUSE
-    zypper install -y jq curl
-elif command -v pacman
+    info "Detected zypper (openSUSE)"
+    echo ""
+    info "Installing jq, curl, and bc..."
+    zypper install -y jq curl bc
+elif command -v pacman >/dev/null 2>&1; then
     # Arch Linux
-    pacman -S --noconfirm jq curl
-elif command -v apk
+    info "Detected pacman (Arch Linux)"
+    echo ""
+    info "Installing jq, curl, and bc..."
+    pacman -S --noconfirm jq curl bc
+elif command -v apk >/dev/null 2>&1; then
     # Alpine Linux
-    apk add --no-cache jq curl
+    info "Detected apk (Alpine Linux)"
+    echo ""
+    info "Installing jq, curl, and bc..."
+    apk add --no-cache jq curl bc
 else
-    warning "Could not detect package manager. Please ensure 'jq' and 'curl' are installed manually."
+    warning "Could not detect package manager. Please ensure 'jq', 'curl', and 'bc' are installed manually."
 fi
+
+echo ""
+success "Dependencies installation completed"
+echo ""
 
 # Step 1: Handle existing configuration directory
 info "📁 Setting up configuration directory..."
@@ -322,7 +347,7 @@ echo ""
 echo -e "${GREEN}📋 Installation Summary:${NC}"
 echo "   • Configuration directory: /etc/patchmon"
 echo "   • Agent installed: /usr/local/bin/patchmon-agent.sh"
-echo "   • Dependencies installed: jq, curl"
+echo "   • Dependencies installed: jq, curl, bc"
 echo "   • Crontab configured for automatic updates"
 echo "   • API credentials configured and tested"
 
