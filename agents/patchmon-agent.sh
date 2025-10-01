@@ -810,8 +810,16 @@ get_system_info() {
     # SELinux Status
     if command -v getenforce >/dev/null 2>&1; then
         selinux_status=$(getenforce 2>/dev/null | tr '[:upper:]' '[:lower:]')
+        # Map "enforcing" to "enabled" for server validation
+        if [[ "$selinux_status" == "enforcing" ]]; then
+            selinux_status="enabled"
+        fi
     elif [[ -f /etc/selinux/config ]]; then
         selinux_status=$(grep "^SELINUX=" /etc/selinux/config | cut -d'=' -f2 | tr '[:upper:]' '[:lower:]')
+        # Map "enforcing" to "enabled" for server validation
+        if [[ "$selinux_status" == "enforcing" ]]; then
+            selinux_status="enabled"
+        fi
     else
         selinux_status="disabled"
     fi
