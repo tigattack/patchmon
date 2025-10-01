@@ -644,16 +644,31 @@ get_yum_packages() {
     fi
     
     # Get upgradable packages
-    local upgradable=$($package_manager check-update 2>/dev/null | grep -v "^$" | grep -v "^Loaded" | grep -v "^Last metadata" | tail -n +2)
+    local upgradable=$($package_manager check-update 2>/dev/null | grep -v "^$" | grep -v "^Loaded" | grep -v "^Last metadata" | grep -v "^Security" | tail -n +2)
     
     while IFS= read -r line; do
+        # Skip empty lines and lines with special characters
+        [[ -z "$line" ]] && continue
+        [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+        
         if [[ "$line" =~ ^([^[:space:]]+)[[:space:]]+([^[:space:]]+)[[:space:]]+([^[:space:]]+) ]]; then
             local package_name="${BASH_REMATCH[1]}"
             local available_version="${BASH_REMATCH[2]}"
             local repo="${BASH_REMATCH[3]}"
             
+            # Sanitize package name and versions (remove any control characters)
+            package_name=$(echo "$package_name" | tr -d '[:cntrl:]' | sed 's/[^a-zA-Z0-9._+-]//g')
+            available_version=$(echo "$available_version" | tr -d '[:cntrl:]' | sed 's/[^a-zA-Z0-9._+-]//g')
+            repo=$(echo "$repo" | tr -d '[:cntrl:]')
+            
+            # Skip if package name is empty after sanitization
+            [[ -z "$package_name" ]] && continue
+            
             # Get current version
-            local current_version=$($package_manager list installed "$package_name" 2>/dev/null | grep "^$package_name" | awk '{print $2}')
+            local current_version=$($package_manager list installed "$package_name" 2>/dev/null | grep "^$package_name" | awk '{print $2}' | tr -d '[:cntrl:]' | sed 's/[^a-zA-Z0-9._+-]//g')
+            
+            # Skip if we couldn't get current version
+            [[ -z "$current_version" ]] && current_version="unknown"
             
             local is_security_update=false
             if echo "$repo" | grep -q "security"; then
@@ -674,9 +689,21 @@ get_yum_packages() {
     local installed=$($package_manager list installed 2>/dev/null | grep -v "^Loaded" | grep -v "^Installed" | head -100)
     
     while IFS= read -r line; do
+        # Skip empty lines
+        [[ -z "$line" ]] && continue
+        [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+        
         if [[ "$line" =~ ^([^[:space:]]+)[[:space:]]+([^[:space:]]+) ]]; then
             local package_name="${BASH_REMATCH[1]}"
             local version="${BASH_REMATCH[2]}"
+            
+            # Sanitize package name and version
+            package_name=$(echo "$package_name" | tr -d '[:cntrl:]' | sed 's/[^a-zA-Z0-9._+-]//g')
+            version=$(echo "$version" | tr -d '[:cntrl:]' | sed 's/[^a-zA-Z0-9._+-]//g')
+            
+            # Skip if package name is empty after sanitization
+            [[ -z "$package_name" ]] && continue
+            [[ -z "$version" ]] && version="unknown"
             
             # Check if this package is not in the upgrade list
             if ! echo "$upgradable" | grep -q "^$package_name "; then
