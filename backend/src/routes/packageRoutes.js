@@ -67,7 +67,9 @@ router.get("/", async (req, res) => {
 					latest_version: true,
 					created_at: true,
 					_count: {
-						host_packages: true,
+						select: {
+							host_packages: true,
+						},
 					},
 				},
 				skip,
@@ -82,7 +84,7 @@ router.get("/", async (req, res) => {
 		// Get additional stats for each package
 		const packagesWithStats = await Promise.all(
 			packages.map(async (pkg) => {
-				const [updatesCount, securityCount, affectedHosts] = await Promise.all([
+				const [updatesCount, securityCount, packageHosts] = await Promise.all([
 					prisma.host_packages.count({
 						where: {
 							package_id: pkg.id,
@@ -117,17 +119,17 @@ router.get("/", async (req, res) => {
 
 				return {
 					...pkg,
-					affectedHostsCount: pkg._count.hostPackages,
-					affectedHosts: affectedHosts.map((hp) => ({
-						hostId: hp.host.id,
-						friendlyName: hp.host.friendly_name,
-						osType: hp.host.os_type,
+					packageHostsCount: pkg._count.host_packages,
+					packageHosts: packageHosts.map((hp) => ({
+						hostId: hp.hosts.id,
+						friendlyName: hp.hosts.friendly_name,
+						osType: hp.hosts.os_type,
 						currentVersion: hp.current_version,
 						availableVersion: hp.available_version,
 						isSecurityUpdate: hp.is_security_update,
 					})),
 					stats: {
-						totalInstalls: pkg._count.hostPackages,
+						totalInstalls: pkg._count.host_packages,
 						updatesNeeded: updatesCount,
 						securityUpdates: securityCount,
 					},
