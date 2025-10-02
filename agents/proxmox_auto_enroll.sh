@@ -4,7 +4,7 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 # Trap to catch errors only (not normal exits)
 trap 'echo "[ERROR] Script failed at line $LINENO with exit code $?"' ERR
 
-SCRIPT_VERSION="1.0.3"
+SCRIPT_VERSION="1.1.0"
 echo "[DEBUG] Script Version: $SCRIPT_VERSION ($(date +%Y-%m-%d\ %H:%M:%S))"
 
 # =============================================================================
@@ -112,6 +112,9 @@ info "Initializing statistics..."
 enrolled_count=0
 skipped_count=0
 failed_count=0
+
+# Track containers with dpkg errors for later recovery
+declare -A dpkg_error_containers
 info "Statistics initialized"
 
 # ===== PROCESS CONTAINERS =====
@@ -218,7 +221,13 @@ while IFS= read -r line; do
             info "  Install output: $install_output"
             ((failed_count++)) || true
         else
-            warn "  ✗ Failed to install agent in $friendly_name (exit: $install_exit_code)"
+            # Check if it's a dpkg error
+            if [[ "$install_output" == *"dpkg was interrupted"* ]] || [[ "$install_output" == *"dpkg --configure -a"* ]]; then
+                warn "  ⚠ Failed due to dpkg error in $friendly_name (can be fixed)"
+                dpkg_error_containers["$vmid"]="$friendly_name:$api_id:$api_key"
+            else
+                warn "  ✗ Failed to install agent in $friendly_name (exit: $install_exit_code)"
+            fi
             info "  Install output: $install_output"
             ((failed_count++)) || true
         fi
@@ -255,6 +264,79 @@ echo ""
 if [[ "$DRY_RUN" == "true" ]]; then
     warn "This was a DRY RUN - no actual changes were made"
     warn "Set DRY_RUN=false to perform actual enrollment"
+fi
+
+# ===== DPKG ERROR RECOVERY =====
+if [[ ${#dpkg_error_containers[@]} -gt 0 ]]; then
+    echo ""
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║              DPKG ERROR RECOVERY AVAILABLE                    ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo ""
+    warn "Detected ${#dpkg_error_containers[@]} container(s) with dpkg errors:"
+    for vmid in "${!dpkg_error_containers[@]}"; do
+        IFS=':' read -r name api_id api_key <<< "${dpkg_error_containers[$vmid]}"
+        info "  • Container $vmid: $name"
+    done
+    echo ""
+    
+    # Ask user if they want to fix dpkg errors
+    read -p "Would you like to fix dpkg errors and retry installation? (y/N): " -n 1 -r
+    echo ""
+    
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo ""
+        info "Starting dpkg recovery process..."
+        echo ""
+        
+        recovered_count=0
+        
+        for vmid in "${!dpkg_error_containers[@]}"; do
+            IFS=':' read -r name api_id api_key <<< "${dpkg_error_containers[$vmid]}"
+            
+            info "Fixing dpkg in container $vmid ($name)..."
+            
+            # Run dpkg --configure -a
+            dpkg_output=$(timeout 60 pct exec "$vmid" -- dpkg --configure -a 2>&1 </dev/null || true)
+            
+            if [[ $? -eq 0 ]]; then
+                info "  ✓ dpkg fixed successfully"
+                
+                # Retry agent installation
+                info "  Retrying agent installation..."
+                
+                install_exit_code=0
+                install_output=$(timeout 180 pct exec "$vmid" -- bash -c "
+                    cd /tmp
+                    curl $CURL_FLAGS \
+                        -H \"X-API-ID: $api_id\" \
+                        -H \"X-API-KEY: $api_key\" \
+                        -o patchmon-install.sh \
+                        '$PATCHMON_URL/api/v1/hosts/install' && \
+                    bash patchmon-install.sh && \
+                    rm -f patchmon-install.sh
+                " 2>&1 </dev/null) || install_exit_code=$?
+                
+                if [[ $install_exit_code -eq 0 ]] || [[ "$install_output" == *"PatchMon Agent installation completed successfully"* ]]; then
+                    info "  ✓ Agent installed successfully in $name"
+                    ((recovered_count++)) || true
+                    ((enrolled_count++)) || true
+                    ((failed_count--)) || true
+                else
+                    warn "  ✗ Agent installation still failed (exit: $install_exit_code)"
+                fi
+            else
+                warn "  ✗ Failed to fix dpkg in $name"
+                info "  dpkg output: $dpkg_output"
+            fi
+            
+            echo ""
+        done
+        
+        echo ""
+        info "Recovery complete: $recovered_count container(s) recovered"
+        echo ""
+    fi
 fi
 
 if [[ $failed_count -gt 0 ]]; then
