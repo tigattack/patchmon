@@ -29,18 +29,11 @@ services:
       NODE_ENV: development
       LOG_LEVEL: info
       DATABASE_URL: postgresql://patchmon_user:1NS3CU6E_DEV_D8_PASSW0RD@database:5432/patchmon_db
-      PM_DB_CONN_MAX_ATTEMPTS: 30
-      PM_DB_CONN_WAIT_INTERVAL: 2
       JWT_SECRET: INS3CURE_DEV_7WT_5ECR3T
-      JWT_EXPIRES_IN: 1h
-      JWT_REFRESH_EXPIRES_IN: 7d
-      SESSION_INACTIVITY_TIMEOUT_MINUTES: 30
       SERVER_PROTOCOL: http
       SERVER_HOST: localhost
       SERVER_PORT: 3000
       CORS_ORIGIN: http://localhost:3000
-      RATE_LIMIT_WINDOW_MS: 900000
-      RATE_LIMIT_MAX: 100
     ports:
       - "3001:3001"
     volumes:

@@ -19,21 +19,15 @@ services:
   backend:
     image: ghcr.io/9technologygroup/patchmon-backend:latest
     restart: unless-stopped
+    # See PatchMon Docker README for additional environment variables and configuration instructions
     environment:
       LOG_LEVEL: info
       DATABASE_URL: postgresql://patchmon_user:REPLACE_YOUR_POSTGRES_PASSWORD_HERE@database:5432/patchmon_db
-      PM_DB_CONN_MAX_ATTEMPTS: 30
-      PM_DB_CONN_WAIT_INTERVAL: 2
       JWT_SECRET: # CREATE A STRONG SECRET AND PUT IT HERE - Generate with 'openssl rand -hex 64'
-      JWT_EXPIRES_IN: 1h
-      JWT_REFRESH_EXPIRES_IN: 7d
-      SESSION_INACTIVITY_TIMEOUT_MINUTES: 30
       SERVER_PROTOCOL: http
       SERVER_HOST: localhost
       SERVER_PORT: 3000
       CORS_ORIGIN: http://localhost:3000
-      RATE_LIMIT_WINDOW_MS: 900000
-      RATE_LIMIT_MAX: 100
     volumes:
       - agent_files:/app/agents
     depends_on:
