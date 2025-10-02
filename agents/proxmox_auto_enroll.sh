@@ -4,7 +4,7 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 # Trap to catch any unexpected exits
 trap 'echo "[ERROR] Script exited unexpectedly at line $LINENO with exit code $?"' ERR EXIT
 
-SCRIPT_VERSION="1.0.0-debug.9"
+SCRIPT_VERSION="1.0.0-debug.10"
 echo "[DEBUG] Script Version: $SCRIPT_VERSION ($(date +%Y-%m-%d\ %H:%M:%S))"
 
 # =============================================================================
@@ -127,7 +127,7 @@ while IFS= read -r line; do
     # Skip stopped containers if configured
     if [[ "$status" != "running" ]] && [[ "$SKIP_STOPPED" == "true" ]]; then
         warn "  Skipping $name - container not running"
-        ((skipped_count++))
+        ((skipped_count++)) || true
         echo ""
         continue
     fi
@@ -135,7 +135,7 @@ while IFS= read -r line; do
     # Check if container is stopped
     if [[ "$status" != "running" ]]; then
         warn "  Container $name is stopped - cannot gather info or install agent"
-        ((skipped_count++))
+        ((skipped_count++)) || true
         echo ""
         continue
     fi
@@ -154,7 +154,7 @@ while IFS= read -r line; do
 
     if [[ "$DRY_RUN" == "true" ]]; then
         info "  [DRY RUN] Would enroll: $friendly_name"
-        ((enrolled_count++))
+        ((enrolled_count++)) || true
         echo ""
         continue
     fi
@@ -211,27 +211,27 @@ while IFS= read -r line; do
 
         if [[ $install_exit_code -eq 0 ]]; then
             info "  ✓ Agent installed successfully in $friendly_name"
-            ((enrolled_count++))
+            ((enrolled_count++)) || true
         elif [[ $install_exit_code -eq 124 ]]; then
             warn "  ⏱ Agent installation timed out (>180s) in $friendly_name"
             info "  Install output: $install_output"
-            ((failed_count++))
+            ((failed_count++)) || true
         else
             warn "  ✗ Failed to install agent in $friendly_name (exit: $install_exit_code)"
             info "  Install output: $install_output"
-            ((failed_count++))
+            ((failed_count++)) || true
         fi
 
     elif [[ "$http_code" == "409" ]]; then
         warn "  ⊘ Host $friendly_name already enrolled - skipping"
-        ((skipped_count++))
+        ((skipped_count++)) || true
     elif [[ "$http_code" == "429" ]]; then
         error "  ✗ Rate limit exceeded - maximum hosts per day reached"
-        ((failed_count++))
+        ((failed_count++)) || true
     else
         error "  ✗ Failed to enroll $friendly_name - HTTP $http_code"
         debug "  Response: $body"
-        ((failed_count++))
+        ((failed_count++)) || true
     fi
 
     echo ""
