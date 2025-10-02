@@ -396,7 +396,7 @@ const Packages = () => {
 				}
 
 				return pkg.isSecurityUpdate ? (
-					<span className="badge-danger flex items-center gap-1">
+					<span className="badge-danger">
 						<Shield className="h-3 w-3" />
 						Security Update Available
 					</span>
