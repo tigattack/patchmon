@@ -106,11 +106,10 @@ enrolled_count=0
 skipped_count=0
 failed_count=0
 
-# Close stdin to prevent any interference when piped from curl
-exec 0<&-
-
 # ===== PROCESS CONTAINERS =====
+info "Starting container processing loop..."
 while IFS= read -r line; do
+    info "[DEBUG] Read line from lxc_list"
     vmid=$(echo "$line" | awk '{print $1}')
     status=$(echo "$line" | awk '{print $2}')
     name=$(echo "$line" | awk '{print $3}')
