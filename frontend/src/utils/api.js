@@ -259,4 +259,9 @@ export const formatRelativeTime = (date) => {
 	return `${seconds} second${seconds > 1 ? "s" : ""} ago`;
 };
 
+// Search API
+export const searchAPI = {
+	global: (query) => api.get("/search", { params: { q: query } }),
+};
+
 export default api;
