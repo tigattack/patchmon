@@ -5,9 +5,6 @@
 # =============================================================================
 # This script discovers LXC containers on a Proxmox host and automatically
 # enrolls them into PatchMon for patch management.
-
-# Detach from stdin entirely to prevent hangs when piped from curl
-exec </dev/null
 #
 # Usage:
 #   1. Set environment variables or edit configuration below
