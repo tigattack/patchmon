@@ -4,7 +4,7 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 # Trap to catch errors only (not normal exits)
 trap 'echo "[ERROR] Script failed at line $LINENO with exit code $?"' ERR
 
-SCRIPT_VERSION="1.0.2"
+SCRIPT_VERSION="1.0.3"
 echo "[DEBUG] Script Version: $SCRIPT_VERSION ($(date +%Y-%m-%d\ %H:%M:%S))"
 
 # =============================================================================
@@ -194,6 +194,9 @@ while IFS= read -r line; do
         # Install PatchMon agent in container
         info "  Installing PatchMon agent..."
         
+        # Reset exit code for this container
+        install_exit_code=0
+        
         # Download and execute in separate steps to avoid stdin issues with piping
         install_output=$(timeout 180 pct exec "$vmid" -- bash -c "
             cd /tmp
@@ -205,11 +208,9 @@ while IFS= read -r line; do
             bash patchmon-install.sh && \
             rm -f patchmon-install.sh
         " 2>&1 </dev/null) || install_exit_code=$?
-        
-        # Set exit code to 0 if not already set (command succeeded)
-        install_exit_code=${install_exit_code:-0}
 
-        if [[ $install_exit_code -eq 0 ]]; then
+        # Check both exit code AND success message in output for reliability
+        if [[ $install_exit_code -eq 0 ]] || [[ "$install_output" == *"PatchMon Agent installation completed successfully"* ]]; then
             info "  ✓ Agent installed successfully in $friendly_name"
             ((enrolled_count++)) || true
         elif [[ $install_exit_code -eq 124 ]]; then
