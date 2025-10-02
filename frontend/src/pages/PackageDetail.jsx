@@ -66,9 +66,7 @@ const PackageDetail = () => {
 		if (searchTerm) {
 			filtered = hosts.filter(
 				(host) =>
-					host.friendly_name
-						?.toLowerCase()
-						.includes(searchTerm.toLowerCase()) ||
+					host.friendlyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 					host.hostname?.toLowerCase().includes(searchTerm.toLowerCase()),
 			);
 		}
@@ -82,7 +80,7 @@ const PackageDetail = () => {
 		(searchTerm
 			? hosts.filter(
 					(host) =>
-						host.friendly_name
+						host.friendlyName
 							?.toLowerCase()
 							.includes(searchTerm.toLowerCase()) ||
 						host.hostname?.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -377,18 +375,18 @@ const PackageDetail = () => {
 								<tbody className="bg-white dark:bg-secondary-800 divide-y divide-secondary-200 dark:divide-secondary-600">
 									{filteredAndPaginatedHosts.map((host) => (
 										<tr
-											key={host.id}
+											key={host.hostId}
 											className="hover:bg-secondary-50 dark:hover:bg-secondary-700 cursor-pointer transition-colors"
-											onClick={() => handleHostClick(host.id)}
+											onClick={() => handleHostClick(host.hostId)}
 										>
 											<td className="px-6 py-4 whitespace-nowrap">
 												<div className="flex items-center">
 													<Server className="h-5 w-5 text-secondary-400 mr-3" />
 													<div>
 														<div className="text-sm font-medium text-secondary-900 dark:text-white">
-															{host.friendly_name || host.hostname}
+															{host.friendlyName || host.hostname}
 														</div>
-														{host.friendly_name && host.hostname && (
+														{host.friendlyName && host.hostname && (
 															<div className="text-sm text-secondary-500 dark:text-secondary-300">
 																{host.hostname}
 															</div>
@@ -397,7 +395,7 @@ const PackageDetail = () => {
 												</div>
 											</td>
 											<td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-900 dark:text-white">
-												{host.current_version || "Unknown"}
+												{host.currentVersion || "Unknown"}
 											</td>
 											<td className="px-6 py-4 whitespace-nowrap">
 												{host.needsUpdate ? (
