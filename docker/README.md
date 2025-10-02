@@ -92,31 +92,68 @@ When you do this, updating to a new version requires manually updating the image
 
 #### Database Service
 
-- `POSTGRES_DB`: Database name (default: `patchmon_db`)
-- `POSTGRES_USER`: Database user (default: `patchmon_user`)
-- `POSTGRES_PASSWORD`: Database password - **MUST BE CHANGED!**
+| Variable            | Description       | Default          |
+| ------------------- | ----------------- | ---------------- |
+| `POSTGRES_DB`       | Database name     | `patchmon_db`    |
+| `POSTGRES_USER`     | Database user     | `patchmon_user`  |
+| `POSTGRES_PASSWORD` | Database password | **MUST BE SET!** |
 
 #### Backend Service
 
-- `LOG_LEVEL`: Logging level (`debug`, `info`, `warn`, `error`)
-- `DATABASE_URL`: PostgreSQL connection string
-- `PM_DB_CONN_MAX_ATTEMPTS`: Maximum database connection attempts (default: 30)
-- `PM_DB_CONN_WAIT_INTERVAL`: Wait interval between connection attempts in seconds (default: 2)
-- `SERVER_PROTOCOL`: Frontend server protocol (`http` or `https`)
-- `SERVER_HOST`: Frontend server host (default: `localhost`)
-- `SERVER_PORT`: Frontend server port (default: 3000)
-- `PORT`: Backend API port (default: 3001)
-- `API_VERSION`: API version (default: `v1`)
-- `CORS_ORIGIN`: CORS origin URL
-- `RATE_LIMIT_WINDOW_MS`: Rate limiting window in milliseconds (default: 900000)
-- `RATE_LIMIT_MAX`: Maximum requests per window (default: 100)
-- `ENABLE_HSTS`: Enable HTTP Strict Transport Security (default: true)
-- `TRUST_PROXY`: Trust proxy headers (default: true) - See [Express.js docs](https://expressjs.com/en/guide/behind-proxies.html) for usage.
+##### Database Configuration
+
+| Variable                   | Description                                          | Default                                          |
+| -------------------------- | ---------------------------------------------------- | ------------------------------------------------ |
+| `DATABASE_URL`             | PostgreSQL connection string                         | **MUST BE UPDATED WITH YOUR POSTGRES_PASSWORD!** |
+| `PM_DB_CONN_MAX_ATTEMPTS`  | Maximum database connection attempts                 | `30`                                             |
+| `PM_DB_CONN_WAIT_INTERVAL` | Wait interval between connection attempts in seconds | `2`                                              |
+
+##### Authentication & Security
+
+| Variable                             | Description                                               | Default          |
+| ------------------------------------ | --------------------------------------------------------- | ---------------- |
+| `JWT_SECRET`                         | JWT signing secret - Generate with `openssl rand -hex 64` | **MUST BE SET!** |
+| `JWT_EXPIRES_IN`                     | JWT token expiration time                                 | `1h`             |
+| `JWT_REFRESH_EXPIRES_IN`             | JWT refresh token expiration time                         | `7d`             |
+| `SESSION_INACTIVITY_TIMEOUT_MINUTES` | Session inactivity timeout in minutes                     | `30`             |
+| `DEFAULT_USER_ROLE`                  | Default role for new users                                | `user`           |
+
+##### Server & Network Configuration
+
+| Variable          | Description                                                                                     | Default                 |
+| ----------------- | ----------------------------------------------------------------------------------------------- | ----------------------- |
+| `PORT`            | Backend API port                                                                                | `3001`                  |
+| `SERVER_PROTOCOL` | Frontend server protocol (`http` or `https`)                                                    | `http`                  |
+| `SERVER_HOST`     | Frontend server host                                                                            | `localhost`             |
+| `SERVER_PORT`     | Frontend server port                                                                            | `3000`                  |
+| `CORS_ORIGIN`     | CORS origin URL                                                                                 | `http://localhost:3000` |
+| `ENABLE_HSTS`     | Enable HTTP Strict Transport Security                                                           | `true`                  |
+| `TRUST_PROXY`     | Trust proxy headers - See [Express.js docs](https://expressjs.com/en/guide/behind-proxies.html) | `true`                  |
+
+##### Rate Limiting
+
+| Variable                     | Description                                         | Default  |
+| ---------------------------- | --------------------------------------------------- | -------- |
+| `RATE_LIMIT_WINDOW_MS`       | Rate limiting window in milliseconds                | `900000` |
+| `RATE_LIMIT_MAX`             | Maximum requests per window                         | `5000`   |
+| `AUTH_RATE_LIMIT_WINDOW_MS`  | Authentication rate limiting window in milliseconds | `600000` |
+| `AUTH_RATE_LIMIT_MAX`        | Maximum authentication requests per window          | `500`    |
+| `AGENT_RATE_LIMIT_WINDOW_MS` | Agent API rate limiting window in milliseconds      | `60000`  |
+| `AGENT_RATE_LIMIT_MAX`       | Maximum agent requests per window                   | `1000`   |
+
+##### Logging
+
+| Variable         | Description                                      | Default |
+| ---------------- | ------------------------------------------------ | ------- |
+| `LOG_LEVEL`      | Logging level (`debug`, `info`, `warn`, `error`) | `info`  |
+| `ENABLE_LOGGING` | Enable application logging                       | `true`  |
 
 #### Frontend Service
 
-- `BACKEND_HOST`: Backend service hostname (default: `backend`)
-- `BACKEND_PORT`: Backend service port (default: 3001)
+| Variable       | Description              | Default   |
+| -------------- | ------------------------ | --------- |
+| `BACKEND_HOST` | Backend service hostname | `backend` |
+| `BACKEND_PORT` | Backend service port     | `3001`    |
 
 ### Volumes
 
