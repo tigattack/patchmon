@@ -42,10 +42,11 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # ===== LOGGING FUNCTIONS =====
-info() { echo -e "${GREEN}[INFO]${NC} $1"; }
-warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+info() { echo -e "${GREEN}[INFO]${NC} $1"; return 0; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; return 0; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
-debug() { [[ "${DEBUG:-false}" == "true" ]] && echo -e "${BLUE}[DEBUG]${NC} $1"; }
+success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; return 0; }
+debug() { [[ "${DEBUG:-false}" == "true" ]] && echo -e "${BLUE}[DEBUG]${NC} $1" || true; return 0; }
 
 # ===== BANNER =====
 cat << "EOF"
