@@ -4,7 +4,7 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 # Trap to catch any unexpected exits
 trap 'echo "[ERROR] Script exited unexpectedly at line $LINENO with exit code $?"' ERR EXIT
 
-SCRIPT_VERSION="1.0.0-debug.5"
+SCRIPT_VERSION="1.0.0-debug.6"
 echo "[DEBUG] Script Version: $SCRIPT_VERSION ($(date +%Y-%m-%d\ %H:%M:%S))"
 
 # =============================================================================
