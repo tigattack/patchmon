@@ -4,7 +4,7 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 # Trap to catch any unexpected exits
 trap 'echo "[ERROR] Script exited unexpectedly at line $LINENO with exit code $?"' ERR EXIT
 
-SCRIPT_VERSION="1.0.0-debug.7"
+SCRIPT_VERSION="1.0.0-debug.8"
 echo "[DEBUG] Script Version: $SCRIPT_VERSION ($(date +%Y-%m-%d\ %H:%M:%S))"
 
 # =============================================================================
@@ -206,20 +206,21 @@ while IFS= read -r line; do
                 '$PATCHMON_URL/api/v1/hosts/install' && \
             bash patchmon-install.sh && \
             rm -f patchmon-install.sh
-        " 2>&1 </dev/null)
+        " 2>&1 </dev/null) || install_exit_code=$?
         
-        install_exit_code=$?
+        # Set exit code to 0 if not already set (command succeeded)
+        install_exit_code=${install_exit_code:-0}
 
         if [[ $install_exit_code -eq 0 ]]; then
             info "  ✓ Agent installed successfully in $friendly_name"
             ((enrolled_count++))
         elif [[ $install_exit_code -eq 124 ]]; then
             warn "  ⏱ Agent installation timed out (>180s) in $friendly_name"
-            debug "  Install output: $install_output"
+            info "  Install output: $install_output"
             ((failed_count++))
         else
             warn "  ✗ Failed to install agent in $friendly_name (exit: $install_exit_code)"
-            debug "  Install output: $install_output"
+            info "  Install output: $install_output"
             ((failed_count++))
         fi
 
