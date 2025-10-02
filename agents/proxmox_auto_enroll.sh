@@ -4,6 +4,9 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 # Trap to catch any unexpected exits
 trap 'echo "[ERROR] Script exited unexpectedly at line $LINENO with exit code $?"' ERR EXIT
 
+SCRIPT_VERSION="1.0.0-debug.5"
+echo "[DEBUG] Script Version: $SCRIPT_VERSION ($(date +%Y-%m-%d\ %H:%M:%S))"
+
 # =============================================================================
 # PatchMon Proxmox LXC Auto-Enrollment Script
 # =============================================================================
@@ -19,8 +22,6 @@ trap 'echo "[ERROR] Script exited unexpectedly at line $LINENO with exit code $?
 #   - Auto-enrollment token from PatchMon
 #   - Network access to PatchMon server
 # =============================================================================
-
-set -e
 
 # ===== CONFIGURATION =====
 PATCHMON_URL="${PATCHMON_URL:-https://patchmon.example.com}"
