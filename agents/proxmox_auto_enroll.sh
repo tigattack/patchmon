@@ -132,9 +132,9 @@ while IFS= read -r line; do
 
     # Get container details
     debug "  Gathering container information..."
-    hostname=$(pct exec "$vmid" -- hostname 2>/dev/null || echo "$name")
-    ip_address=$(pct exec "$vmid" -- hostname -I 2>/dev/null | awk '{print $1}' || echo "unknown")
-    os_info=$(pct exec "$vmid" -- cat /etc/os-release 2>/dev/null | grep "^PRETTY_NAME=" | cut -d'"' -f2 || echo "unknown")
+    hostname=$(timeout 5 pct exec "$vmid" -- hostname 2>/dev/null </dev/null || echo "$name")
+    ip_address=$(timeout 5 pct exec "$vmid" -- hostname -I 2>/dev/null </dev/null | awk '{print $1}' || echo "unknown")
+    os_info=$(timeout 5 pct exec "$vmid" -- cat /etc/os-release 2>/dev/null </dev/null | grep "^PRETTY_NAME=" | cut -d'"' -f2 || echo "unknown")
 
     friendly_name="${HOST_PREFIX}${hostname}"
 
@@ -184,10 +184,10 @@ while IFS= read -r line; do
         # Install PatchMon agent in container
         info "  Installing PatchMon agent..."
         
-        install_output=$(pct exec "$vmid" -- bash -c "curl $CURL_FLAGS \
+        install_output=$(timeout 120 pct exec "$vmid" -- bash -c "curl $CURL_FLAGS \
             -H 'X-API-ID: $api_id' \
             -H 'X-API-KEY: $api_key' \
-            '$PATCHMON_URL/api/v1/hosts/install' | bash" 2>&1)
+            '$PATCHMON_URL/api/v1/hosts/install' | bash" 2>&1 </dev/null)
 
         if [[ $? -eq 0 ]]; then
             info "  ✓ Agent installed successfully in $friendly_name"
