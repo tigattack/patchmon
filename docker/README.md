@@ -10,8 +10,8 @@ PatchMon is a containerised application that monitors system patches and updates
 
 ## Images
 
-- **Backend**: [ghcr.io/9technologygroup/patchmon-backend:latest](https://github.com/9technologygroup/patchmon.net/pkgs/container/patchmon-backend)
-- **Frontend**: [ghcr.io/9technologygroup/patchmon-frontend:latest](https://github.com/9technologygroup/patchmon.net/pkgs/container/patchmon-frontend)
+- **Backend**: [ghcr.io/patchmon/patchmon-backend:latest](https://github.com/patchmon/patchmon.net/pkgs/container/patchmon-backend)
+- **Frontend**: [ghcr.io/patchmon/patchmon-frontend:latest](https://github.com/patchmon/patchmon.net/pkgs/container/patchmon-frontend)
 
 Version tags are also available (e.g. `1.2.3`) for both of these images.
 
@@ -71,10 +71,10 @@ When you do this, updating to a new version requires manually updating the image
    ```yaml
    services:
      backend:
-       image: ghcr.io/9technologygroup/patchmon-backend:1.2.3  # Update version here
+       image: ghcr.io/patchmon/patchmon-backend:1.2.3  # Update version here
       ...
      frontend:
-       image: ghcr.io/9technologygroup/patchmon-frontend:1.2.3  # Update version here
+       image: ghcr.io/patchmon/patchmon-frontend:1.2.3  # Update version here
       ...
    ```
 

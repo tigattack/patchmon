@@ -17,7 +17,7 @@ services:
       retries: 7
 
   backend:
-    image: ghcr.io/9technologygroup/patchmon-backend:latest
+    image: ghcr.io/patchmon/patchmon-backend:latest
     restart: unless-stopped
     # See PatchMon Docker README for additional environment variables and configuration instructions
     environment:
@@ -35,7 +35,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: ghcr.io/9technologygroup/patchmon-frontend:latest
+    image: ghcr.io/patchmon/patchmon-frontend:latest
     restart: unless-stopped
     ports:
       - "3000:3000"
