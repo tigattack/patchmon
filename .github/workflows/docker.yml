@@ -56,13 +56,12 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push ${{ matrix.image }} image
-        if: github.event_name != 'workflow_dispatch' || inputs.push == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/${{ matrix.image }}.Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ github.event_name != 'workflow_dispatch' || inputs.push == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.image }}
