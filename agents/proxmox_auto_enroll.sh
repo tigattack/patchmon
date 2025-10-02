@@ -4,7 +4,7 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 # Trap to catch errors only (not normal exits)
 trap 'echo "[ERROR] Script failed at line $LINENO with exit code $?"' ERR
 
-SCRIPT_VERSION="1.0.1"
+SCRIPT_VERSION="1.0.2"
 echo "[DEBUG] Script Version: $SCRIPT_VERSION ($(date +%Y-%m-%d\ %H:%M:%S))"
 
 # =============================================================================
@@ -29,7 +29,7 @@ AUTO_ENROLLMENT_KEY="${AUTO_ENROLLMENT_KEY:-}"
 AUTO_ENROLLMENT_SECRET="${AUTO_ENROLLMENT_SECRET:-}"
 CURL_FLAGS="${CURL_FLAGS:--s}"
 DRY_RUN="${DRY_RUN:-false}"
-HOST_PREFIX="${HOST_PREFIX:-proxmox-}"
+HOST_PREFIX="${HOST_PREFIX:-}"
 SKIP_STOPPED="${SKIP_STOPPED:-true}"
 PARALLEL_INSTALL="${PARALLEL_INSTALL:-false}"
 MAX_PARALLEL="${MAX_PARALLEL:-5}"
