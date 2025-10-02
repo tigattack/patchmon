@@ -1,4 +1,8 @@
 #!/bin/bash
+set -euo pipefail  # Exit on error, undefined vars, pipe failures
+
+# Trap to catch any unexpected exits
+trap 'echo "[ERROR] Script exited unexpectedly at line $LINENO with exit code $?"' ERR EXIT
 
 # =============================================================================
 # PatchMon Proxmox LXC Auto-Enrollment Script
@@ -101,10 +105,12 @@ total_containers=$(echo "$lxc_list" | wc -l)
 info "Found $total_containers LXC container(s)"
 echo ""
 
+info "Initializing statistics..."
 # ===== STATISTICS =====
 enrolled_count=0
 skipped_count=0
 failed_count=0
+info "Statistics initialized"
 
 # ===== PROCESS CONTAINERS =====
 info "Starting container processing loop..."
