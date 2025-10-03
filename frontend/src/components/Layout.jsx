@@ -882,7 +882,7 @@ const Layout = ({ children }) => {
 							{/* External Links */}
 							<div className="flex items-center gap-2">
 								<a
-									href="https://github.com/9technologygroup/patchmon.net"
+									href="https://github.com/PatchMon/PatchMon"
 									target="_blank"
 									rel="noopener noreferrer"
 									className="flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 text-secondary-600 dark:text-secondary-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors shadow-sm group relative"
