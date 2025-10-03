@@ -41,6 +41,7 @@ PatchMon provides centralized patch management across diverse server environment
 
 ### API & Integrations
 - REST API under `/api/v1` with JWT auth
+- **Proxmox LXC Auto-Enrollment** - Automatically discover and enroll LXC containers from Proxmox hosts ([Documentation](PROXMOX_AUTO_ENROLLMENT.md))
 
 ### Security
 - Rate limiting for general, auth, and agent endpoints

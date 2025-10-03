@@ -29,6 +29,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useUpdateNotification } from "../contexts/UpdateNotificationContext";
 import { dashboardAPI, versionAPI } from "../utils/api";
+import GlobalSearch from "./GlobalSearch";
 import UpgradeNotificationIcon from "./UpgradeNotificationIcon";
 
 const Layout = ({ children }) => {
@@ -866,12 +867,18 @@ const Layout = ({ children }) => {
 					<div className="h-6 w-px bg-secondary-200 lg:hidden" />
 
 					<div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-						<div className="relative flex flex-1 items-center">
-							<h2 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100">
+						<div className="relative flex items-center">
+							<h2 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100 whitespace-nowrap">
 								{getPageTitle()}
 							</h2>
 						</div>
-						<div className="flex items-center gap-x-4 lg:gap-x-6">
+
+						{/* Global Search Bar */}
+						<div className="hidden md:flex items-center max-w-sm">
+							<GlobalSearch />
+						</div>
+
+						<div className="flex flex-1 items-center gap-x-4 lg:gap-x-6 justify-end">
 							{/* External Links */}
 							<div className="flex items-center gap-2">
 								<a

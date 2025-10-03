@@ -21,13 +21,14 @@ model dashboard_preferences {
 }
 
 model host_groups {
-  id          String   @id
-  name        String   @unique
-  description String?
-  color       String?  @default("#3B82F6")
-  created_at  DateTime @default(now())
-  updated_at  DateTime
-  hosts       hosts[]
+  id                      String                    @id
+  name                    String                    @unique
+  description             String?
+  color                   String?                   @default("#3B82F6")
+  created_at              DateTime                  @default(now())
+  updated_at              DateTime
+  hosts                   hosts[]
+  auto_enrollment_tokens  auto_enrollment_tokens[]
 }
 
 model host_packages {
@@ -172,22 +173,23 @@ model update_history {
 }
 
 model users {
-  id                    String                  @id
-  username              String                  @unique
-  email                 String                  @unique
-  password_hash         String
-  role                  String                  @default("admin")
-  is_active             Boolean                 @default(true)
-  last_login            DateTime?
-  created_at            DateTime                @default(now())
-  updated_at            DateTime
-  tfa_backup_codes      String?
-  tfa_enabled           Boolean                 @default(false)
-  tfa_secret            String?
-  first_name            String?
-  last_name             String?
-  dashboard_preferences dashboard_preferences[]
-  user_sessions         user_sessions[]
+  id                     String                   @id
+  username               String                   @unique
+  email                  String                   @unique
+  password_hash          String
+  role                   String                   @default("admin")
+  is_active              Boolean                  @default(true)
+  last_login             DateTime?
+  created_at             DateTime                 @default(now())
+  updated_at             DateTime
+  tfa_backup_codes       String?
+  tfa_enabled            Boolean                  @default(false)
+  tfa_secret             String?
+  first_name             String?
+  last_name              String?
+  dashboard_preferences  dashboard_preferences[]
+  user_sessions          user_sessions[]
+  auto_enrollment_tokens auto_enrollment_tokens[]
 }
 
 model user_sessions {
@@ -206,4 +208,28 @@ model user_sessions {
   @@index([user_id])
   @@index([refresh_token])
   @@index([expires_at])
+}
+
+model auto_enrollment_tokens {
+  id                    String       @id
+  token_name            String
+  token_key             String       @unique
+  token_secret          String
+  created_by_user_id    String?
+  is_active             Boolean      @default(true)
+  allowed_ip_ranges     String[]
+  max_hosts_per_day     Int          @default(100)
+  hosts_created_today   Int          @default(0)
+  last_reset_date       DateTime     @default(now()) @db.Date
+  default_host_group_id String?
+  created_at            DateTime     @default(now())
+  updated_at            DateTime
+  last_used_at          DateTime?
+  expires_at            DateTime?
+  metadata              Json?
+  users                 users?       @relation(fields: [created_by_user_id], references: [id], onDelete: SetNull)
+  host_groups           host_groups? @relation(fields: [default_host_group_id], references: [id], onDelete: SetNull)
+
+  @@index([token_key])
+  @@index([is_active])
 }
