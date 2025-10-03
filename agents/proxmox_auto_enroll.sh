@@ -4,7 +4,7 @@ set -eo pipefail  # Exit on error, pipe failures (removed -u as we handle unset 
 # Trap to catch errors only (not normal exits)
 trap 'echo "[ERROR] Script failed at line $LINENO with exit code $?"' ERR
 
-SCRIPT_VERSION="1.2.0"
+SCRIPT_VERSION="1.3.0"
 echo "[DEBUG] Script Version: $SCRIPT_VERSION ($(date +%Y-%m-%d\ %H:%M:%S))"
 
 # =============================================================================
@@ -196,6 +196,44 @@ while IFS= read -r line; do
         fi
 
         info "  ✓ Host enrolled successfully: $api_id"
+
+        # Ensure curl is installed in the container
+        info "  Checking for curl in container..."
+        curl_check=$(timeout 10 pct exec "$vmid" -- bash -c "command -v curl >/dev/null 2>&1 && echo 'installed' || echo 'missing'" 2>/dev/null </dev/null || echo "error")
+        
+        if [[ "$curl_check" == "missing" ]]; then
+            info "  Installing curl in container..."
+            
+            # Detect package manager and install curl
+            curl_install_output=$(timeout 60 pct exec "$vmid" -- bash -c "
+                if command -v apt-get >/dev/null 2>&1; then
+                    export DEBIAN_FRONTEND=noninteractive
+                    apt-get update -qq && apt-get install -y -qq curl
+                elif command -v yum >/dev/null 2>&1; then
+                    yum install -y -q curl
+                elif command -v dnf >/dev/null 2>&1; then
+                    dnf install -y -q curl
+                elif command -v apk >/dev/null 2>&1; then
+                    apk add --no-cache curl
+                else
+                    echo 'ERROR: No supported package manager found'
+                    exit 1
+                fi
+            " 2>&1 </dev/null) || true
+            
+            if [[ "$curl_install_output" == *"ERROR: No supported package manager"* ]]; then
+                warn "  ✗ Could not install curl - no supported package manager found"
+                failed_containers["$vmid"]="$friendly_name|No package manager for curl|$curl_install_output"
+                ((failed_count++)) || true
+                echo ""
+                sleep 1
+                continue
+            else
+                info "  ✓ curl installed successfully"
+            fi
+        else
+            info "  ✓ curl already installed"
+        fi
 
         # Install PatchMon agent in container
         info "  Installing PatchMon agent..."
