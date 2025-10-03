@@ -132,6 +132,7 @@ export const repositoryAPI = {
 	getByHost: (hostId) => api.get(`/repositories/host/${hostId}`),
 	update: (repositoryId, data) =>
 		api.put(`/repositories/${repositoryId}`, data),
+	delete: (repositoryId) => api.delete(`/repositories/${repositoryId}`),
 	toggleHostRepository: (hostId, repositoryId, isEnabled) =>
 		api.patch(`/repositories/host/${hostId}/repository/${repositoryId}`, {
 			isEnabled,
