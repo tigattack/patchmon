@@ -2,7 +2,7 @@
 
 [![Website](https://img.shields.io/badge/Website-patchmon.net-blue?style=for-the-badge)](https://patchmon.net)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-blue?style=for-the-badge&logo=discord)](https://patchmon.net/discord)
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/9technologygroup/patchmon.net)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/PatchMon/PatchMon)
 [![Roadmap](https://img.shields.io/badge/Roadmap-View%20Progress-green?style=for-the-badge&logo=github)](https://github.com/orgs/PatchMon/projects/2)
 ---
 
@@ -12,7 +12,7 @@
 
 PatchMon provides centralized patch management across diverse server environments. Agents communicate outbound-only to the PatchMon server, eliminating inbound ports on monitored hosts while delivering comprehensive visibility and safe automation.
 
-![Dashboard Screenshot](https://raw.githubusercontent.com/9technologygroup/patchmon.net/main/dashboard.jpeg)
+![Dashboard Screenshot](https://raw.githubusercontent.com/PatchMon/PatchMon/main/dashboard.jpeg)
 
 ## Features
 
@@ -63,7 +63,7 @@ Managed, zero-maintenance PatchMon hosting. Stay tuned.
 
 #### Docker (preferred)
 
-For getting started with Docker, see the [Docker documentation](https://github.com/9technologygroup/patchmon.net/blob/main/docker/README.md)
+For getting started with Docker, see the [Docker documentation](https://github.com/PatchMon/PatchMon/blob/main/docker/README.md)
 
 #### Native Install (advanced/non-docker)
 
@@ -85,7 +85,7 @@ apt install curl -y
 
 #### Script
 ```bash
-curl -fsSL -o setup.sh https://raw.githubusercontent.com/9technologygroup/patchmon.net/refs/heads/main/setup.sh && chmod +x setup.sh && bash setup.sh
+curl -fsSL -o setup.sh https://raw.githubusercontent.com/PatchMon/PatchMon/refs/heads/main/setup.sh && chmod +x setup.sh && bash setup.sh
 ```
 
 #### Minimum specs for building : #####
@@ -282,6 +282,6 @@ Thank you to all our contributors who help make PatchMon better every day!
 **Made with ❤️ by the PatchMon Team**
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-blue?style=for-the-badge&logo=discord)](https://patchmon.net/discord)
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/9technologygroup/patchmon.net)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/PatchMon/PatchMon)
 
 </div>
