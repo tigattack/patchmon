@@ -4,7 +4,7 @@ set -eo pipefail  # Exit on error, pipe failures (removed -u as we handle unset 
 # Trap to catch errors only (not normal exits)
 trap 'echo "[ERROR] Script failed at line $LINENO with exit code $?"' ERR
 
-SCRIPT_VERSION="1.1.1"
+SCRIPT_VERSION="1.2.0"
 echo "[DEBUG] Script Version: $SCRIPT_VERSION ($(date +%Y-%m-%d\ %H:%M:%S))"
 
 # =============================================================================
@@ -115,6 +115,9 @@ failed_count=0
 
 # Track containers with dpkg errors for later recovery
 declare -A dpkg_error_containers
+
+# Track all failed containers for summary
+declare -A failed_containers
 info "Statistics initialized"
 
 # ===== PROCESS CONTAINERS =====
@@ -219,14 +222,20 @@ while IFS= read -r line; do
         elif [[ $install_exit_code -eq 124 ]]; then
             warn "  ⏱ Agent installation timed out (>180s) in $friendly_name"
             info "  Install output: $install_output"
+            # Store failure details
+            failed_containers["$vmid"]="$friendly_name|Timeout (>180s)|$install_output"
             ((failed_count++)) || true
         else
             # Check if it's a dpkg error
             if [[ "$install_output" == *"dpkg was interrupted"* ]] || [[ "$install_output" == *"dpkg --configure -a"* ]]; then
                 warn "  ⚠ Failed due to dpkg error in $friendly_name (can be fixed)"
                 dpkg_error_containers["$vmid"]="$friendly_name:$api_id:$api_key"
+                # Store failure details
+                failed_containers["$vmid"]="$friendly_name|dpkg error|$install_output"
             else
                 warn "  ✗ Failed to install agent in $friendly_name (exit: $install_exit_code)"
+                # Store failure details
+                failed_containers["$vmid"]="$friendly_name|Exit code $install_exit_code|$install_output"
             fi
             info "  Install output: $install_output"
             ((failed_count++)) || true
@@ -237,10 +246,12 @@ while IFS= read -r line; do
         ((skipped_count++)) || true
     elif [[ "$http_code" == "429" ]]; then
         error "  ✗ Rate limit exceeded - maximum hosts per day reached"
+        failed_containers["$vmid"]="$friendly_name|Rate limit exceeded|$body"
         ((failed_count++)) || true
     else
         error "  ✗ Failed to enroll $friendly_name - HTTP $http_code"
         debug "  Response: $body"
+        failed_containers["$vmid"]="$friendly_name|HTTP $http_code enrollment failed|$body"
         ((failed_count++)) || true
     fi
 
@@ -260,6 +271,32 @@ info "Successfully Enrolled:  $enrolled_count"
 info "Skipped:                $skipped_count"
 info "Failed:                 $failed_count"
 echo ""
+
+# ===== FAILURE DETAILS =====
+if [[ ${#failed_containers[@]} -gt 0 ]]; then
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║                     FAILURE DETAILS                           ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo ""
+    
+    for vmid in "${!failed_containers[@]}"; do
+        IFS='|' read -r name reason output <<< "${failed_containers[$vmid]}"
+        
+        warn "Container $vmid: $name"
+        info "  Reason: $reason"
+        info "  Last 5 lines of output:"
+        
+        # Get last 5 lines of output
+        last_5_lines=$(echo "$output" | tail -n 5)
+        
+        # Display each line with proper indentation
+        while IFS= read -r line; do
+            echo "    $line"
+        done <<< "$last_5_lines"
+        
+        echo ""
+    done
+fi
 
 if [[ "$DRY_RUN" == "true" ]]; then
     warn "This was a DRY RUN - no actual changes were made"
