@@ -16,7 +16,6 @@ import {
 	Shield,
 	ShieldCheck,
 	Unlock,
-	Users,
 	X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -513,8 +512,8 @@ const Repositories = () => {
 			case "hostCount":
 				return (
 					<div className="flex items-center justify-center gap-1 text-sm text-secondary-900 dark:text-white">
-						<Users className="h-4 w-4" />
-						<span>{repo.host_count}</span>
+						<Server className="h-4 w-4" />
+						<span>{repo.hostCount}</span>
 					</div>
 				);
 			case "actions":
