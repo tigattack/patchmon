@@ -1,4 +1,40 @@
 require("dotenv").config();
+
+// Validate required environment variables on startup
+function validateEnvironmentVariables() {
+	const requiredVars = {
+		JWT_SECRET: "Required for secure authentication token generation",
+		DATABASE_URL: "Required for database connection",
+	};
+
+	const missing = [];
+
+	// Check required variables
+	for (const [varName, description] of Object.entries(requiredVars)) {
+		if (!process.env[varName]) {
+			missing.push(`${varName}: ${description}`);
+		}
+	}
+
+	// Fail if required variables are missing
+	if (missing.length > 0) {
+		console.error("❌ Missing required environment variables:");
+		for (const error of missing) {
+			console.error(`   - ${error}`);
+		}
+		console.error("");
+		console.error(
+			"Please set these environment variables and restart the application.",
+		);
+		process.exit(1);
+	}
+
+	console.log("✅ Environment variable validation passed");
+}
+
+// Validate environment variables before importing any modules that depend on them
+validateEnvironmentVariables();
+
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
