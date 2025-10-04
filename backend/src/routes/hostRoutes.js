@@ -1127,12 +1127,16 @@ router.get("/install", async (req, res) => {
 			}
 		} catch (_) {}
 
-		// Inject the API credentials, server URL, and curl flags into the script
+		// Check for --force parameter
+		const forceInstall = req.query.force === "true" || req.query.force === "1";
+
+		// Inject the API credentials, server URL, curl flags, and force flag into the script
 		const envVars = `#!/bin/bash
 export PATCHMON_URL="${serverUrl}"
 export API_ID="${host.api_id}"
 export API_KEY="${host.api_key}"
 export CURL_FLAGS="${curlFlags}"
+export FORCE_INSTALL="${forceInstall ? "true" : "false"}"
 
 `;
 

@@ -136,10 +136,6 @@ Agents (Outbound Only)
 |  Agents on your servers   | ----------> | Backend API (/api/v1)  |
 +---------------------------+             +------------------------+
 
-Operational
-- systemd manages backend service
-- certbot/nginx for TLS (public)
-- setup.sh bootstraps OS, app, DB, config
 ```
 
 ## Support
