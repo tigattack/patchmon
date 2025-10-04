@@ -1151,6 +1151,48 @@ export CURL_FLAGS="${curlFlags}"
 	}
 });
 
+// Check if machine_id already exists (requires auth)
+router.post("/check-machine-id", validateApiCredentials, async (req, res) => {
+	try {
+		const { machine_id } = req.body;
+
+		if (!machine_id) {
+			return res.status(400).json({
+				error: "machine_id is required",
+			});
+		}
+
+		// Check if a host with this machine_id exists
+		const existing_host = await prisma.hosts.findUnique({
+			where: { machine_id },
+			select: {
+				id: true,
+				friendly_name: true,
+				machine_id: true,
+				api_id: true,
+				status: true,
+				created_at: true,
+			},
+		});
+
+		if (existing_host) {
+			return res.status(200).json({
+				exists: true,
+				host: existing_host,
+				message: "This machine is already enrolled",
+			});
+		}
+
+		return res.status(200).json({
+			exists: false,
+			message: "Machine not yet enrolled",
+		});
+	} catch (error) {
+		console.error("Error checking machine_id:", error);
+		res.status(500).json({ error: "Failed to check machine_id" });
+	}
+});
+
 // Serve the removal script (public endpoint - no authentication required)
 router.get("/remove", async (_req, res) => {
 	try {
