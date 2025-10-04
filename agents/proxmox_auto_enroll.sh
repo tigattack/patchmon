@@ -33,6 +33,7 @@ HOST_PREFIX="${HOST_PREFIX:-}"
 SKIP_STOPPED="${SKIP_STOPPED:-true}"
 PARALLEL_INSTALL="${PARALLEL_INSTALL:-false}"
 MAX_PARALLEL="${MAX_PARALLEL:-5}"
+FORCE_INSTALL="${FORCE_INSTALL:-false}"
 
 # ===== COLOR OUTPUT =====
 RED='\033[0;31m'
@@ -243,6 +244,13 @@ while IFS= read -r line; do
         # Install PatchMon agent in container
         info "  Installing PatchMon agent..."
         
+        # Build install URL with force flag if enabled
+        install_url="$PATCHMON_URL/api/v1/hosts/install"
+        if [[ "$FORCE_INSTALL" == "true" ]]; then
+            install_url="$install_url?force=true"
+            info "  Using force mode - will bypass broken packages"
+        fi
+        
         # Reset exit code for this container
         install_exit_code=0
         
@@ -253,7 +261,7 @@ while IFS= read -r line; do
                 -H \"X-API-ID: $api_id\" \
                 -H \"X-API-KEY: $api_key\" \
                 -o patchmon-install.sh \
-                '$PATCHMON_URL/api/v1/hosts/install' && \
+                '$install_url' && \
             bash patchmon-install.sh && \
             rm -f patchmon-install.sh
         " 2>&1 </dev/null) || install_exit_code=$?
