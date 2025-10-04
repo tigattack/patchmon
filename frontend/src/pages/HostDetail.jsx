@@ -387,6 +387,17 @@ const HostDetail = () => {
 											</div>
 										)}
 
+										{host.machine_id && (
+											<div>
+												<p className="text-xs text-secondary-500 dark:text-secondary-300 mb-1.5">
+													Machine ID
+												</p>
+												<p className="font-medium text-secondary-900 dark:text-white font-mono text-sm break-all">
+													{host.machine_id}
+												</p>
+											</div>
+										)}
+
 										<div>
 											<p className="text-xs text-secondary-500 dark:text-secondary-300 mb-1.5">
 												Host Group
