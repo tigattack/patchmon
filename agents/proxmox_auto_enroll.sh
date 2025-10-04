@@ -4,7 +4,7 @@ set -eo pipefail  # Exit on error, pipe failures (removed -u as we handle unset 
 # Trap to catch errors only (not normal exits)
 trap 'echo "[ERROR] Script failed at line $LINENO with exit code $?"' ERR
 
-SCRIPT_VERSION="1.3.0"
+SCRIPT_VERSION="2.0.0"
 echo "[DEBUG] Script Version: $SCRIPT_VERSION ($(date +%Y-%m-%d\ %H:%M:%S))"
 
 # =============================================================================
@@ -151,12 +151,16 @@ while IFS= read -r line; do
     hostname=$(timeout 5 pct exec "$vmid" -- hostname 2>/dev/null </dev/null || echo "$name")
     ip_address=$(timeout 5 pct exec "$vmid" -- hostname -I 2>/dev/null </dev/null | awk '{print $1}' || echo "unknown")
     os_info=$(timeout 5 pct exec "$vmid" -- cat /etc/os-release 2>/dev/null </dev/null | grep "^PRETTY_NAME=" | cut -d'"' -f2 || echo "unknown")
+    
+    # Get machine ID from container
+    machine_id=$(timeout 5 pct exec "$vmid" -- bash -c "cat /etc/machine-id 2>/dev/null || cat /var/lib/dbus/machine-id 2>/dev/null || echo 'proxmox-lxc-$vmid-'$(cat /proc/sys/kernel/random/uuid)" </dev/null 2>/dev/null || echo "proxmox-lxc-$vmid-unknown")
 
     friendly_name="${HOST_PREFIX}${hostname}"
 
     info "  Hostname: $hostname"
     info "  IP Address: $ip_address"
     info "  OS: $os_info"
+    info "  Machine ID: ${machine_id:0:16}..."
 
     if [[ "$DRY_RUN" == "true" ]]; then
         info "  [DRY RUN] Would enroll: $friendly_name"
@@ -174,6 +178,7 @@ while IFS= read -r line; do
         -H "Content-Type: application/json" \
         -d "{
             \"friendly_name\": \"$friendly_name\",
+            \"machine_id\": \"$machine_id\",
             \"metadata\": {
                 \"vmid\": \"$vmid\",
                 \"proxmox_node\": \"$(hostname)\",
