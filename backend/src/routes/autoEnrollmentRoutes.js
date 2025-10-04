@@ -521,6 +521,9 @@ router.post(
 		body("friendly_name")
 			.isLength({ min: 1, max: 255 })
 			.withMessage("Friendly name is required"),
+		body("machine_id")
+			.isLength({ min: 1, max: 255 })
+			.withMessage("Machine ID is required"),
 		body("metadata").optional().isObject(),
 	],
 	async (req, res) => {
@@ -530,15 +533,15 @@ router.post(
 				return res.status(400).json({ errors: errors.array() });
 			}
 
-			const { friendly_name } = req.body;
+			const { friendly_name, machine_id } = req.body;
 
 			// Generate host API credentials
 			const api_id = `patchmon_${crypto.randomBytes(8).toString("hex")}`;
 			const api_key = crypto.randomBytes(32).toString("hex");
 
-			// Check if host already exists
+			// Check if host already exists by machine_id (not hostname)
 			const existing_host = await prisma.hosts.findUnique({
-				where: { friendly_name },
+				where: { machine_id },
 			});
 
 			if (existing_host) {
@@ -546,7 +549,10 @@ router.post(
 					error: "Host already exists",
 					host_id: existing_host.id,
 					api_id: existing_host.api_id,
-					message: "This host is already enrolled in PatchMon",
+					machine_id: existing_host.machine_id,
+					friendly_name: existing_host.friendly_name,
+					message:
+						"This machine is already enrolled in PatchMon (matched by machine ID)",
 				});
 			}
 
@@ -554,6 +560,7 @@ router.post(
 			const host = await prisma.hosts.create({
 				data: {
 					id: uuidv4(),
+					machine_id,
 					friendly_name,
 					os_type: "unknown",
 					os_version: "unknown",
@@ -648,17 +655,26 @@ router.post(
 
 			for (const host_data of hosts) {
 				try {
-					const { friendly_name } = host_data;
+					const { friendly_name, machine_id } = host_data;
 
-					// Check if host already exists
+					if (!machine_id) {
+						results.failed.push({
+							friendly_name,
+							error: "Machine ID is required",
+						});
+						continue;
+					}
+
+					// Check if host already exists by machine_id
 					const existing_host = await prisma.hosts.findUnique({
-						where: { friendly_name },
+						where: { machine_id },
 					});
 
 					if (existing_host) {
 						results.skipped.push({
 							friendly_name,
-							reason: "Already exists",
+							machine_id,
+							reason: "Machine already enrolled",
 							api_id: existing_host.api_id,
 						});
 						continue;
@@ -672,6 +688,7 @@ router.post(
 					const host = await prisma.hosts.create({
 						data: {
 							id: uuidv4(),
+							machine_id,
 							friendly_name,
 							os_type: "unknown",
 							os_version: "unknown",
