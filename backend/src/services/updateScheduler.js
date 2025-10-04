@@ -60,13 +60,8 @@ class UpdateScheduler {
 
 			// Get settings
 			const settings = await prisma.settings.findFirst();
-			if (!settings || !settings.githubRepoUrl) {
-				console.log("⚠️ No GitHub repository configured, skipping update check");
-				return;
-			}
-
-			// Extract owner and repo from GitHub URL
-			const repoUrl = settings.githubRepoUrl;
+			const DEFAULT_GITHUB_REPO = "https://github.com/patchMon/patchmon";
+			const repoUrl = settings?.githubRepoUrl || DEFAULT_GITHUB_REPO;
 			let owner, repo;
 
 			if (repoUrl.includes("git@github.com:")) {
