@@ -60,7 +60,8 @@ model host_repositories {
 
 model hosts {
   id                 String              @id
-  friendly_name      String              @unique
+  machine_id         String              @unique
+  friendly_name      String
   ip                 String?
   os_type            String
   os_version         String
@@ -92,6 +93,10 @@ model hosts {
   host_repositories  host_repositories[]
   host_groups        host_groups?        @relation(fields: [host_group_id], references: [id])
   update_history     update_history[]
+
+  @@index([machine_id])
+  @@index([friendly_name])
+  @@index([hostname])
 }
 
 model packages {
