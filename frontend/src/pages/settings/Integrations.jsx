@@ -22,6 +22,7 @@ const Integrations = () => {
 	const [new_token, setNewToken] = useState(null);
 	const [show_secret, setShowSecret] = useState(false);
 	const [server_url, setServerUrl] = useState("");
+	const [force_proxmox_install, setForceProxmoxInstall] = useState(false);
 
 	// Form state
 	const [form_data, setFormData] = useState({
@@ -33,6 +34,12 @@ const Integrations = () => {
 	});
 
 	const [copy_success, setCopySuccess] = useState({});
+
+	// Helper function to build Proxmox enrollment URL with optional force flag
+	const getProxmoxUrl = () => {
+		const baseUrl = `${server_url}/api/v1/auto-enrollment/proxmox-lxc?token_key=${new_token.token_key}&token_secret=${new_token.token_secret}`;
+		return force_proxmox_install ? `${baseUrl}&force=true` : baseUrl;
+	};
 
 	const handleTabChange = (tabName) => {
 		setActiveTab(tabName);
@@ -664,10 +671,32 @@ const Integrations = () => {
 										Run this command on your Proxmox host to download and
 										execute the enrollment script:
 									</p>
+
+									{/* Force Install Toggle */}
+									<div className="mb-3">
+										<label className="flex items-center gap-2 text-sm">
+											<input
+												type="checkbox"
+												checked={force_proxmox_install}
+												onChange={(e) =>
+													setForceProxmoxInstall(e.target.checked)
+												}
+												className="rounded border-secondary-300 dark:border-secondary-600 text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-400 dark:bg-secondary-700"
+											/>
+											<span className="text-secondary-800 dark:text-secondary-200">
+												Force install (bypass broken packages in containers)
+											</span>
+										</label>
+										<p className="text-xs text-secondary-600 dark:text-secondary-400 mt-1">
+											Enable this if your LXC containers have broken packages
+											(CloudPanel, WHM, etc.) that block apt-get operations
+										</p>
+									</div>
+
 									<div className="flex items-center gap-2">
 										<input
 											type="text"
-											value={`curl -s "${server_url}/api/v1/auto-enrollment/proxmox-lxc?token_key=${new_token.token_key}&token_secret=${new_token.token_secret}" | bash`}
+											value={`curl -s "${getProxmoxUrl()}" | bash`}
 											readOnly
 											className="flex-1 px-3 py-2 border border-secondary-300 dark:border-secondary-600 rounded-md bg-secondary-50 dark:bg-secondary-900 text-secondary-900 dark:text-white font-mono text-xs"
 										/>
@@ -675,7 +704,7 @@ const Integrations = () => {
 											type="button"
 											onClick={() =>
 												copy_to_clipboard(
-													`curl -s "${server_url}/api/v1/auto-enrollment/proxmox-lxc?token_key=${new_token.token_key}&token_secret=${new_token.token_secret}" | bash`,
+													`curl -s "${getProxmoxUrl()}" | bash`,
 													"curl-command",
 												)
 											}
