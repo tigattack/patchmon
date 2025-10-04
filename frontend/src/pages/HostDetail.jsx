@@ -466,11 +466,23 @@ const HostDetail = () => {
 
 							{/* Network Information */}
 							{activeTab === "network" &&
-								(host.gateway_ip ||
+								(host.ip ||
+									host.gateway_ip ||
 									host.dns_servers ||
 									host.network_interfaces) && (
 									<div className="space-y-4">
 										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+											{host.ip && (
+												<div>
+													<p className="text-xs text-secondary-500 dark:text-secondary-300">
+														IP Address
+													</p>
+													<p className="font-medium text-secondary-900 dark:text-white font-mono text-sm">
+														{host.ip}
+													</p>
+												</div>
+											)}
+
 											{host.gateway_ip && (
 												<div>
 													<p className="text-xs text-secondary-500 dark:text-secondary-300">
@@ -802,6 +814,7 @@ const HostDetail = () => {
 
 							{activeTab === "network" &&
 								!(
+									host.ip ||
 									host.gateway_ip ||
 									host.dns_servers ||
 									host.network_interfaces

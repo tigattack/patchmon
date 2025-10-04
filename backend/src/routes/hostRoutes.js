@@ -172,15 +172,6 @@ router.post(
 			// Generate unique API credentials for this host
 			const { apiId, apiKey } = generateApiCredentials();
 
-			// Check if host already exists
-			const existingHost = await prisma.hosts.findUnique({
-				where: { friendly_name: friendly_name },
-			});
-
-			if (existingHost) {
-				return res.status(409).json({ error: "Host already exists" });
-			}
-
 			// If hostGroupId is provided, verify the group exists
 			if (hostGroupId) {
 				const hostGroup = await prisma.host_groups.findUnique({
@@ -196,6 +187,7 @@ router.post(
 			const host = await prisma.hosts.create({
 				data: {
 					id: uuidv4(),
+					machine_id: `pending-${uuidv4()}`, // Temporary placeholder until agent connects with real machine_id
 					friendly_name: friendly_name,
 					os_type: "unknown", // Will be updated when agent connects
 					os_version: "unknown", // Will be updated when agent connects
@@ -321,6 +313,10 @@ router.post(
 			.optional()
 			.isArray()
 			.withMessage("Load average must be an array"),
+		body("machineId")
+			.optional()
+			.isString()
+			.withMessage("Machine ID must be a string"),
 	],
 	async (req, res) => {
 		try {
@@ -337,6 +333,11 @@ router.post(
 				last_update: new Date(),
 				updated_at: new Date(),
 			};
+
+			// Update machine_id if provided and current one is a placeholder
+			if (req.body.machineId && host.machine_id.startsWith("pending-")) {
+				updateData.machine_id = req.body.machineId;
+			}
 
 			// Basic system info
 			if (req.body.osType) updateData.os_type = req.body.osType;
