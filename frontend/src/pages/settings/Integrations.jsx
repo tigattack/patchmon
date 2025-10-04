@@ -14,6 +14,7 @@ import SettingsLayout from "../../components/SettingsLayout";
 import api from "../../utils/api";
 
 const Integrations = () => {
+	const [activeTab, setActiveTab] = useState("proxmox");
 	const [tokens, setTokens] = useState([]);
 	const [host_groups, setHostGroups] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -32,6 +33,10 @@ const Integrations = () => {
 	});
 
 	const [copy_success, setCopySuccess] = useState({});
+
+	const handleTabChange = (tabName) => {
+		setActiveTab(tabName);
+	};
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: Only run on mount
 	useEffect(() => {
@@ -163,193 +168,226 @@ const Integrations = () => {
 		<SettingsLayout>
 			<div className="space-y-6">
 				{/* Header */}
-				<div className="flex items-center justify-between">
-					<div>
-						<h1 className="text-2xl font-bold text-secondary-900 dark:text-white">
-							Integrations
-						</h1>
-						<p className="mt-1 text-sm text-secondary-600 dark:text-secondary-400">
-							Manage auto-enrollment tokens for Proxmox and other integrations
-						</p>
-					</div>
-					<button
-						type="button"
-						onClick={() => setShowCreateModal(true)}
-						className="btn-primary flex items-center gap-2"
-					>
-						<Plus className="h-4 w-4" />
-						New Token
-					</button>
+				<div>
+					<h1 className="text-2xl font-bold text-secondary-900 dark:text-white">
+						Integrations
+					</h1>
+					<p className="mt-1 text-sm text-secondary-600 dark:text-secondary-400">
+						Manage auto-enrollment tokens for Proxmox and other integrations
+					</p>
 				</div>
 
-				{/* Proxmox Integration Section */}
-				<div className="bg-white dark:bg-secondary-800 border border-secondary-200 dark:border-secondary-600 rounded-lg p-6">
-					<div className="flex items-center gap-3 mb-4">
-						<div className="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
-							<Server className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-						</div>
-						<div>
-							<h3 className="text-lg font-semibold text-secondary-900 dark:text-white">
-								Proxmox LXC Auto-Enrollment
-							</h3>
-							<p className="text-sm text-secondary-600 dark:text-secondary-400">
-								Automatically discover and enroll LXC containers from Proxmox
-								hosts
-							</p>
-						</div>
+				{/* Tabs Navigation */}
+				<div className="bg-white dark:bg-secondary-800 border border-secondary-200 dark:border-secondary-600 rounded-lg overflow-hidden">
+					<div className="border-b border-secondary-200 dark:border-secondary-600 flex">
+						<button
+							type="button"
+							onClick={() => handleTabChange("proxmox")}
+							className={`px-6 py-3 text-sm font-medium ${
+								activeTab === "proxmox"
+									? "text-primary-600 dark:text-primary-400 border-b-2 border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+									: "text-secondary-500 dark:text-secondary-400 hover:text-secondary-700 dark:hover:text-secondary-300 hover:bg-secondary-50 dark:hover:bg-secondary-700/50"
+							}`}
+						>
+							Proxmox LXC
+						</button>
+						{/* Future tabs can be added here */}
 					</div>
 
-					{/* Token List */}
-					{loading ? (
-						<div className="text-center py-8">
-							<div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
-						</div>
-					) : tokens.length === 0 ? (
-						<div className="text-center py-8 text-secondary-600 dark:text-secondary-400">
-							<p>No auto-enrollment tokens created yet.</p>
-							<p className="text-sm mt-2">
-								Create a token to enable automatic host enrollment from Proxmox.
-							</p>
-						</div>
-					) : (
-						<div className="space-y-3">
-							{tokens.map((token) => (
-								<div
-									key={token.id}
-									className="border border-secondary-200 dark:border-secondary-600 rounded-lg p-4 hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
-								>
-									<div className="flex justify-between items-start">
-										<div className="flex-1">
-											<div className="flex items-center gap-2 flex-wrap">
-												<h4 className="font-medium text-secondary-900 dark:text-white">
-													{token.token_name}
-												</h4>
-												<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-													Proxmox LXC
-												</span>
-												{token.is_active ? (
-													<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-														Active
-													</span>
-												) : (
-													<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary-100 text-secondary-800 dark:bg-secondary-700 dark:text-secondary-200">
-														Inactive
-													</span>
-												)}
-											</div>
-											<div className="mt-2 space-y-1 text-sm text-secondary-600 dark:text-secondary-400">
-												<div className="flex items-center gap-2">
-													<span className="font-mono text-xs bg-secondary-100 dark:bg-secondary-700 px-2 py-1 rounded">
-														{token.token_key}
-													</span>
-													<button
-														type="button"
-														onClick={() =>
-															copy_to_clipboard(
-																token.token_key,
-																`key-${token.id}`,
-															)
-														}
-														className="text-primary-600 hover:text-primary-700 dark:text-primary-400"
-													>
-														{copy_success[`key-${token.id}`] ? (
-															<CheckCircle className="h-4 w-4" />
-														) : (
-															<Copy className="h-4 w-4" />
-														)}
-													</button>
-												</div>
-												<p>
-													Usage: {token.hosts_created_today}/
-													{token.max_hosts_per_day} hosts today
-												</p>
-												{token.host_groups && (
-													<p>
-														Default Group:{" "}
-														<span
-															className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-															style={{
-																backgroundColor: `${token.host_groups.color}20`,
-																color: token.host_groups.color,
-															}}
-														>
-															{token.host_groups.name}
-														</span>
-													</p>
-												)}
-												{token.allowed_ip_ranges?.length > 0 && (
-													<p>
-														Allowed IPs: {token.allowed_ip_ranges.join(", ")}
-													</p>
-												)}
-												<p>Created: {format_date(token.created_at)}</p>
-												{token.last_used_at && (
-													<p>Last Used: {format_date(token.last_used_at)}</p>
-												)}
-												{token.expires_at && (
-													<p>
-														Expires: {format_date(token.expires_at)}
-														{new Date(token.expires_at) < new Date() && (
-															<span className="ml-2 text-red-600 dark:text-red-400">
-																(Expired)
-															</span>
-														)}
-													</p>
-												)}
-											</div>
+					{/* Tab Content */}
+					<div className="p-6">
+						{/* Proxmox Tab */}
+						{activeTab === "proxmox" && (
+							<div className="space-y-6">
+								{/* Header with New Token Button */}
+								<div className="flex items-center justify-between">
+									<div className="flex items-center gap-3">
+										<div className="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
+											<Server className="h-5 w-5 text-primary-600 dark:text-primary-400" />
 										</div>
-										<div className="flex items-center gap-2">
-											<button
-												type="button"
-												onClick={() =>
-													toggle_token_active(token.id, token.is_active)
-												}
-												className={`px-3 py-1 text-sm rounded ${
-													token.is_active
-														? "bg-secondary-100 text-secondary-700 hover:bg-secondary-200 dark:bg-secondary-700 dark:text-secondary-300"
-														: "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300"
-												}`}
-											>
-												{token.is_active ? "Disable" : "Enable"}
-											</button>
-											<button
-												type="button"
-												onClick={() => delete_token(token.id, token.token_name)}
-												className="text-red-600 hover:text-red-800 dark:text-red-400 p-2"
-											>
-												<Trash2 className="h-4 w-4" />
-											</button>
+										<div>
+											<h3 className="text-lg font-semibold text-secondary-900 dark:text-white">
+												Proxmox LXC Auto-Enrollment
+											</h3>
+											<p className="text-sm text-secondary-600 dark:text-secondary-400">
+												Automatically discover and enroll LXC containers from
+												Proxmox hosts
+											</p>
 										</div>
 									</div>
+									<button
+										type="button"
+										onClick={() => setShowCreateModal(true)}
+										className="btn-primary flex items-center gap-2"
+									>
+										<Plus className="h-4 w-4" />
+										New Token
+									</button>
 								</div>
-							))}
-						</div>
-					)}
-				</div>
 
-				{/* Documentation Section */}
-				<div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-6">
-					<h3 className="text-lg font-semibold text-primary-900 dark:text-primary-200 mb-3">
-						How to Use Auto-Enrollment
-					</h3>
-					<ol className="list-decimal list-inside space-y-2 text-sm text-primary-800 dark:text-primary-300">
-						<li>Create a new auto-enrollment token using the button above</li>
-						<li>
-							Copy the one-line installation command shown in the success dialog
-						</li>
-						<li>SSH into your Proxmox host as root</li>
-						<li>
-							Paste and run the command - it will automatically discover and
-							enroll all running LXC containers
-						</li>
-						<li>View enrolled containers in the Hosts page</li>
-					</ol>
-					<div className="mt-4 p-3 bg-primary-100 dark:bg-primary-900/40 rounded border border-primary-200 dark:border-primary-700">
-						<p className="text-xs text-primary-800 dark:text-primary-300">
-							<strong>💡 Tip:</strong> You can run the same command multiple
-							times safely - already enrolled containers will be automatically
-							skipped.
-						</p>
+								{/* Token List */}
+								{loading ? (
+									<div className="text-center py-8">
+										<div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+									</div>
+								) : tokens.length === 0 ? (
+									<div className="text-center py-8 text-secondary-600 dark:text-secondary-400">
+										<p>No auto-enrollment tokens created yet.</p>
+										<p className="text-sm mt-2">
+											Create a token to enable automatic host enrollment from
+											Proxmox.
+										</p>
+									</div>
+								) : (
+									<div className="space-y-3">
+										{tokens.map((token) => (
+											<div
+												key={token.id}
+												className="border border-secondary-200 dark:border-secondary-600 rounded-lg p-4 hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
+											>
+												<div className="flex justify-between items-start">
+													<div className="flex-1">
+														<div className="flex items-center gap-2 flex-wrap">
+															<h4 className="font-medium text-secondary-900 dark:text-white">
+																{token.token_name}
+															</h4>
+															<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+																Proxmox LXC
+															</span>
+															{token.is_active ? (
+																<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+																	Active
+																</span>
+															) : (
+																<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary-100 text-secondary-800 dark:bg-secondary-700 dark:text-secondary-200">
+																	Inactive
+																</span>
+															)}
+														</div>
+														<div className="mt-2 space-y-1 text-sm text-secondary-600 dark:text-secondary-400">
+															<div className="flex items-center gap-2">
+																<span className="font-mono text-xs bg-secondary-100 dark:bg-secondary-700 px-2 py-1 rounded">
+																	{token.token_key}
+																</span>
+																<button
+																	type="button"
+																	onClick={() =>
+																		copy_to_clipboard(
+																			token.token_key,
+																			`key-${token.id}`,
+																		)
+																	}
+																	className="text-primary-600 hover:text-primary-700 dark:text-primary-400"
+																>
+																	{copy_success[`key-${token.id}`] ? (
+																		<CheckCircle className="h-4 w-4" />
+																	) : (
+																		<Copy className="h-4 w-4" />
+																	)}
+																</button>
+															</div>
+															<p>
+																Usage: {token.hosts_created_today}/
+																{token.max_hosts_per_day} hosts today
+															</p>
+															{token.host_groups && (
+																<p>
+																	Default Group:{" "}
+																	<span
+																		className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+																		style={{
+																			backgroundColor: `${token.host_groups.color}20`,
+																			color: token.host_groups.color,
+																		}}
+																	>
+																		{token.host_groups.name}
+																	</span>
+																</p>
+															)}
+															{token.allowed_ip_ranges?.length > 0 && (
+																<p>
+																	Allowed IPs:{" "}
+																	{token.allowed_ip_ranges.join(", ")}
+																</p>
+															)}
+															<p>Created: {format_date(token.created_at)}</p>
+															{token.last_used_at && (
+																<p>
+																	Last Used: {format_date(token.last_used_at)}
+																</p>
+															)}
+															{token.expires_at && (
+																<p>
+																	Expires: {format_date(token.expires_at)}
+																	{new Date(token.expires_at) < new Date() && (
+																		<span className="ml-2 text-red-600 dark:text-red-400">
+																			(Expired)
+																		</span>
+																	)}
+																</p>
+															)}
+														</div>
+													</div>
+													<div className="flex items-center gap-2">
+														<button
+															type="button"
+															onClick={() =>
+																toggle_token_active(token.id, token.is_active)
+															}
+															className={`px-3 py-1 text-sm rounded ${
+																token.is_active
+																	? "bg-secondary-100 text-secondary-700 hover:bg-secondary-200 dark:bg-secondary-700 dark:text-secondary-300"
+																	: "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300"
+															}`}
+														>
+															{token.is_active ? "Disable" : "Enable"}
+														</button>
+														<button
+															type="button"
+															onClick={() =>
+																delete_token(token.id, token.token_name)
+															}
+															className="text-red-600 hover:text-red-800 dark:text-red-400 p-2"
+														>
+															<Trash2 className="h-4 w-4" />
+														</button>
+													</div>
+												</div>
+											</div>
+										))}
+									</div>
+								)}
+
+								{/* Documentation Section */}
+								<div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-6">
+									<h3 className="text-lg font-semibold text-primary-900 dark:text-primary-200 mb-3">
+										How to Use Auto-Enrollment
+									</h3>
+									<ol className="list-decimal list-inside space-y-2 text-sm text-primary-800 dark:text-primary-300">
+										<li>
+											Create a new auto-enrollment token using the button above
+										</li>
+										<li>
+											Copy the one-line installation command shown in the
+											success dialog
+										</li>
+										<li>SSH into your Proxmox host as root</li>
+										<li>
+											Paste and run the command - it will automatically discover
+											and enroll all running LXC containers
+										</li>
+										<li>View enrolled containers in the Hosts page</li>
+									</ol>
+									<div className="mt-4 p-3 bg-primary-100 dark:bg-primary-900/40 rounded border border-primary-200 dark:border-primary-700">
+										<p className="text-xs text-primary-800 dark:text-primary-300">
+											<strong>💡 Tip:</strong> You can run the same command
+											multiple times safely - already enrolled containers will
+											be automatically skipped.
+										</p>
+									</div>
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
 			</div>
