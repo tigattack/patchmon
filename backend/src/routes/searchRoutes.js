@@ -70,10 +70,12 @@ router.get("/", authenticateToken, async (req, res) => {
 							{ hostname: { contains: searchTerm, mode: "insensitive" } },
 							{ friendly_name: { contains: searchTerm, mode: "insensitive" } },
 							{ ip: { contains: searchTerm, mode: "insensitive" } },
+							{ machine_id: { contains: searchTerm, mode: "insensitive" } },
 						],
 					},
 					select: {
 						id: true,
+						machine_id: true,
 						hostname: true,
 						friendly_name: true,
 						ip: true,
