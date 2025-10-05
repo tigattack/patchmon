@@ -19,6 +19,8 @@ import {
 	Shield,
 	Star,
 	UserCircle,
+	Users,
+	Wrench,
 	X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
