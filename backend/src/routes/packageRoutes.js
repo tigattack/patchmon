@@ -101,9 +101,12 @@ router.get("/", async (req, res) => {
 					prisma.host_packages.findMany({
 						where: {
 							package_id: pkg.id,
-							needs_update: true,
 						},
 						select: {
+							current_version: true,
+							available_version: true,
+							needs_update: true,
+							is_security_update: true,
 							hosts: {
 								select: {
 									id: true,
