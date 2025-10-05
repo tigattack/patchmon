@@ -1,4 +1,4 @@
-name: patchmon-dev
+name: patchmon-dev-fork
 
 services:
   database:
@@ -23,7 +23,7 @@ services:
       context: ..
       dockerfile: docker/backend.Dockerfile
       target: development
-      tags: [patchmon-backend:dev]
+      tags: [patchmon-backend:dev-fork]
     restart: unless-stopped
     environment:
       NODE_ENV: development
@@ -59,7 +59,7 @@ services:
       context: ..
       dockerfile: docker/frontend.Dockerfile
       target: development
-      tags: [patchmon-frontend:dev]
+      tags: [patchmon-frontend:dev-fork]
     restart: unless-stopped
     environment:
       BACKEND_HOST: backend
