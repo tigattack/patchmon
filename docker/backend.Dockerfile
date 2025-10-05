@@ -16,8 +16,6 @@ WORKDIR /app
 
 COPY --chown=node:node package*.json ./
 COPY --chown=node:node backend/ ./backend/
-COPY --chown=node:node agents ./agents_backup
-COPY --chown=node:node agents ./agents
 COPY --chmod=755 docker/backend.docker-entrypoint.sh ./entrypoint.sh
 
 WORKDIR /app/backend
@@ -25,8 +23,6 @@ WORKDIR /app/backend
 RUN npm ci --ignore-scripts && npx prisma generate
 
 EXPOSE 3001
-
-VOLUME [ "/app/agents" ]
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
   CMD curl -f http://localhost:3001/health || exit 1
@@ -72,15 +68,11 @@ WORKDIR /app
 
 COPY --from=builder /app/backend ./backend
 COPY --from=builder /app/node_modules ./node_modules
-COPY --chown=node:node agents ./agents_backup
-COPY --chown=node:node agents ./agents
 COPY --chmod=755 docker/backend.docker-entrypoint.sh ./entrypoint.sh
 
 WORKDIR /app/backend
 
 EXPOSE 3001
-
-VOLUME [ "/app/agents" ]
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
   CMD curl -f http://localhost:3001/health || exit 1
