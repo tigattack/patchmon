@@ -1,4 +1,4 @@
-name: patchmon-dev
+name: patchmon-dev-fork
 
 services:
   database:
@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./compose_dev_data/db:/var/lib/postgresql/data
+      - ./compose_dev_data_fork/db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U patchmon_user -d patchmon_db"]
       interval: 3s
@@ -23,7 +23,7 @@ services:
       context: ..
       dockerfile: docker/backend.Dockerfile
       target: development
-      tags: [patchmon-backend:dev]
+      tags: [patchmon-backend:dev-fork]
     restart: unless-stopped
     environment:
       NODE_ENV: development
@@ -37,7 +37,7 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - ./compose_dev_data/agents:/app/agents
+      - ./compose_dev_data_fork/agents:/app/agents
     depends_on:
       database:
         condition: service_healthy
@@ -59,7 +59,7 @@ services:
       context: ..
       dockerfile: docker/frontend.Dockerfile
       target: development
-      tags: [patchmon-frontend:dev]
+      tags: [patchmon-frontend:dev-fork]
     restart: unless-stopped
     environment:
       BACKEND_HOST: backend
