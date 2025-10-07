@@ -1,5 +1,13 @@
 # PatchMon - Linux Patch Monitoring made Simple
 
+## Fork Changes
+
+- Remove unused shell agent
+- Remove placeholder "coming soon" features
+- Remove host network information features
+- Remove host system resource features
+
+---
 [![Website](https://img.shields.io/badge/Website-patchmon.net-blue?style=for-the-badge)](https://patchmon.net)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-blue?style=for-the-badge&logo=discord)](https://patchmon.net/discord)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github)](https://github.com/PatchMon/PatchMon)
